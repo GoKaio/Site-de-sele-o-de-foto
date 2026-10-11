@@ -15,18 +15,31 @@ except ImportError:
 
 DATABASE_URL = os.environ.get('DATABASE_URL') or os.environ.get('SUPABASE_DB_URL')
 
-# No Vercel (onde o filesystem é read-only), se não houver DATABASE_URL, utiliza /tmp/banco.db
-if os.environ.get('VERCEL') == '1' and not DATABASE_URL:
-    tmp_db = '/tmp/banco.db'
-    orig_db = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'banco.db')
-    if not os.path.exists(tmp_db) and os.path.exists(orig_db):
-        try:
-            shutil.copy2(orig_db, tmp_db)
-        except Exception:
-            pass
-    DB_FILE = tmp_db
-else:
-    DB_FILE = os.environ.get('DB_FILE', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'banco.db'))
+def is_serverless_env() -> bool:
+    """Detecta de forma infalível se o ambiente é Serverless / read-only (Vercel, AWS Lambda, etc)."""
+    if os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME') or os.environ.get('LAMBDA_TASK_ROOT'):
+        return True
+    base = os.path.dirname(os.path.abspath(__file__))
+    if '/var/task' in base or '\\var\\task' in base:
+        return True
+    try:
+        test_path = os.path.join(base, '.write_test')
+        with open(test_path, 'w') as f:
+            f.write('1')
+        os.remove(test_path)
+        return False
+    except Exception:
+        return True
+
+def get_db_file() -> str:
+    explicit = os.environ.get('DB_FILE')
+    if explicit:
+        return explicit
+    if is_serverless_env():
+        return '/tmp/banco.db'
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'banco.db')
+
+DB_FILE = get_db_file()
 
 def is_postgres() -> bool:
     """Retorna True se configurado para banco PostgreSQL / Supabase."""
@@ -106,7 +119,7 @@ class PostgresConnectionWrapper:
     def close(self):
         self._conn.close()
 
-def get_connection():
+def get_connection(skip_init: bool = False):
     if is_postgres():
         try:
             import psycopg2
@@ -116,14 +129,35 @@ def get_connection():
         except Exception as e:
             print(f"[Supabase Postgres] Erro ao conectar ao Postgres: {e}. Usando fallback SQLite.")
     
-    conn = sqlite3.connect(DB_FILE, timeout=30.0)
+    current_db = get_db_file()
+    is_serverless = is_serverless_env()
+
+    needs_init = not os.path.exists(current_db)
+    if is_serverless and needs_init:
+        orig_db = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'banco.db')
+        if os.path.exists(orig_db):
+            try:
+                shutil.copy2(orig_db, current_db)
+                needs_init = False
+            except Exception:
+                pass
+
+    conn = sqlite3.connect(current_db, timeout=30.0)
     conn.row_factory = sqlite3.Row
     try:
-        conn.execute('PRAGMA journal_mode=WAL')
+        if is_serverless:
+            # Em AWS Lambda / Vercel /tmp, PRAGMA journal_mode=WAL causa 'disk I/O error' devido a restrições de SHM lock
+            conn.execute('PRAGMA journal_mode=MEMORY')
+        else:
+            conn.execute('PRAGMA journal_mode=WAL')
         conn.execute('PRAGMA busy_timeout=30000')
         conn.execute('PRAGMA foreign_keys=ON')
     except Exception:
         pass
+
+    if needs_init and not skip_init:
+        init_db(conn)
+
     return conn
 
 def hash_senha(senha_plain: str) -> str:
@@ -137,14 +171,15 @@ def verificar_senha(senha_plain: str, senha_hash: str) -> bool:
     except Exception:
         return False
 
-def init_db():
+def init_db(conn=None):
     if is_postgres():
         try:
-            conn = get_connection()
-            cur = conn.cursor()
+            c = conn or get_connection(skip_init=True)
+            cur = c.cursor()
             cur.execute("SELECT 1 FROM information_schema.tables WHERE table_name = 'usuarios'")
             row = cur.fetchone()
-            conn.close()
+            if conn is None:
+                c.close()
             if row:
                 print("[Supabase Postgres] Banco Supabase conectado e tabelas verificadas.")
             else:
@@ -153,7 +188,11 @@ def init_db():
             print(f"[Supabase Postgres] Verificação de tabelas: {e}")
         return
 
-    conn = get_connection()
+    should_close = False
+    if conn is None:
+        conn = get_connection(skip_init=True)
+        should_close = True
+
     cur = conn.cursor()
 
     # ── 1. Usuários (Fotógrafo, Clientes e Admin) ──────────────────────────
@@ -467,7 +506,8 @@ def init_db():
         """, textos_iniciais)
 
     conn.commit()
-    conn.close()
+    if should_close:
+        conn.close()
 
 def get_site_textos() -> dict:
     """Retorna todos os textos configuráveis do site como um dicionário chave -> valor."""

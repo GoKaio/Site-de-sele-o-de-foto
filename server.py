@@ -25,15 +25,18 @@ try:
 except ImportError:
     pass
 
-from db import get_connection, init_db, verificar_senha, hash_senha, get_site_textos, update_site_textos
+from db import get_connection, init_db, verificar_senha, hash_senha, get_site_textos, update_site_textos, is_serverless_env
 from supabase_client import upload_para_supabase_storage, is_supabase_configured
 
 # ── Inicializa banco de dados ─────────────────────────────────────────────────
-init_db()
+try:
+    init_db()
+except Exception as e:
+    print(f"[Init DB] Aviso ao inicializar banco: {e}")
 
 app = Bottle()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-if os.environ.get('VERCEL') == '1':
+if is_serverless_env():
     UPLOAD_DIR = '/tmp/uploads'
 else:
     UPLOAD_DIR = os.path.join(BASE_DIR, 'uploads')
