@@ -712,7 +712,10 @@ def api_upload_fotos_multipart(galeria_id):
         return json_response({'error': 'Galeria não encontrada'}, 404)
 
     cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id = ?", (real_id,))
-    total_atual = cur.fetchone()[0]
+    cnt_row = cur.fetchone()
+    total_atual = (cnt_row[0] if cnt_row else 0) if cnt_row is not None else 0
+    if isinstance(cnt_row, dict) and 'count' in cnt_row:
+        total_atual = cnt_row['count']
 
     EXTENSOES_PERMITIDAS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
     TAMANHO_MAX = 20 * 1024 * 1024  # 20 MB por arquivo
@@ -1563,6 +1566,11 @@ def serve_static(filepath):
     _, ext = os.path.splitext(filepath)
     if ext.lower() not in ALLOWED_EXTENSIONS:
         abort(403, 'Tipo de arquivo não permitido')
+
+    if filepath.startswith('uploads/'):
+        fname = filepath[len('uploads/'):]
+        if os.path.exists(os.path.join(UPLOAD_DIR, fname)):
+            return static_file(fname, root=UPLOAD_DIR)
 
     return static_file(filepath, root=BASE_DIR)
 

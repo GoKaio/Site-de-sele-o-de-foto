@@ -932,6 +932,48 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     window.carregarDadosGaleria();
 
+    // Função auxiliar para redimensionar fotos pesadas antes do envio (evita limite de 4.5MB da Vercel)
+    async function otimizarFotoParaUpload(file, maxDimension = 2048) {
+      if (!file.type || !file.type.startsWith('image/')) return file;
+      if (file.size < 2.5 * 1024 * 1024) return file;
+
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+            if (width > maxDimension || height > maxDimension) {
+              if (width > height) {
+                height = Math.round((height * maxDimension) / width);
+                width = maxDimension;
+              } else {
+                width = Math.round((width * maxDimension) / height);
+                height = maxDimension;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob((blob) => {
+              if (blob) {
+                resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+              } else {
+                resolve(file);
+              }
+            }, 'image/jpeg', 0.90);
+          };
+          img.onerror = () => resolve(file);
+          img.src = e.target.result;
+        };
+        reader.onerror = () => resolve(file);
+        reader.readAsDataURL(file);
+      });
+    }
+
     // ── SUBIR FOTOS PARA A GALERIA DO CLIENTE ──
     window.uploadFotosParaGaleria = async function(input) {
       const files = input.files;
@@ -943,44 +985,56 @@ document.addEventListener('DOMContentLoaded', () => {
       const pctTxt = document.getElementById('txtUploadGaleriaPorcentagem');
 
       if (progressBox) progressBox.style.display = 'block';
-      if (bar) bar.style.width = '15%';
-      if (pctTxt) pctTxt.textContent = '15%';
+      if (bar) bar.style.width = '5%';
+      if (pctTxt) pctTxt.textContent = '5%';
       if (statusTxt) statusTxt.textContent = `Preparando envio de ${files.length} foto(s)...`;
 
-      try {
-        const formData = new FormData();
-        for (let i = 0; i < files.length; i++) {
-          formData.append('fotos', files[i]);
+      let totalSucesso = 0;
+      let totalErros = 0;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const pct = Math.round(((i) / files.length) * 100);
+        if (bar) bar.style.width = `${Math.max(10, pct)}%`;
+        if (pctTxt) pctTxt.textContent = `${Math.max(10, pct)}%`;
+        if (statusTxt) statusTxt.textContent = `Enviando foto ${i + 1} de ${files.length} (${file.name})...`;
+
+        try {
+          const filePronto = await otimizarFotoParaUpload(file, 2048);
+          const formData = new FormData();
+          formData.append('fotos', filePronto, file.name);
+
+          const res = await fetch(`/api/galeria/${galConfigId}/upload-fotos`, {
+            method: 'POST',
+            body: formData
+          });
+          const data = await res.json();
+          if (data.success) {
+            totalSucesso += (data.inseridas && data.inseridas.length) || 1;
+          } else {
+            totalErros++;
+            console.warn(`Erro no upload da foto ${file.name}:`, data.error);
+          }
+        } catch (err) {
+          totalErros++;
+          console.error(`Falha no upload da foto ${file.name}:`, err);
         }
+      }
 
-        if (bar) bar.style.width = '50%';
-        if (pctTxt) pctTxt.textContent = '50%';
-        if (statusTxt) statusTxt.textContent = `Enviando ${files.length} foto(s) para o servidor...`;
+      if (bar) bar.style.width = '100%';
+      if (pctTxt) pctTxt.textContent = '100%';
 
-        const res = await fetch(`/api/galeria/${galConfigId}/upload-fotos`, {
-          method: 'POST',
-          body: formData
-        });
-        const data = await res.json();
-
-        if (bar) bar.style.width = '100%';
-        if (pctTxt) pctTxt.textContent = '100%';
-
-        if (data.success) {
-          const totalInseridas = (data.inseridas && data.inseridas.length) || data.count || files.length;
-          showToast(`✓ ${totalInseridas} foto(s) adicionadas com sucesso!`);
-          if (statusTxt) statusTxt.textContent = `✓ Upload concluído! ${totalInseridas} fotos prontas.`;
-        } else {
-          showToast(data.error || 'Erro no envio das fotos.', 'error');
-        }
-      } catch (err) {
-        console.error('Erro no upload multipart:', err);
+      if (totalSucesso > 0) {
+        showToast(`✓ ${totalSucesso} foto(s) adicionada(s) com sucesso!`);
+        if (statusTxt) statusTxt.textContent = `✓ Upload concluído! ${totalSucesso} fotos prontas.`;
+      } else {
         showToast('Erro ao realizar upload das fotos.', 'error');
+        if (statusTxt) statusTxt.textContent = 'Falha no envio das fotos.';
       }
 
       setTimeout(() => {
         if (progressBox) progressBox.style.display = 'none';
-      }, 2000);
+      }, 2500);
 
       input.value = '';
       if (typeof window.carregarFotosGaleriaConfig === 'function') {

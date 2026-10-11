@@ -62,6 +62,17 @@ def _clean_pg_dict(d: dict) -> dict:
             res[k] = v
     return res
 
+class RowWrapper(dict):
+    """Permite acesso tanto por chave (row['id']) quanto por índice numérico (row[0]), idêntico ao sqlite3.Row."""
+    def __init__(self, d):
+        super().__init__(d)
+        self._values = list(d.values())
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self._values[key]
+        return super().__getitem__(key)
+
 class PostgresCursorWrapper:
     def __init__(self, raw_cur):
         self._cur = raw_cur
@@ -103,11 +114,11 @@ class PostgresCursorWrapper:
 
     def fetchone(self):
         row = self._cur.fetchone()
-        return _clean_pg_dict(dict(row)) if row else None
+        return RowWrapper(_clean_pg_dict(dict(row))) if row else None
 
     def fetchall(self):
         rows = self._cur.fetchall()
-        return [_clean_pg_dict(dict(r)) for r in rows] if rows else []
+        return [RowWrapper(_clean_pg_dict(dict(r))) for r in rows] if rows else []
 
     @property
     def rowcount(self):
