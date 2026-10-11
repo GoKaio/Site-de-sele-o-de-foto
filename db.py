@@ -46,6 +46,22 @@ def is_postgres() -> bool:
     return bool(DATABASE_URL and (DATABASE_URL.startswith('postgres://') or DATABASE_URL.startswith('postgresql://')))
 
 # ── ADAPTADOR POSTGRESQL / SUPABASE (SUPAVISOR TRANSACTION MODE) ──────────────
+import decimal
+from datetime import date
+
+def _clean_pg_dict(d: dict) -> dict:
+    if not isinstance(d, dict):
+        return d
+    res = {}
+    for k, v in d.items():
+        if isinstance(v, decimal.Decimal):
+            res[k] = float(v)
+        elif isinstance(v, (datetime, date)):
+            res[k] = v.isoformat()
+        else:
+            res[k] = v
+    return res
+
 class PostgresCursorWrapper:
     def __init__(self, raw_cur):
         self._cur = raw_cur
@@ -87,11 +103,11 @@ class PostgresCursorWrapper:
 
     def fetchone(self):
         row = self._cur.fetchone()
-        return dict(row) if row else None
+        return _clean_pg_dict(dict(row)) if row else None
 
     def fetchall(self):
         rows = self._cur.fetchall()
-        return [dict(r) for r in rows] if rows else []
+        return [_clean_pg_dict(dict(r)) for r in rows] if rows else []
 
     @property
     def rowcount(self):
@@ -100,6 +116,16 @@ class PostgresCursorWrapper:
 class PostgresConnectionWrapper:
     def __init__(self, raw_conn):
         self._conn = raw_conn
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            self._conn.rollback()
+        else:
+            self._conn.commit()
+        return False
 
     def cursor(self):
         import psycopg2.extras
@@ -117,7 +143,10 @@ class PostgresConnectionWrapper:
         self._conn.rollback()
 
     def close(self):
-        self._conn.close()
+        try:
+            self._conn.close()
+        except Exception:
+            pass
 
 def get_connection(skip_init: bool = False):
     if is_postgres():

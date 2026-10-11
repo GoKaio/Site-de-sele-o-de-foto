@@ -129,10 +129,21 @@ def rate_limit(limit: int = RATE_LIMIT_GERAL):
 
 # ── Helpers de Resposta ───────────────────────────────────────────────────────
 
+import decimal
+from datetime import date
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        if isinstance(obj, decimal.Decimal):
+            return float(obj)
+        return super().default(obj)
+
 def json_response(data, status: int = 200):
     response.content_type = 'application/json; charset=utf-8'
     response.status = status
-    return json.dumps(data, ensure_ascii=False)
+    return json.dumps(data, ensure_ascii=False, cls=CustomJSONEncoder)
 
 def get_body() -> dict:
     try:
@@ -258,10 +269,14 @@ def api_login_admin():
     conn.close()
 
     if user and verificar_senha(senha_input, user['senha_hash']):
-        # Atualiza último login
-        with get_connection() as c:
-            c.execute("UPDATE usuarios SET ultimo_login=?, tentativas_login=0 WHERE id=?",
-                      (datetime.now().isoformat(), user['id']))
+        try:
+            conn_u = get_connection()
+            conn_u.execute("UPDATE usuarios SET ultimo_login=?, tentativas_login=0 WHERE id=?",
+                           (datetime.now().isoformat(), user['id']))
+            conn_u.commit()
+            conn_u.close()
+        except Exception:
+            pass
         audit(ip, '/api/auth/login-admin', 'POST', user['id'], 'LOGIN_ADMIN_OK', login_input, 200)
         return json_response({'success': True, 'user': {
             'id': user['id'], 'nome': user['nome'],
@@ -294,9 +309,14 @@ def api_login_fotografo():
     conn.close()
 
     if user and verificar_senha(senha_input, user['senha_hash']):
-        with get_connection() as c:
-            c.execute("UPDATE usuarios SET ultimo_login=?, tentativas_login=0 WHERE id=?",
-                      (datetime.now().isoformat(), user['id']))
+        try:
+            conn_u = get_connection()
+            conn_u.execute("UPDATE usuarios SET ultimo_login=?, tentativas_login=0 WHERE id=?",
+                           (datetime.now().isoformat(), user['id']))
+            conn_u.commit()
+            conn_u.close()
+        except Exception:
+            pass
         audit(ip, '/api/auth/login-fotografo', 'POST', user['id'], 'LOGIN_FOTO_OK', email_input, 200)
         return json_response({'success': True, 'user': {
             'id': user['id'], 'nome': user['nome'],
