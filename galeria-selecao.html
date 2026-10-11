@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script>window.location.replace("galeria-config.html" + window.location.search + "#selecao");</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seleção e venda | Configurações da Galeria | Casa da Foto Studio</title>
+  <meta name="description" content="Painel de gerenciamento, dados, prazos, clientes e entrega da galeria.">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Full-Width Fluid Wrapper -->
+  <div class="site-wrapper" id="siteWrapper">
+
+    <!-- 1. HEADER DO PAINEL DO FOTÓGRAFO (100% FULL-WIDTH) -->
+    <header class="site-header admin-header" id="siteHeader">
+      <div class="content-wrap-wide admin-header-nav">
+        
+        <!-- Logo e Monograma -->
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+          <div class="header-logo-card" style="width: 155px; height: 74px; padding: 0.4rem 1rem;">
+            <img src="assets/logo/logo.png" alt="Logo Casa da Foto" id="headerLogoImg">
+          </div>
+          <div>
+            <span class="header-brand-name" style="font-size: 0.72rem;">ESTÚDIO CASA DA FOTO</span>
+            <span class="header-brand-slogan" style="font-size: 0.65rem;">Momentos que ficam</span>
+          </div>
+        </div>
+
+        <!-- Links Centrais -->
+        <nav class="admin-nav-center" aria-label="Navegação do Painel">
+          <a href="index.html" class="nav-item">Início</a>
+          <a href="projetos.html" class="nav-item active-nav">Projetos</a>
+          <a href="#clientes-menu" class="nav-item">Clientes</a>
+          <a href="#config-menu" class="nav-item">Configurações</a>
+        </nav>
+
+        <!-- Ações do Fotógrafo (Direita) -->
+        <div class="admin-nav-user-actions">
+          <span class="btn-painel-fotografo">PAINEL DO FOTÓGRAFO</span>
+          <span style="font-size: 1.25rem; color: #FFFFFF; cursor: pointer;">🔔</span>
+          <div class="user-avatar-circle">CF</div>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- 2. LAYOUT SPLIT: SIDEBAR DE CONFIGURAÇÕES + ÁREA DE CONTEÚDO -->
+    <div class="admin-layout-wrapper">
+      
+      <!-- SIDEBAR LATERAL ESQUERDA -->
+      <aside class="admin-sidebar" id="adminSidebar">
+        
+        <div>
+          <a href="projetos.html" class="sidebar-back-link">
+            <span>← Todos os projetos</span>
+          </a>
+
+          <div class="sidebar-project-header">
+            <span class="sidebar-project-tag">CONFIGURAÇÕES DA GALERIA</span>
+            <h2 class="sidebar-project-title">Exemplo de seleção</h2>
+            <span class="badge-status-andamento">Escolha em andamento</span>
+          </div>
+        </div>
+
+        <!-- Menu com os 10 Módulos das Telas do Figma -->
+        <ul class="sidebar-menu-list" id="sidebarMenu">
+          <li>
+            <a href="galeria-dados.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📁 Dados da galeria</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-fotos.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🖼️ Fotos</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-selecao.html" class="sidebar-nav-btn active">
+              <span class="sidebar-btn-content">🛒 Seleção e venda</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-prazo.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📅 Prazo e lembrete</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-acesso.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🔒 Acesso e privacidade</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-clientes.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">👥 Clientes</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-download.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📥 Download</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-design.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🎨 Design</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-atividades.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📊 Atividades do cliente</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-historico.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🕒 Histórico de atividades</span>
+            </a>
+          </li>
+        </ul>
+        <!-- Card de Ajuda no Rodapé da Sidebar -->
+        <div class="sidebar-help-card">
+          <strong>Cada detalhe, com cuidado.</strong>
+          <p>Organize a escolha e prepare uma entrega tranquila para seu cliente.</p>
+          <a href="#">Central de ajuda ↗</a>
+        </div>
+
+      </aside>
+      <!-- ÁREA DE CONTEÚDO PRINCIPAL (DIREITA) -->
+      <main class="admin-main-content" id="adminMainContent">
+        
+        <!-- Barra Superior: Breadcrumbs, Badge e Botão Prévia -->
+        <div class="admin-top-meta-row">
+          <div class="admin-breadcrumb">
+            Projetos &nbsp;/&nbsp; Exemplo de seleção &nbsp;/&nbsp; <strong id="breadcrumbTabName">Seleção e venda</strong>
+          </div>
+          <span class="admin-badge-demo">Demonstração · sem valores comerciais</span>
+        </div>
+
+        <div class="admin-header-action-row">
+          <div>
+            <h1 class="admin-page-title" id="pageTitle">Seleção e venda</h1>
+            <p class="admin-page-subtitle" id="pageSubtitle">Configure o pacote e acompanhe as favoritas, mantendo as fotos extras em uma lista separada.</p>
+          </div>
+          <a href="escolha-fotos.html" class="btn-previa-cliente">
+            <span>👁 Prévia do cliente</span>
+          </a>
+        </div>
+
+        <!-- CONTEÚDO DA TELA: SELEÇÃO E VENDA -->
+        <div class="tab-pane active" id="tab-selecao" >
+          <div class="admin-form-two-col">
+            <div>
+              <!-- Bloco 1: Regras de seleção -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Regras de seleção</h3>
+                <p class="panel-desc">Quantidades de demonstração; não representam uma oferta comercial.</p>
+
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Fotos incluídas no pacote</label>
+                    <input type="text" class="field-input" value="10 fotos">
+                  </div>
+                  <div>
+                    <label class="field-label">Fotos extras</label>
+                    <select class="field-select">
+                      <option selected>Permitir escolha separada</option>
+                      <option>Bloquear extras</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="toggle-item-row" style="margin-top: 1rem;">
+                  <div class="toggle-label-wrap">
+                    <strong>Solicitar confirmação das extras</strong>
+                    <span>As extras precisam ser confirmadas antes da finalização.</span>
+                  </div>
+                  <label class="switch-toggle">
+                    <input type="checkbox" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+                <span class="field-hint-caption" style="margin-top: 0.75rem;">Nenhum preço definido neste exemplo. Valores e condições são combinados fora desta demonstração.</span>
+              </div>
+
+              <!-- Bloco 2: Fotos do pacote -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Fotos do pacote</h3>
+                <p class="panel-desc">Seleção parcial recebida - 6 de 10 fotos - ainda restam 4 escolhas.</p>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                  <div style="border-radius: 8px; overflow: hidden;"><img src="assets/images/familia.jpg" style="width: 100%; height: 95px; object-fit: cover;"><div style="font-size: 0.75rem; font-weight: 700; margin-top: 2px;">Foto 001</div></div>
+                  <div style="border-radius: 8px; overflow: hidden;"><img src="assets/images/gestante.jpg" style="width: 100%; height: 95px; object-fit: cover;"><div style="font-size: 0.75rem; font-weight: 700; margin-top: 2px;">Foto 002</div></div>
+                  <div style="border-radius: 8px; overflow: hidden;"><img src="assets/images/bebe.jpg" style="width: 100%; height: 95px; object-fit: cover;"><div style="font-size: 0.75rem; font-weight: 700; margin-top: 2px;">Foto 003</div></div>
+                  <div style="border-radius: 8px; overflow: hidden;"><img src="assets/images/gestante.jpg" style="width: 100%; height: 95px; object-fit: cover;"><div style="font-size: 0.75rem; font-weight: 700; margin-top: 2px;">Foto 005</div></div>
+                  <div style="border-radius: 8px; overflow: hidden;"><img src="assets/images/bebe.jpg" style="width: 100%; height: 95px; object-fit: cover;"><div style="font-size: 0.75rem; font-weight: 700; margin-top: 2px;">Foto 006</div></div>
+                  <div style="border-radius: 8px; overflow: hidden;"><img src="assets/images/bebe.jpg" style="width: 100%; height: 95px; object-fit: cover;"><div style="font-size: 0.75rem; font-weight: 700; margin-top: 2px;">Foto 009</div></div>
+                </div>
+              </div>
+
+              <!-- Bloco 3: Fotos extras -->
+              <div class="admin-card-panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                  <h3 class="panel-title">Fotos extras</h3>
+                  <span class="preview-pill-tag">Aguardando confirmação</span>
+                </div>
+                <p class="panel-desc">2 fotos à parte. Não ocupam as vagas do pacote.</p>
+
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; max-width: 380px;">
+                  <div style="border-radius: 8px; overflow: hidden;"><img src="assets/images/familia.jpg" style="width: 100%; height: 95px; object-fit: cover;"><div style="font-size: 0.75rem; font-weight: 700; margin-top: 2px;">Foto 004</div></div>
+                  <div style="border-radius: 8px; overflow: hidden;"><img src="assets/images/gestante.jpg" style="width: 100%; height: 95px; object-fit: cover;"><div style="font-size: 0.75rem; font-weight: 700; margin-top: 2px;">Foto 008</div></div>
+                </div>
+                <span class="field-hint-caption" style="margin-top: 0.75rem;">Foto 004 e Foto 008 serão encaminhadas separadamente para revisão.</span>
+              </div>
+
+              <div class="admin-bottom-actions-row">
+                <span>Alterações apenas nesta galeria de demonstração.</span>
+                <button type="button" class="btn-salvar-admin">✓ Salvar alterações</button>
+              </div>
+            </div>
+
+            <!-- Coluna Direita -->
+            <div class="admin-side-cards-col">
+              <div class="admin-preview-box">
+                <h4>Encaminhar a finalização</h4>
+                <span class="preview-pill-tag">Seleção em andamento</span>
+                <div style="font-size: 1.6rem; font-weight: 800; color: var(--text-dark); margin: 0.5rem 0;">6 do pacote + 2 extras</div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1rem;">
+                  Este é o rascunho de escolha do cliente, ainda não enviado como seleção final.
+                </p>
+                <div style="font-size: 0.8rem; color: var(--text-dark); margin-bottom: 1rem;">
+                  <strong>Antes de finalizar</strong>
+                  <ol style="margin-left: 1.2rem; margin-top: 0.4rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.35rem;">
+                    <li>Receber a seleção final do cliente.</li>
+                    <li>Revisar as 6 fotos do pacote.</li>
+                    <li>Confirmar as 2 extras à parte.</li>
+                    <li>Preparar os arquivos de entrega.</li>
+                  </ol>
+                </div>
+                <button type="button" class="btn-salvar-admin" style="width: 100%; justify-content: center;">📋 Preparar revisão</button>
+              </div>
+
+              <div class="admin-info-box-note">
+                <strong>Não misture as listas</strong>
+                <p>A quantidade total escolhida é 8, mas apenas 6 contam no pacote. As 4 vagas restantes continuam disponíveis.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+    </div>
+
+    <!-- Rodapé -->
+    <footer class="admin-footer-strip">
+      <div class="content-wrap-wide admin-footer-flex">
+        <span>Casa da Foto Studio · Momentos que ficam</span>
+        <span>Exemplo de seleção · Dados e estados ilustrativos</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- SCRIPT DE NAVEGAÇÃO INTERATIVA ENTRE AS 10 TELAS -->
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script>window.location.replace("galeria-config.html" + window.location.search + "#historico");</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Histórico de atividades | Configurações da Galeria | Casa da Foto Studio</title>
+  <meta name="description" content="Painel de gerenciamento, dados, prazos, clientes e entrega da galeria.">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Full-Width Fluid Wrapper -->
+  <div class="site-wrapper" id="siteWrapper">
+
+    <!-- 1. HEADER DO PAINEL DO FOTÓGRAFO (100% FULL-WIDTH) -->
+    <header class="site-header admin-header" id="siteHeader">
+      <div class="content-wrap-wide admin-header-nav">
+        
+        <!-- Logo e Monograma -->
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+          <div class="header-logo-card" style="width: 155px; height: 74px; padding: 0.4rem 1rem;">
+            <img src="assets/logo/logo.png" alt="Logo Casa da Foto" id="headerLogoImg">
+          </div>
+          <div>
+            <span class="header-brand-name" style="font-size: 0.72rem;">ESTÚDIO CASA DA FOTO</span>
+            <span class="header-brand-slogan" style="font-size: 0.65rem;">Momentos que ficam</span>
+          </div>
+        </div>
+
+        <!-- Links Centrais -->
+        <nav class="admin-nav-center" aria-label="Navegação do Painel">
+          <a href="index.html" class="nav-item">Início</a>
+          <a href="projetos.html" class="nav-item active-nav">Projetos</a>
+          <a href="#clientes-menu" class="nav-item">Clientes</a>
+          <a href="#config-menu" class="nav-item">Configurações</a>
+        </nav>
+
+        <!-- Ações do Fotógrafo (Direita) -->
+        <div class="admin-nav-user-actions">
+          <span class="btn-painel-fotografo">PAINEL DO FOTÓGRAFO</span>
+          <span style="font-size: 1.25rem; color: #FFFFFF; cursor: pointer;">🔔</span>
+          <div class="user-avatar-circle">CF</div>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- 2. LAYOUT SPLIT: SIDEBAR DE CONFIGURAÇÕES + ÁREA DE CONTEÚDO -->
+    <div class="admin-layout-wrapper">
+      
+      <!-- SIDEBAR LATERAL ESQUERDA -->
+      <aside class="admin-sidebar" id="adminSidebar">
+        
+        <div>
+          <a href="projetos.html" class="sidebar-back-link">
+            <span>← Todos os projetos</span>
+          </a>
+
+          <div class="sidebar-project-header">
+            <span class="sidebar-project-tag">CONFIGURAÇÕES DA GALERIA</span>
+            <h2 class="sidebar-project-title">Exemplo de seleção</h2>
+            <span class="badge-status-andamento">Escolha em andamento</span>
+          </div>
+        </div>
+
+        <!-- Menu com os 10 Módulos das Telas do Figma -->
+        <ul class="sidebar-menu-list" id="sidebarMenu">
+          <li>
+            <a href="galeria-dados.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📁 Dados da galeria</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-fotos.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🖼️ Fotos</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-selecao.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🛒 Seleção e venda</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-prazo.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📅 Prazo e lembrete</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-acesso.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🔒 Acesso e privacidade</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-clientes.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">👥 Clientes</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-download.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📥 Download</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-design.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🎨 Design</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-atividades.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📊 Atividades do cliente</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-historico.html" class="sidebar-nav-btn active">
+              <span class="sidebar-btn-content">🕒 Histórico de atividades</span>
+            </a>
+          </li>
+        </ul>
+        <!-- Card de Ajuda no Rodapé da Sidebar -->
+        <div class="sidebar-help-card">
+          <strong>Cada detalhe, com cuidado.</strong>
+          <p>Organize a escolha e prepare uma entrega tranquila para seu cliente.</p>
+          <a href="#">Central de ajuda ↗</a>
+        </div>
+
+      </aside>
+      <!-- ÁREA DE CONTEÚDO PRINCIPAL (DIREITA) -->
+      <main class="admin-main-content" id="adminMainContent">
+        
+        <!-- Barra Superior: Breadcrumbs, Badge e Botão Prévia -->
+        <div class="admin-top-meta-row">
+          <div class="admin-breadcrumb">
+            Projetos &nbsp;/&nbsp; Exemplo de seleção &nbsp;/&nbsp; <strong id="breadcrumbTabName">Histórico</strong>
+          </div>
+          <span class="admin-badge-demo">Demonstração · sem valores comerciais</span>
+        </div>
+
+        <div class="admin-header-action-row">
+          <div>
+            <h1 class="admin-page-title" id="pageTitle">Histórico de atividades</h1>
+            <p class="admin-page-subtitle" id="pageSubtitle">Consulte a linha do tempo da galeria e os registros de cada etapa do trabalho.</p>
+          </div>
+          <a href="escolha-fotos.html" class="btn-previa-cliente">
+            <span>👁 Prévia do cliente</span>
+          </a>
+        </div>
+
+        <!-- CONTEÚDO DA TELA: HISTÓRICO DE ATIVIDADES -->
+        <div class="tab-pane active" id="tab-historico" >
+          <div class="admin-form-two-col">
+            <div>
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Registro cronológico</h3>
+                <p class="panel-desc">7 eventos ilustrativos · mais recentes primeiro.</p>
+
+                <div class="form-row-2col" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 1.5rem;">
+                  <div>
+                    <label class="field-label">Período</label>
+                    <select class="field-select"><option selected>04 a 10/10/2026</option></select>
+                  </div>
+                  <div>
+                    <label class="field-label">Responsável</label>
+                    <select class="field-select"><option selected>Todos</option></select>
+                  </div>
+                  <div>
+                    <label class="field-label">Tipo de atividade</label>
+                    <select class="field-select"><option selected>Todas</option></select>
+                  </div>
+                </div>
+
+                <!-- Lista de 7 Registros Cronológicos -->
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.8rem;">
+                  
+                  <div style="padding: 0.85rem; border: 1px solid #E8DDD0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 0.85rem; align-items: center;">
+                      <span style="color: var(--text-muted); font-size: 0.75rem; width: 85px;">10 OUT 2026<br>14:20</span>
+                      <div>
+                        <strong style="color: var(--text-dark);">Preferências da galeria salvas</strong>
+                        <div style="font-size: 0.74rem; color: var(--text-muted);">Prazo em 20/10, acesso privado e download bloqueado.</div>
+                      </div>
+                    </div>
+                    <span class="preview-pill-tag">Fotógrafo</span>
+                  </div>
+
+                  <div style="padding: 0.85rem; border: 1px solid #E8DDD0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 0.85rem; align-items: center;">
+                      <span style="color: var(--text-muted); font-size: 0.75rem; width: 85px;">10 OUT 2026<br>14:18</span>
+                      <div>
+                        <strong style="color: var(--text-dark);">Escolha parcial atualizada</strong>
+                        <div style="font-size: 0.74rem; color: var(--text-muted);">Fotos do pacote: 001, 002, 003, 005, 006, 009 e 2 extras (004 e 008).</div>
+                      </div>
+                    </div>
+                    <span class="preview-pill-tag" style="background:#FAF5EE; color:#666;">Cliente</span>
+                  </div>
+
+                  <div style="padding: 0.85rem; border: 1px solid #E8DDD0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 0.85rem; align-items: center;">
+                      <span style="color: var(--text-muted); font-size: 0.75rem; width: 85px;">10 OUT 2026<br>09:42</span>
+                      <div>
+                        <strong style="color: var(--text-dark);">Galeria acessada para revisão</strong>
+                        <div style="font-size: 0.74rem; color: var(--text-muted);">Cliente de exemplo retornou e continuou pelo celular.</div>
+                      </div>
+                    </div>
+                    <span class="preview-pill-tag" style="background:#FAF5EE; color:#666;">Cliente</span>
+                  </div>
+
+                  <div style="padding: 0.85rem; border: 1px solid #E8DDD0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 0.85rem; align-items: center;">
+                      <span style="color: var(--text-muted); font-size: 0.75rem; width: 85px;">09 OUT 2026<br>10:50</span>
+                      <div>
+                        <strong style="color: var(--text-dark);">Primeiro acesso à galeria</strong>
+                        <div style="font-size: 0.74rem; color: var(--text-muted);">Convite acessado pelo destinatário principal.</div>
+                      </div>
+                    </div>
+                    <span class="preview-pill-tag" style="background:#FAF5EE; color:#666;">Cliente</span>
+                  </div>
+
+                  <div style="padding: 0.85rem; border: 1px solid #E8DDD0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 0.85rem; align-items: center;">
+                      <span style="color: var(--text-muted); font-size: 0.75rem; width: 85px;">08 OUT 2026<br>15:00</span>
+                      <div>
+                        <strong style="color: var(--text-dark);">Convite registrado</strong>
+                        <div style="font-size: 0.74rem; color: var(--text-muted);">Convite no sistema para cliente@exemplo.com.</div>
+                      </div>
+                    </div>
+                    <span class="preview-pill-tag">Fotógrafo</span>
+                  </div>
+
+                  <div style="padding: 0.85rem; border: 1px solid #E8DDD0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 0.85rem; align-items: center;">
+                      <span style="color: var(--text-muted); font-size: 0.75rem; width: 85px;">04 OUT 2026<br>16:30</span>
+                      <div>
+                        <strong style="color: var(--text-dark);">12 fotos organizadas</strong>
+                        <div style="font-size: 0.74rem; color: var(--text-muted);">Miniaturas revisadas e ordenadas pelo número da foto.</div>
+                      </div>
+                    </div>
+                    <span class="preview-pill-tag">Fotógrafo</span>
+                  </div>
+
+                  <div style="padding: 0.85rem; border: 1px solid #E8DDD0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 0.85rem; align-items: center;">
+                      <span style="color: var(--text-muted); font-size: 0.75rem; width: 85px;">04 OUT 2026<br>16:00</span>
+                      <div>
+                        <strong style="color: var(--text-dark);">Galeria criada</strong>
+                        <div style="font-size: 0.74rem; color: var(--text-muted);">Exemplo de seleção · 10 fotos incluídas no cenário ilustrativo.</div>
+                      </div>
+                    </div>
+                    <span class="preview-pill-tag">Fotógrafo</span>
+                  </div>
+
+                </div>
+
+                <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 1rem;">
+                  Todos os 7 registros do pacote exibidos.
+                </div>
+              </div>
+            </div>
+
+            <!-- Coluna Direita -->
+            <div class="admin-side-cards-col">
+              <div class="admin-preview-box">
+                <h4>Sobre este histórico</h4>
+                <div style="font-size: 1.5rem; margin-bottom: 0.4rem;">🕒</div>
+                <strong style="display: block; font-size: 1.15rem; color: var(--text-dark); margin-bottom: 0.4rem;">Do primeiro convite à entrega.</strong>
+                <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 0.75rem;">
+                  As ações do fotógrafo e os acessos do cliente aparecem juntos, com data e responsável.
+                </p>
+                <span class="preview-pill-tag" style="margin-bottom: 1rem;">7 registros no exemplo</span>
+                <button type="button" class="btn-salvar-admin" style="width: 100%; justify-content: center;">📄 Exportar registro</button>
+                <span style="display: block; font-size: 0.72rem; color: var(--text-muted); text-align: center; margin-top: 0.5rem;">Exportação apenas ilustrativa; nenhum arquivo será criado.</span>
+              </div>
+
+              <div class="admin-info-box-note">
+                <strong>Escolha ainda não finalizada</strong>
+                <p>O registro mais recente do cliente é parcial: 6 fotos no pacote e 2 extras. Não há envio final nem liberação de download neste histórico.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+    </div>
+
+    <!-- Rodapé -->
+    <footer class="admin-footer-strip">
+      <div class="content-wrap-wide admin-footer-flex">
+        <span>Casa da Foto Studio · Momentos que ficam</span>
+        <span>Exemplo de seleção · Dados e estados ilustrativos</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- SCRIPT DE NAVEGAÇÃO INTERATIVA ENTRE AS 10 TELAS -->
+    <script src="app.js"></script>
+</body>
+</html>

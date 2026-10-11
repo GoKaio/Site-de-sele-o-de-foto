@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script>window.location.replace("galeria-config.html" + window.location.search + "#clientes");</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clientes | Configurações da Galeria | Casa da Foto Studio</title>
+  <meta name="description" content="Painel de gerenciamento, dados, prazos, clientes e entrega da galeria.">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Full-Width Fluid Wrapper -->
+  <div class="site-wrapper" id="siteWrapper">
+
+    <!-- 1. HEADER DO PAINEL DO FOTÓGRAFO (100% FULL-WIDTH) -->
+    <header class="site-header admin-header" id="siteHeader">
+      <div class="content-wrap-wide admin-header-nav">
+        
+        <!-- Logo e Monograma -->
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+          <div class="header-logo-card" style="width: 155px; height: 74px; padding: 0.4rem 1rem;">
+            <img src="assets/logo/logo.png" alt="Logo Casa da Foto" id="headerLogoImg">
+          </div>
+          <div>
+            <span class="header-brand-name" style="font-size: 0.72rem;">ESTÚDIO CASA DA FOTO</span>
+            <span class="header-brand-slogan" style="font-size: 0.65rem;">Momentos que ficam</span>
+          </div>
+        </div>
+
+        <!-- Links Centrais -->
+        <nav class="admin-nav-center" aria-label="Navegação do Painel">
+          <a href="index.html" class="nav-item">Início</a>
+          <a href="projetos.html" class="nav-item active-nav">Projetos</a>
+          <a href="#clientes-menu" class="nav-item">Clientes</a>
+          <a href="#config-menu" class="nav-item">Configurações</a>
+        </nav>
+
+        <!-- Ações do Fotógrafo (Direita) -->
+        <div class="admin-nav-user-actions">
+          <span class="btn-painel-fotografo">PAINEL DO FOTÓGRAFO</span>
+          <span style="font-size: 1.25rem; color: #FFFFFF; cursor: pointer;">🔔</span>
+          <div class="user-avatar-circle">CF</div>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- 2. LAYOUT SPLIT: SIDEBAR DE CONFIGURAÇÕES + ÁREA DE CONTEÚDO -->
+    <div class="admin-layout-wrapper">
+      
+      <!-- SIDEBAR LATERAL ESQUERDA -->
+      <aside class="admin-sidebar" id="adminSidebar">
+        
+        <div>
+          <a href="projetos.html" class="sidebar-back-link">
+            <span>← Todos os projetos</span>
+          </a>
+
+          <div class="sidebar-project-header">
+            <span class="sidebar-project-tag">CONFIGURAÇÕES DA GALERIA</span>
+            <h2 class="sidebar-project-title">Exemplo de seleção</h2>
+            <span class="badge-status-andamento">Escolha em andamento</span>
+          </div>
+        </div>
+
+        <!-- Menu com os 10 Módulos das Telas do Figma -->
+        <ul class="sidebar-menu-list" id="sidebarMenu">
+          <li>
+            <a href="galeria-dados.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📁 Dados da galeria</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-fotos.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🖼️ Fotos</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-selecao.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🛒 Seleção e venda</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-prazo.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📅 Prazo e lembrete</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-acesso.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🔒 Acesso e privacidade</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-clientes.html" class="sidebar-nav-btn active">
+              <span class="sidebar-btn-content">👥 Clientes</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-download.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📥 Download</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-design.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🎨 Design</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-atividades.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📊 Atividades do cliente</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-historico.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🕒 Histórico de atividades</span>
+            </a>
+          </li>
+        </ul>
+        <!-- Card de Ajuda no Rodapé da Sidebar -->
+        <div class="sidebar-help-card">
+          <strong>Cada detalhe, com cuidado.</strong>
+          <p>Organize a escolha e prepare uma entrega tranquila para seu cliente.</p>
+          <a href="#">Central de ajuda ↗</a>
+        </div>
+
+      </aside>
+      <!-- ÁREA DE CONTEÚDO PRINCIPAL (DIREITA) -->
+      <main class="admin-main-content" id="adminMainContent">
+        
+        <!-- Barra Superior: Breadcrumbs, Badge e Botão Prévia -->
+        <div class="admin-top-meta-row">
+          <div class="admin-breadcrumb">
+            Projetos &nbsp;/&nbsp; Exemplo de seleção &nbsp;/&nbsp; <strong id="breadcrumbTabName">Clientes</strong>
+          </div>
+          <span class="admin-badge-demo">Demonstração · sem valores comerciais</span>
+        </div>
+
+        <div class="admin-header-action-row">
+          <div>
+            <h1 class="admin-page-title" id="pageTitle">Clientes</h1>
+            <p class="admin-page-subtitle" id="pageSubtitle">Gerencie destinatários, acompanhe os convites e mantenha a escolha em um só lugar.</p>
+          </div>
+          <a href="escolha-fotos.html" class="btn-previa-cliente">
+            <span>👁 Prévia do cliente</span>
+          </a>
+        </div>
+
+        <!-- CONTEÚDO DA TELA: CLIENTES -->
+        <div class="tab-pane active" id="tab-clientes" >
+          <div class="admin-form-two-col">
+            <div>
+              <!-- Bloco 1: Destinatários da galeria -->
+              <div class="admin-card-panel">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem;">
+                  <div>
+                    <h3 class="panel-title">Destinatários da galeria</h3>
+                    <p class="panel-desc" style="margin-bottom: 0;">1 destinatário convidado · contato fictício reservado para a demonstração.</p>
+                  </div>
+                  <button type="button" class="btn-salvar-admin" style="white-space: nowrap;">+ Adicionar destinatário</button>
+                </div>
+
+                <div class="form-row-2col" style="margin-bottom: 1.5rem;">
+                  <div>
+                    <label class="field-label">Buscar destinatário</label>
+                    <input type="text" class="field-input" placeholder="Nome ou e-mail">
+                  </div>
+                  <div>
+                    <label class="field-label">Status</label>
+                    <select class="field-select">
+                      <option selected>Todos os status</option>
+                      <option>Convite acessado</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Tabela de Destinatários -->
+                <div style="border: 1px solid #E8DDD0; border-radius: 12px; overflow: hidden; font-size: 0.8rem;">
+                  <div style="display: grid; grid-template-columns: 1.4fr 1.2fr 1fr 1fr; background: #FAF5EE; padding: 0.75rem 1rem; font-weight: 700; color: var(--text-muted); border-bottom: 1px solid #E8DDD0;">
+                    <span>Destinatário</span>
+                    <span>Convite</span>
+                    <span>Último acesso</span>
+                    <span>Seleção</span>
+                  </div>
+                  <div style="display: grid; grid-template-columns: 1.4fr 1.2fr 1fr 1fr; padding: 1rem; align-items: center; border-bottom: 1px solid #FAF5EE;">
+                    <div>
+                      <strong style="display: block; color: var(--text-dark);">Cliente de exemplo</strong>
+                      <span style="color: var(--text-muted); font-size: 0.74rem;">cliente@exemplo.com</span>
+                      <span class="preview-pill-tag" style="margin-top: 4px; display: inline-block;">Destinatário principal</span>
+                    </div>
+                    <div>
+                      <span class="preview-pill-tag">Convite acessado</span>
+                      <span style="display: block; font-size: 0.72rem; color: var(--text-muted);">09 out. 2026 - 10:50</span>
+                    </div>
+                    <div>
+                      <strong style="display: block; color: var(--text-dark);">10 out. - 14:18</strong>
+                      <span style="font-size: 0.72rem; color: var(--text-muted);">3 acessos à galeria</span>
+                    </div>
+                    <div>
+                      <strong style="display: block; color: var(--text-dark);">6 do pacote + 2 extras</strong>
+                      <span class="preview-pill-tag">Em andamento</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bloco 2: Preparar um novo convite -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Preparar um novo convite</h3>
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Nome do destinatário</label>
+                    <input type="text" class="field-input" placeholder="Nome de exibição">
+                  </div>
+                  <div>
+                    <label class="field-label">E-mail</label>
+                    <input type="email" class="field-input" placeholder="destinatario@exemplo.com">
+                  </div>
+                </div>
+                <div class="form-field-group">
+                  <label class="field-label">Permissão</label>
+                  <select class="field-select">
+                    <option selected>Apenas visualizar - sem alterar a escolha principal</option>
+                  </select>
+                </div>
+                <div class="form-field-group">
+                  <label class="field-label">Mensagem do convite</label>
+                  <textarea class="field-textarea">Olá! Compartilhamos esta galeria para você acompanhar os momentos do nosso ensaio. A escolha das fotos fica com o destinatário principal.</textarea>
+                </div>
+                <button type="button" class="btn-salvar-admin">✉ Preparar convite</button>
+                <span class="field-hint-caption" style="margin-top: 0.5rem;">Formulário ilustrativo - nenhum contato ou envio real.</span>
+              </div>
+            </div>
+
+            <!-- Coluna Direita -->
+            <div class="admin-side-cards-col">
+              <div class="admin-preview-box">
+                <h4>Preferências de convite</h4>
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Avisar quando o convite for acessado</strong>
+                    <span>Acompanhe a primeira visita do cliente.</span>
+                  </div>
+                  <label class="switch-toggle"><input type="checkbox" checked><span class="switch-slider"></span></label>
+                </div>
+                <div class="toggle-item-row" style="margin-bottom: 1rem;">
+                  <div class="toggle-label-wrap">
+                    <strong>Vincular a seleção ao cliente principal</strong>
+                    <span>Evite escolhas conflitantes entre convidados.</span>
+                  </div>
+                  <label class="switch-toggle"><input type="checkbox" checked><span class="switch-slider"></span></label>
+                </div>
+                <button type="button" class="btn-salvar-admin" style="width: 100%; justify-content: center;">✈ Reenviar convite</button>
+              </div>
+
+              <div class="admin-info-box-note">
+                <strong>Uma escolha compartilhada</strong>
+                <p>Somente o cliente principal seleciona as fotos. Novos convidados podem visualizar sem alterar as fotos.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+    </div>
+
+    <!-- Rodapé -->
+    <footer class="admin-footer-strip">
+      <div class="content-wrap-wide admin-footer-flex">
+        <span>Casa da Foto Studio · Momentos que ficam</span>
+        <span>Exemplo de seleção · Dados e estados ilustrativos</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- SCRIPT DE NAVEGAÇÃO INTERATIVA ENTRE AS 10 TELAS -->
+    <script src="app.js"></script>
+</body>
+</html>

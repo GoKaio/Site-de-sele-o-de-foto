@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Escolha de Fotos | Casa da Foto Studio</title>
+  <meta name="description" content="Área de seleção e aprovação de fotos de ensaio da Casa da Foto Studio.">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Full-Width Fluid Wrapper -->
+  <div class="site-wrapper" id="siteWrapper">
+
+    <!-- 1. HEADER (100% FULL-WIDTH) -->
+    <header class="site-header" id="siteHeader">
+      
+      <!-- Top Bar: Subtítulo & Ornamentos -->
+      <div class="header-top-bar">
+        <div class="ornament-line" aria-hidden="true">
+          <span class="ornament-dot"></span>
+          <span class="ornament-dash"></span>
+          <span class="ornament-dot"></span>
+        </div>
+
+        <div class="header-brand-title">
+          <span class="header-brand-name">ESTÚDIO CASA DA FOTO</span>
+          <span class="header-brand-slogan">Momentos que ficam</span>
+        </div>
+
+        <div class="ornament-line" aria-hidden="true">
+          <span class="ornament-dot"></span>
+          <span class="ornament-dash"></span>
+          <span class="ornament-dot"></span>
+        </div>
+      </div>
+
+      <!-- Main Nav: Links e Logo Card Central -->
+      <div class="content-wrap">
+        <nav class="header-nav-grid" aria-label="Navegação Principal">
+          
+          <!-- Links da Esquerda -->
+          <div class="nav-links-left">
+            <a href="index.html" class="nav-item">Início</a>
+            <a href="pacotes.html" class="nav-item">Pacotes</a>
+          </div>
+
+          <!-- Card Central da Logo Oficial -->
+          <a href="index.html" class="header-logo-card" title="Página Inicial (index.html)">
+            <img src="assets/logo/logo.png" alt="Logo Casa da Foto - Estúdio Fotográfico" id="headerLogoImg">
+          </a>
+
+          <!-- Links da Direita -->
+          <div class="nav-links-right">
+            <a href="escolha-fotos.html" class="nav-item active-nav">Escolha de fotos</a>
+            <a href="projetos.html" class="nav-item">Projetos</a>
+          </div>
+
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- 2. SEÇÃO SUPERIOR: TÍTULO, PASSOS E MÉTRICAS -->
+      <section class="selection-top-section" id="selectionTop">
+        <div class="content-wrap-wide">
+          
+          <!-- Breadcrumb e Badge -->
+          <div class="selection-breadcrumb-row">
+            <div style="display: flex; align-items: center; gap: 0.85rem;">
+              <span class="breadcrumb-path">Área do cliente &gt; <strong>Escolha de fotos</strong></span>
+              <a href="login.html" onclick="sessionStorage.removeItem('cliente_autenticado');" style="font-size: 0.75rem; color: #8C5F35; text-decoration: none; font-weight: 600;">(Sair ↗)</a>
+            </div>
+            <span class="badge-exemplo">ⓘ Exemplo de seleção</span>
+          </div>
+
+          <!-- Título Principal e Indicador de Passos -->
+          <div class="selection-title-row">
+            <div>
+              <h1 class="selection-main-title">Escolha os momentos que ficam.</h1>
+              <p class="selection-main-subtitle">
+                Marque suas favoritas para o pacote ou escolha como extras. Depois, revise as duas listas e envie sua seleção ao fotógrafo.
+              </p>
+            </div>
+
+            <div class="step-indicator-pills">
+              <span class="step-pill-active" id="pillPasso1" style="cursor: pointer;" title="Ir para a seleção de fotos">1 - Escolher</span>
+              <span class="step-pill-inactive" id="pillPasso2" style="cursor: pointer;" title="Revisar resumo e enviar ao fotógrafo">2 - Revisar e enviar</span>
+            </div>
+          </div>
+
+          <!-- Linha de 4 Cards de Métricas -->
+          <div class="selection-metrics-grid">
+            
+            <!-- Card 1: Fotos incluídas -->
+            <div class="metric-card">
+              <span class="metric-number">10</span>
+              <div class="metric-info">
+                <span class="metric-label">Fotos incluídas</span>
+                <span class="metric-sublabel">Limite do pacote</span>
+              </div>
+            </div>
+
+            <!-- Card 2: Selecionadas no pacote (Destaque Escuro) -->
+            <div class="metric-card metric-highlight">
+              <span class="metric-number">0</span>
+              <div class="metric-info">
+                <span class="metric-label">Selecionadas no pacote</span>
+                <span class="metric-sublabel">Fotos escolhidas</span>
+              </div>
+            </div>
+
+            <!-- Card 3: Fotos restantes -->
+            <div class="metric-card">
+              <span class="metric-number">0</span>
+              <div class="metric-info">
+                <span class="metric-label">Fotos restantes</span>
+                <span class="metric-sublabel">Ainda podem entrar no pacote</span>
+              </div>
+            </div>
+
+            <!-- Card 4: Extras escolhidos -->
+            <div class="metric-card">
+              <span class="metric-number">0</span>
+              <div class="metric-info">
+                <span class="metric-label">Extras escolhidos</span>
+                <span class="metric-sublabel">Separados do pacote</span>
+              </div>
+            </div>
+
+          </div>
+
+          <p class="disclaimer-caption" id="captionGaleriaCliente">
+            Selecione suas fotos favoritas para compor seu ensaio. Fotos marcadas como extras serão adicionadas ao seu resumo.
+          </p>
+
+        </div>
+      </section>
+
+      <!-- 3. ÁREA PRINCIPAL DE SELEÇÃO (FUNDO AREIA) -->
+      <section class="proofing-section" id="proofingMain">
+        <div class="content-wrap-wide proofing-layout-grid">
+          
+          <!-- Coluna Esquerda: Galeria de Fotos com Filtros -->
+          <div class="proofing-photos-col">
+            
+            <!-- Barra Superior: Abas e Ordenação -->
+            <div class="photos-header-controls">
+              <div class="photos-header-left">
+                <h2 class="photos-title">Suas fotos</h2>
+                
+                <div class="proofing-tabs-row">
+                  <button type="button" class="tab-filter-btn active">Todas</button>
+                  <button type="button" class="tab-filter-btn">Fotos do pacote</button>
+                  <button type="button" class="tab-filter-btn">Fotos extras</button>
+                  <button type="button" class="tab-filter-btn">Não selecionadas</button>
+                </div>
+              </div>
+
+              <div class="order-selector">
+                <select id="selectOrdemFotosCliente" style="background: #FAF5EE; border: 1px solid #D8CAB9; border-radius: 20px; padding: 4px 12px; font-size: 0.8rem; color: #5C4A3E; cursor: pointer; outline: none; font-weight: 600;" aria-label="Ordenar fotos">
+                  <option value="padrao">Ordem: número crescente</option>
+                  <option value="decrescente">Ordem: número decrescente</option>
+                  <option value="selecionadas">Ordem: selecionadas primeiro</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Barra de Busca de Fotos -->
+            <div class="photos-search-bar-row">
+              <div class="photo-search-input-pill">
+                <span>🔍</span>
+                <input type="text" placeholder="Buscar pelo número da foto" aria-label="Buscar pelo número da foto">
+              </div>
+
+              <span class="hint-text">Use o ícone de ampliar para ver os detalhes.</span>
+            </div>
+
+            <!-- Grade Dinâmica de Fotos -->
+            <div class="proofing-cards-grid" id="photosGrid">
+              <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: #8C5F35; font-weight: 600;">
+                Carregando fotos da galeria...
+              </div>
+            </div>
+
+            <!-- Rodapé da Grade -->
+            <div class="grid-footer-meta">
+              <span id="txtMetaExibidas">Fotos da sua galeria exclusiva</span>
+              <span>Proteção visual ativa com marca d'água oficial</span>
+            </div>
+
+          </div>
+
+          <!-- Coluna Direita: Resumo da Seleção e Legenda -->
+          <aside class="proofing-summary-col">
+            
+            <!-- Card de Resumo -->
+            <div class="summary-card">
+              
+              <!-- Cabeçalho Escuro -->
+              <div class="summary-card-header">
+                <span class="summary-tag">SUA SELEÇÃO</span>
+                <h3 class="summary-title">Um olhar final nas favoritas</h3>
+                <span class="summary-subtitle">8 fotos escolhidas - em duas listas</span>
+              </div>
+
+              <!-- Corpo do Resumo -->
+              <div class="summary-card-body">
+                
+                <!-- Bloco: Fotos do Pacote -->
+                <div>
+                  <div class="summary-section-row">
+                    <span>Fotos do pacote</span>
+                    <span class="badge-counter">6 de 10</span>
+                  </div>
+                  <div class="summary-progress-bar-bg">
+                    <div class="summary-progress-bar-fill"></div>
+                  </div>
+                  <p class="summary-desc-text">
+                    Você ainda pode escolher 4 fotos para o pacote deste exemplo.
+                  </p>
+                  <div class="selected-pills-list">
+                    <span class="photo-chip">Foto 001</span>
+                    <span class="photo-chip">Foto 002</span>
+                    <span class="photo-chip">Foto 003</span>
+                    <span class="photo-chip">Foto 005</span>
+                    <span class="photo-chip">Foto 006</span>
+                    <span class="photo-chip">Foto 009</span>
+                  </div>
+                </div>
+
+                <!-- Bloco: Fotos Extras -->
+                <div>
+                  <div class="summary-section-row">
+                    <span>Fotos extras</span>
+                    <span class="badge-counter badge-extra">2 fotos</span>
+                  </div>
+                  <p class="summary-desc-text">
+                    Não ocupam as vagas do pacote. Serão enviadas em uma lista separada.
+                  </p>
+                  <div class="selected-pills-list" style="margin-bottom: 0.75rem;">
+                    <span class="photo-chip">Foto 004</span>
+                    <span class="photo-chip">Foto 008</span>
+                  </div>
+                  <div class="alert-box-info">
+                    ⓘ O fotógrafo confirmará os valores das fotos extras antes da finalização. Nenhum valor está definido neste exemplo.
+                  </div>
+                </div>
+
+                <!-- Bloco: Total para Enviar e Botão -->
+                <div class="summary-total-box">
+                  <h4 class="total-header">Total para enviar &nbsp; 6 do pacote + 2 extras</h4>
+                  <p class="total-subtext">
+                    Revise suas escolhas antes de enviar. O fotógrafo receberá as fotos do pacote e as extras separadamente.
+                  </p>
+                  
+                  <button type="button" class="btn-enviar-selecao" id="btnEnviarSelecao">
+                    <span>✈ Enviar seleção ao fotógrafo</span>
+                  </button>
+
+                  <p class="post-send-note">
+                    Depois do envio: revisão pelo fotógrafo e confirmação dos extras antes de finalizar.
+                  </p>
+                </div>
+
+              </div>
+
+            </div>
+
+            <!-- Card de Legenda -->
+            <div class="legend-card">
+              <span class="legend-title">COMO IDENTIFICAR SUAS ESCOLHAS</span>
+              
+              <div class="legend-item">
+                <span class="legend-icon-badge sq-pacote">✓</span>
+                <div class="legend-text">
+                  <strong>No pacote</strong>
+                  <span>Conta entre as 10 incluídas</span>
+                </div>
+              </div>
+
+              <div class="legend-item">
+                <span class="legend-icon-badge sq-extra">+</span>
+                <div class="legend-text">
+                  <strong>Extra</strong>
+                  <span>À parte, para confirmar valores</span>
+                </div>
+              </div>
+
+              <div class="legend-item">
+                <span class="legend-icon-badge sq-empty"></span>
+                <div class="legend-text">
+                  <strong>Não selecionada</strong>
+                  <span>Não será enviada ao fotógrafo</span>
+                </div>
+              </div>
+            </div>
+
+          </aside>
+
+        </div>
+      </section>
+    </main>
+
+    <!-- Rodapé da Tela de Seleção -->
+    <footer class="selection-site-footer">
+      <div class="content-wrap-wide selection-footer-row">
+        <span>Casa da Foto Studio · Momentos que ficam</span>
+        <span>Exemplo de seleção - Quantidades ilustrativas, não comerciais</span>
+      </div>
+    </footer>
+
+  </div>
+
+
+
+  <script src="app.js"></script>
+</body>
+</html>

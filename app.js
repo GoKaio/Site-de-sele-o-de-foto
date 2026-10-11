@@ -1,0 +1,2203 @@
+/**
+ * Casa da Foto Studio - Integração Full Stack com API e Banco de Dados SQLite
+ * Controle de Acesso por Perfil, Kanban Dinâmico e Gestão Administrativa
+ */
+
+// Utilitário de Notificações Toast Elegante
+function showToast(message, type = 'success') {
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.style.cssText = `
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 380px;
+    `;
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  const isSuccess = type === 'success';
+  toast.style.cssText = `
+    background: ${isSuccess ? '#352319' : '#8B2626'};
+    color: #FAF5EE;
+    border: 1px solid ${isSuccess ? '#C59B6D' : '#FF9999'};
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideInToast 0.3s ease;
+    transition: all 0.3s ease;
+  `;
+
+  toast.innerHTML = `
+    <span style="font-size: 1.2rem;">${isSuccess ? '✓' : '⚠️'}</span>
+    <span style="flex: 1; line-height: 1.4;">${message}</span>
+  `;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(20px)';
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+// Injeta estilo de animação para os toasts
+if (!document.getElementById('toastStyle')) {
+  const style = document.createElement('style');
+  style.id = 'toastStyle';
+  style.textContent = `
+    @keyframes slideInToast {
+      from { opacity: 0; transform: translateX(40px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// Função global para logout de qualquer perfil
+function logoutUsuario() {
+  sessionStorage.removeItem('cliente_autenticado');
+  sessionStorage.removeItem('cliente_nome');
+  sessionStorage.removeItem('fotografo_autenticado');
+  sessionStorage.removeItem('usuario_nome');
+  sessionStorage.removeItem('admin_autenticado');
+  sessionStorage.removeItem('admin_nome');
+  showToast('Sessão encerrada com sucesso.');
+  setTimeout(() => {
+    window.location.href = 'login.html';
+  }, 500);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  // ============================================================================
+  // 0. CONTROLE DE ACESSO E PERMISSÕES (ROLE-BASED ACCESS CONTROL)
+  // ============================================================================
+  const rawPath = window.location.pathname.split('/').pop().toLowerCase();
+  const currentPage = rawPath || 'index.html';
+  
+  const isClient = sessionStorage.getItem('cliente_autenticado') === 'true';
+  const isFoto = sessionStorage.getItem('fotografo_autenticado') === 'true';
+  const isAdmin = sessionStorage.getItem('admin_autenticado') === 'true';
+
+  // REGRA 1: "o cliente so vai te acesso a seleçao de foto"
+  // Se o cliente tentar acessar projetos, qualquer tela de galeria ou admin:
+  if (isClient) {
+    if (currentPage === 'projetos.html' || currentPage.startsWith('galeria-') || currentPage === 'admin.html') {
+      alert('Acesso restrito. Como cliente, você só tem acesso à Seleção de Fotos.');
+      window.location.href = 'escolha-fotos.html';
+      return;
+    }
+  }
+
+  // REGRA 2: "so o fotogafo vai te aceeso a galeria de fotos e o login do fotogafo so tem acesso a essa tela"
+  // Projetos e Configurações de Galeria são restritos ao Fotógrafo e Administrador
+  if (currentPage === 'projetos.html' || currentPage.startsWith('galeria-')) {
+    if (!isFoto && !isAdmin) {
+      window.location.href = 'login-fotografo.html';
+      return;
+    }
+  }
+
+  // REGRA 3: Painel Administrativo restrito exclusivamente ao Administrador
+  if (currentPage === 'admin.html') {
+    if (!isAdmin) {
+      window.location.href = 'admin-login.html';
+      return;
+    }
+  }
+
+  // REGRA 4: Tela de Escolha de Fotos requer autenticação (cliente, fotógrafo ou admin)
+  const urlParams = new URLSearchParams(window.location.search);
+  const isPrevia = urlParams.get('previa') === 'true';
+  if (currentPage === 'escolha-fotos.html') {
+    if (!isClient && !isFoto && !isAdmin && !isPrevia) {
+      window.location.href = 'login-cliente.html';
+      return;
+    }
+  }
+
+  // Carrega foto oficial de destaque nas telas de login se presente na página
+  const authHeroImg = document.getElementById('authHeroImg') || document.querySelector('.auth-hero-photo-wrap img');
+  if (authHeroImg) {
+    fetch('/api/site/login-foto')
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.url) {
+          authHeroImg.src = data.url;
+        }
+      })
+      .catch(() => {});
+  }
+
+  // Atualiza barra de navegação superior com status de usuário logado
+  atualizarHeaderStatus();
+
+  function atualizarHeaderStatus() {
+    const navRight = document.querySelector('.nav-links-right');
+    if (!navRight) return;
+
+    if (isClient) {
+      const nome = sessionStorage.getItem('cliente_nome') || 'Cliente';
+      // Cliente só tem acesso à escolha de fotos
+      navRight.innerHTML = `
+        <a href="escolha-fotos.html" class="nav-item">Minhas Fotos (${nome})</a>
+        <a href="javascript:void(0)" onclick="logoutUsuario()" class="nav-item" style="color:#C59B6D;">Sair ↗</a>
+      `;
+    } else if (isFoto) {
+      const nome = sessionStorage.getItem('usuario_nome') || 'Fotógrafo';
+      navRight.innerHTML = `
+        <a href="projetos.html" class="nav-item">Projetos</a>
+        <a href="galeria-config.html" class="nav-item">Galeria (${nome})</a>
+        <a href="javascript:void(0)" onclick="logoutUsuario()" class="nav-item" style="color:#C59B6D;">Sair ↗</a>
+      `;
+    } else if (isAdmin) {
+      const nome = sessionStorage.getItem('admin_nome') || 'Admin';
+      navRight.innerHTML = `
+        <a href="admin.html" class="nav-item" style="color:#C59B6D; font-weight:700;">⚙️ Painel Admin</a>
+        <a href="projetos.html" class="nav-item">Projetos</a>
+        <a href="javascript:void(0)" onclick="logoutUsuario()" class="nav-item" style="color:#C59B6D;">Sair ↗</a>
+      `;
+    }
+  }
+
+  // ============================================================================
+  // 1. TELA: LOGIN DO FOTÓGRAFO (login-fotografo.html)
+  // ============================================================================
+  const formFoto = document.getElementById('formLoginFotografo');
+  if (formFoto) {
+    formFoto.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('fotoEmail').value;
+      const senha = document.getElementById('fotoSenha').value;
+      const btn = document.getElementById('btnEntrarFotografo');
+      const originalText = btn ? btn.innerHTML : 'Entrar →';
+
+      if (btn) btn.innerHTML = '<span>Verificando...</span>';
+
+      try {
+        const res = await fetch('/api/auth/login-fotografo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, senha })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          sessionStorage.setItem('fotografo_autenticado', 'true');
+          if (data.user.tipo === 'admin') {
+            sessionStorage.setItem('admin_autenticado', 'true');
+            sessionStorage.setItem('admin_nome', data.user.nome);
+          }
+          sessionStorage.setItem('usuario_nome', data.user.nome);
+          showToast(`Bem-vindo, ${data.user.nome}! Redirecionando...`);
+          setTimeout(() => {
+            window.location.href = 'projetos.html';
+          }, 800);
+        } else {
+          showToast(data.error || 'Credenciais inválidas.', 'error');
+          if (btn) btn.innerHTML = originalText;
+        }
+      } catch (err) {
+        showToast('Erro ao conectar ao servidor.', 'error');
+        if (btn) btn.innerHTML = originalText;
+      }
+    });
+  }
+
+  // ============================================================================
+  // 2. TELA: ACESSO DO CLIENTE (login-cliente.html)
+  // ============================================================================
+  const formCli = document.getElementById('formLoginCliente');
+  if (formCli) {
+    formCli.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const login = document.getElementById('clienteLogin').value;
+      const senha = document.getElementById('clienteSenha').value;
+      const btn = document.getElementById('btnAcessarFotos');
+      const originalText = btn ? btn.innerHTML : 'Acessar minhas fotos →';
+
+      if (btn) btn.innerHTML = '<span>Validando acesso...</span>';
+
+      try {
+        const res = await fetch('/api/auth/login-cliente', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ login, senha })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          sessionStorage.setItem('cliente_autenticado', 'true');
+          sessionStorage.setItem('cliente_nome', data.user.nome);
+          if (data.user && data.user.galeria_id) {
+            sessionStorage.setItem('cliente_galeria_id', data.user.galeria_id);
+          }
+          showToast(`Acesso autorizado! Carregando sua galeria...`);
+          setTimeout(() => {
+            const destUrl = (data.user && data.user.galeria_id) ? `escolha-fotos.html?id=${data.user.galeria_id}` : 'escolha-fotos.html';
+            window.location.href = destUrl;
+          }, 800);
+        } else {
+          showToast(data.error || 'Dados incorretos.', 'error');
+          if (btn) btn.innerHTML = originalText;
+        }
+      } catch (err) {
+        showToast('Erro ao conectar ao servidor.', 'error');
+        if (btn) btn.innerHTML = originalText;
+      }
+    });
+  }
+
+  // ============================================================================
+  // 3. TELA: ESCOLHA DE FOTOS (escolha-fotos.html)
+  // ============================================================================
+  const gridFotos = document.querySelector('.proofing-cards-grid') || document.getElementById('photosGrid');
+  if (gridFotos) {
+    let fotosGlobais = [];
+    const galId = new URLSearchParams(window.location.search).get('galeria_id') || new URLSearchParams(window.location.search).get('id') || sessionStorage.getItem('cliente_galeria_id') || '1';
+
+    async function carregarFotos() {
+      try {
+        const [resFotos, resGal] = await Promise.all([
+          fetch(`/api/galeria/${galId}/fotos`),
+          fetch(`/api/galeria/${galId}`)
+        ]);
+        const data = await resFotos.json();
+        const galData = await resGal.json();
+        window.galeriaDataCliente = galData;
+        fotosGlobais = data.fotos || [];
+        atualizarMetricas(data.totais, galData);
+        aplicarOrdenacaoERenderizar();
+      } catch (err) {
+        console.error('Erro ao buscar fotos:', err);
+      }
+    }
+
+    function atualizarMetricas(totais, galData) {
+      if (!totais) return;
+      const valorFotoExtra = (galData && galData.valor_foto_extra != null) ? parseFloat(galData.valor_foto_extra) : 25.0;
+      const totalExtrasReais = (totais.extra || 0) * valorFotoExtra;
+
+      // Cards de métricas superiores
+      const metricCards = document.querySelectorAll('.selection-metrics-grid .metric-card');
+      if (metricCards.length >= 4) {
+        const num0 = metricCards[0].querySelector('.metric-number');
+        if (num0) num0.textContent = totais.limite_pacote;
+        const num1 = metricCards[1].querySelector('.metric-number');
+        if (num1) num1.textContent = totais.pacote;
+        const num2 = metricCards[2].querySelector('.metric-number');
+        if (num2) num2.textContent = Math.max(0, totais.limite_pacote - totais.pacote);
+        const num3 = metricCards[3].querySelector('.metric-number');
+        if (num3) num3.textContent = totais.extra;
+      }
+
+      // Sidebar resumo
+      const fill = document.querySelector('.summary-progress-bar-fill');
+      if (fill) {
+        const pct = Math.min(100, Math.round((totais.pacote / (totais.limite_pacote || 1)) * 100));
+        fill.style.width = `${pct}%`;
+      }
+      const bPacote = document.querySelector('.summary-section-row .badge-counter');
+      if (bPacote) bPacote.textContent = `${totais.pacote} de ${totais.limite_pacote}`;
+      const bExtra = document.querySelector('.summary-section-row .badge-counter.badge-extra');
+      if (bExtra) bExtra.textContent = `${totais.extra} foto(s) · R$ ${totalExtrasReais.toFixed(2).replace('.', ',')}`;
+
+      const totalH = document.querySelector('.summary-total-box .total-header');
+      if (totalH) {
+        totalH.innerHTML = `Total para enviar &nbsp; ${totais.pacote} do pacote + ${totais.extra} extras (R$ ${totalExtrasReais.toFixed(2).replace('.', ',')})`;
+      }
+
+      const alertInfo = document.querySelector('.alert-box-info');
+      if (alertInfo) {
+        alertInfo.innerHTML = `ⓘ <strong>Valor por foto extra: R$ ${valorFotoExtra.toFixed(2).replace('.', ',')}</strong>.<br>Subtotal das ${totais.extra} fotos extras: <strong>R$ ${totalExtrasReais.toFixed(2).replace('.', ',')}</strong>.`;
+      }
+
+      // Lista de chips de fotos no pacote
+      const chipsLists = document.querySelectorAll('.selected-pills-list');
+      if (chipsLists.length > 0) {
+        const pacotes = fotosGlobais.filter(f => f.status === 'pacote');
+        chipsLists[0].innerHTML = pacotes.length > 0
+          ? pacotes.map(f => `<span class="photo-chip">${f.numero}</span>`).join(' ')
+          : '<span style="font-size:0.75rem; color:#888;">Nenhuma foto no pacote.</span>';
+      }
+
+      // Lista de chips de fotos extras
+      if (chipsLists.length > 1) {
+        const extras = fotosGlobais.filter(f => f.status === 'extra');
+        chipsLists[1].innerHTML = extras.length > 0
+          ? extras.map(f => `<span class="photo-chip">${f.numero}</span>`).join(' ')
+          : '<span style="font-size:0.75rem; color:#888;">Nenhuma foto extra.</span>';
+      }
+    }
+
+    function renderizarCardsFotos(fotos) {
+      if (!fotosGlobais || fotosGlobais.length === 0) {
+        gridFotos.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 4.5rem 2rem; background: #FFFFFF; border-radius: 16px; border: 1.5px dashed #C4A482; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
+            <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">📷</span>
+            <h3 style="color: #2D1D14; font-size: 1.35rem; font-weight: 800; margin-bottom: 0.5rem;">Sua galeria está sendo preparada!</h3>
+            <p style="color: #6B5E55; font-size: 0.92rem; max-width: 500px; margin: 0 auto; line-height: 1.6;">O estúdio está organizando as fotos do seu ensaio. Assim que os arquivos forem carregados no sistema, você poderá escolher suas fotos favoritas e extras com total facilidade.</p>
+          </div>
+        `;
+        const meta = document.getElementById('txtMetaExibidas');
+        if (meta) meta.textContent = '0 fotos disponíveis';
+        return;
+      }
+
+      if (!fotos || fotos.length === 0) {
+        gridFotos.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1.5rem; background: #FFFFFF; border-radius: 12px; border: 1px solid #E8DDD0; color: #8C5F35;">
+            Nenhuma foto encontrada para este filtro.
+          </div>
+        `;
+        const meta = document.getElementById('txtMetaExibidas');
+        if (meta) meta.textContent = `0 de ${fotosGlobais.length} fotos exibidas`;
+        return;
+      }
+
+      const meta = document.getElementById('txtMetaExibidas');
+      if (meta) meta.textContent = `${fotos.length} de ${fotosGlobais.length} fotos exibidas`;
+
+      gridFotos.innerHTML = fotos.map(f => {
+        let badgeHtml = '';
+        let btnHtml = '';
+        let sublinkHtml = '';
+
+        if (f.status === 'pacote') {
+          badgeHtml = '<span class="thumb-checkbox-badge checked-pacote">✓</span>';
+          btnHtml = `<button type="button" class="btn-proof-action action-included" onclick="mudarStatusFoto(${f.id}, 'extra')">✓ Incluída no pacote</button>`;
+          sublinkHtml = `<a href="javascript:void(0)" class="sublink-action" onclick="mudarStatusFoto(${f.id}, 'nao_selecionada')">Remover da seleção</a>`;
+        } else if (f.status === 'extra') {
+          badgeHtml = '<span class="thumb-checkbox-badge checked-extra">+</span>';
+          btnHtml = `<button type="button" class="btn-proof-action action-extra" onclick="mudarStatusFoto(${f.id}, 'nao_selecionada')">+ Escolhida como extra</button>`;
+          sublinkHtml = `<a href="javascript:void(0)" class="sublink-action" onclick="mudarStatusFoto(${f.id}, 'pacote')">Mover para o pacote</a>`;
+        } else {
+          badgeHtml = '<span class="thumb-checkbox-badge empty"></span>';
+          btnHtml = `<button type="button" class="btn-proof-action action-unselected" onclick="mudarStatusFoto(${f.id}, 'pacote')">+ Adicionar ao pacote</button>`;
+          sublinkHtml = `<a href="javascript:void(0)" class="sublink-action" onclick="mudarStatusFoto(${f.id}, 'extra')">Escolher como extra</a>`;
+        }
+
+        const tagStatus = f.status === 'pacote' ? 'No pacote' : f.status === 'extra' ? 'Extra' : 'Não selecionada';
+
+        return `
+          <div class="proofing-card" data-id="${f.id}" data-status="${f.status}" data-numero="${(f.numero || '').toLowerCase()}">
+            <div class="proofing-thumb-wrapper" style="position: relative; overflow: hidden;">
+              <img src="${f.arquivo}" alt="${f.numero}" onclick="abrirLightbox('${f.arquivo}', '${f.numero}')" style="cursor: pointer;">
+              <!-- Marca d'água oficial protetora -->
+              <div class="watermark-overlay" title="Casa da Foto Studio - Marca d'água"></div>
+              ${badgeHtml}
+              <span class="thumb-zoom-icon" onclick="abrirLightbox('${f.arquivo}', '${f.numero}')" title="Ampliar foto">⛶</span>
+            </div>
+            <div class="proofing-card-content">
+              <div class="proofing-card-top-info">
+                <span class="photo-number-label">${f.numero}</span>
+                <span class="photo-status-tag">${tagStatus}</span>
+              </div>
+              ${btnHtml}
+              ${sublinkHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function aplicarOrdenacaoERenderizar() {
+      const selectOrdem = document.getElementById('selectOrdemFotosCliente');
+      const val = selectOrdem ? selectOrdem.value : 'padrao';
+      let lista = [...fotosGlobais];
+
+      if (val === 'decrescente') {
+        lista.sort((a, b) => (b.numero || '').localeCompare(a.numero || '', undefined, { numeric: true }));
+      } else if (val === 'selecionadas') {
+        lista.sort((a, b) => {
+          const prio = s => s === 'pacote' ? 2 : s === 'extra' ? 1 : 0;
+          return prio(b.status) - prio(a.status);
+        });
+      } else {
+        lista.sort((a, b) => (a.ordem || 0) - (b.ordem || 0) || (a.numero || '').localeCompare(b.numero || '', undefined, { numeric: true }));
+      }
+
+      renderizarCardsFotos(lista);
+    }
+
+    // Seletor de ordenação
+    const selectOrdem = document.getElementById('selectOrdemFotosCliente');
+    if (selectOrdem) {
+      selectOrdem.addEventListener('change', aplicarOrdenacaoERenderizar);
+    }
+
+    // Passos do topo
+    const pill1 = document.getElementById('pillPasso1');
+    const pill2 = document.getElementById('pillPasso2');
+    if (pill1) {
+      pill1.addEventListener('click', () => {
+        pill1.className = 'step-pill-active';
+        if (pill2) pill2.className = 'step-pill-inactive';
+        gridFotos.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+    if (pill2) {
+      pill2.addEventListener('click', () => {
+        pill2.className = 'step-pill-active';
+        if (pill1) pill1.className = 'step-pill-inactive';
+        const sidebar = document.querySelector('.proofing-sidebar-summary') || document.getElementById('btnEnviarSelecao');
+        if (sidebar) sidebar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    }
+
+    window.mudarStatusFoto = async function(id, novoStatus) {
+      try {
+        const res = await fetch(`/api/galeria/${galId}/fotos/${id}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: novoStatus })
+        });
+        const d = await res.json();
+        if (d.success) {
+          const txt = novoStatus === 'pacote' ? 'adicionada ao Pacote' : novoStatus === 'extra' ? 'marcada como Extra' : 'removida da seleção';
+          showToast(`Foto ${txt}!`);
+          carregarFotos();
+        }
+      } catch (err) {
+        showToast('Erro ao atualizar seleção.', 'error');
+      }
+    };
+
+    // Filtros de Abas: Todas, Fotos do pacote, Fotos extras, Não selecionadas
+    const tabsProof = document.querySelectorAll('.proofing-tabs-row .tab-filter-btn');
+    tabsProof.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabsProof.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const txt = btn.textContent.toLowerCase();
+        let filtro = 'todas';
+        if (txt.includes('pacote')) filtro = 'pacote';
+        else if (txt.includes('extra')) filtro = 'extra';
+        else if (txt.includes('não') || txt.includes('nao')) filtro = 'nao_selecionada';
+
+        const cards = gridFotos.querySelectorAll('.proofing-card');
+        cards.forEach(c => {
+          c.style.display = (filtro === 'todas' || c.getAttribute('data-status') === filtro) ? 'block' : 'none';
+        });
+      });
+    });
+
+    // Busca dinâmica pelo número da foto
+    const searchPhotoInput = document.querySelector('.photo-search-input-pill input');
+    if (searchPhotoInput) {
+      searchPhotoInput.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase().trim();
+        const cards = gridFotos.querySelectorAll('.proofing-card');
+        cards.forEach(c => {
+          const num = c.getAttribute('data-numero') || '';
+          c.style.display = (!q || num.includes(q)) ? 'block' : 'none';
+        });
+      });
+    }
+
+    // Botão Enviar Seleção ao Fotógrafo
+    const btnEnviar = document.getElementById('btnEnviarSelecao');
+    if (btnEnviar) {
+      btnEnviar.addEventListener('click', async () => {
+        if (!confirm('Deseja confirmar o envio das fotos selecionadas para o estúdio?')) return;
+        btnEnviar.disabled = true;
+        btnEnviar.innerHTML = '<span>Enviando ao estúdio...</span>';
+        try {
+          const res = await fetch(`/api/galeria/${galId}/enviar-selecao`, { method: 'POST' });
+          const d = await res.json();
+          if (d.success) {
+            showToast('🎉 Sua seleção foi enviada com sucesso ao fotógrafo!');
+            btnEnviar.innerHTML = '<span>✓ Seleção Enviada!</span>';
+            btnEnviar.style.background = '#2E7D32';
+          }
+        } catch (err) {
+          showToast('Erro ao enviar seleção.', 'error');
+          btnEnviar.disabled = false;
+          btnEnviar.innerHTML = '<span>✈ Enviar seleção ao fotógrafo</span>';
+        }
+      });
+    }
+
+    carregarFotos();
+  }
+
+  // ============================================================================
+  // 4. TELA: KANBAN DE PROJETOS (projetos.html)
+  // ============================================================================
+  const kanbanBoard = document.querySelector('.kanban-columns-grid') || document.querySelector('.kanban-board-grid');
+  if (kanbanBoard) {
+    let listaProjetosCache = [];
+    let filtroTabAtiva = 'todos';
+
+    const colunas = {
+      'novos': document.getElementById('colNovos'),
+      'andamento': document.getElementById('colAndamento'),
+      'revisao': document.getElementById('colRevisao'),
+      'entrega': document.getElementById('colEntrega') || document.getElementById('colProva'),
+      'prova': document.getElementById('colEntrega') || document.getElementById('colProva'),
+      'finalizados': document.getElementById('colFinalizados')
+    };
+
+    // Função de exclusão de projeto com confirmação
+    window.removerProjetoCard = async function(id, nome) {
+      if (!confirm(`Tem certeza que deseja remover o projeto de "${nome}"?\nEsta ação não poderá ser desfeita.`)) {
+        return;
+      }
+      try {
+        const res = await fetch(`/api/projetos/${id}`, {
+          method: 'DELETE'
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast(`✓ Projeto de "${nome}" removido com sucesso!`);
+          if (typeof window.carregarProjetosGlobal === 'function') {
+            window.carregarProjetosGlobal();
+          }
+        } else {
+          showToast(d.error || 'Erro ao remover projeto.', 'error');
+        }
+      } catch (err) {
+        showToast('Erro de conexão ao remover projeto.', 'error');
+      }
+    };
+
+    function atualizarSelectClientes(projetos) {
+      const selectCliente = document.getElementById('filtroCliente');
+      if (!selectCliente) return;
+      const valorAtual = selectCliente.value;
+      const clientesUnicos = [...new Set(projetos.map(p => p.nome_cliente).filter(Boolean))].sort();
+
+      selectCliente.innerHTML = '<option value="todos">Cliente: Todos</option>';
+      clientesUnicos.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = `Cliente: ${c}`;
+        if (c === valorAtual) opt.selected = true;
+        selectCliente.appendChild(opt);
+      });
+    }
+
+    function renderizarKanbanComFiltros() {
+      const termoBusca = (document.getElementById('kanbanSearchInput')?.value || '').toLowerCase().trim();
+      const periodo = document.getElementById('filtroPeriodo')?.value || 'todos';
+      const cliente = document.getElementById('filtroCliente')?.value || 'todos';
+      const etapa = document.getElementById('filtroEtapa')?.value || 'todas';
+      const categoria = document.getElementById('filtroCategoria')?.value || 'todas';
+      const ordenacao = document.getElementById('filtroOrdenacao')?.value || 'recente';
+
+      // 1. Limpa todas as colunas mantendo apenas o cabeçalho
+      Object.keys(colunas).forEach(key => {
+        const col = colunas[key];
+        if (!col) return;
+        const header = col.querySelector('.kanban-col-header');
+        col.innerHTML = '';
+        if (header) col.appendChild(header);
+      });
+
+      // 2. Filtra a lista em memória
+      const agora = new Date();
+      let filtrados = listaProjetosCache.filter(proj => {
+        let st = proj.status;
+        if (st === 'prova') st = 'entrega';
+
+        // Filtro por Aba Superior
+        if (filtroTabAtiva !== 'todos' && filtroTabAtiva !== 'todas') {
+          if (filtroTabAtiva === 'prova' || filtroTabAtiva === 'entrega') {
+            if (st !== 'entrega' && st !== 'prova') return false;
+          } else if (st !== filtroTabAtiva) {
+            return false;
+          }
+        }
+
+        // Filtro por Etapa do Select
+        if (etapa !== 'todas') {
+          if (etapa === 'entrega' || etapa === 'prova') {
+            if (st !== 'entrega' && st !== 'prova') return false;
+          } else if (st !== etapa) {
+            return false;
+          }
+        }
+
+        // Filtro por Cliente
+        if (cliente !== 'todos' && proj.nome_cliente !== cliente) {
+          return false;
+        }
+
+        // Filtro por Categoria
+        if (categoria !== 'todas') {
+          const catProj = (proj.categoria_tag || '').toLowerCase();
+          const tipoProj = (proj.tipo_ensaio || '').toLowerCase();
+          const catAlvo = categoria.toLowerCase();
+          if (!catProj.includes(catAlvo) && !tipoProj.includes(catAlvo)) {
+            return false;
+          }
+        }
+
+        // Filtro por Período
+        if (periodo !== 'todos' && proj.criado_em) {
+          const criado = new Date(proj.criado_em.replace(' ', 'T'));
+          if (periodo === 'hoje') {
+            if (criado.toDateString() !== agora.toDateString()) return false;
+          } else if (periodo === 'semana') {
+            const limiteSemana = new Date(agora.getTime() - 7 * 24 * 60 * 60 * 1000);
+            if (criado < limiteSemana) return false;
+          } else if (periodo === 'mes') {
+            const limiteMes = new Date(agora.getTime() - 30 * 24 * 60 * 60 * 1000);
+            if (criado < limiteMes) return false;
+          }
+        }
+
+        // Filtro por Busca de Texto
+        if (termoBusca) {
+          const textoCompleto = `${proj.nome_cliente || ''} ${proj.tipo_ensaio || ''} ${proj.categoria_tag || ''} ${proj.prazo || ''}`.toLowerCase();
+          if (!textoCompleto.includes(termoBusca)) return false;
+        }
+
+        return true;
+      });
+
+      // 3. Ordenação
+      if (ordenacao === 'recente') {
+        filtrados.sort((a, b) => b.id - a.id);
+      } else if (ordenacao === 'antigo') {
+        filtrados.sort((a, b) => a.id - b.id);
+      } else if (ordenacao === 'nome_asc') {
+        filtrados.sort((a, b) => (a.nome_cliente || '').localeCompare(b.nome_cliente || ''));
+      } else if (ordenacao === 'nome_desc') {
+        filtrados.sort((a, b) => (b.nome_cliente || '').localeCompare(a.nome_cliente || ''));
+      }
+
+      // 4. Renderização dos cards nas colunas
+      const counts = { novos: 0, andamento: 0, revisao: 0, entrega: 0, finalizados: 0 };
+
+      filtrados.forEach(proj => {
+        let st = proj.status;
+        if (st === 'prova') st = 'entrega';
+        counts[st] = (counts[st] || 0) + 1;
+
+        const col = colunas[st] || colunas[proj.status];
+        if (!col) return;
+
+        const card = document.createElement('div');
+        card.className = 'kanban-item-card';
+        card.setAttribute('data-id', proj.id);
+        card.innerHTML = `
+          <div class="card-top-row">
+            <div class="card-avatar-thumb">
+              <img src="${proj.avatar_img || 'assets/logo/logo.png'}" alt="${proj.nome_cliente || 'Cliente'}" onerror="this.src='assets/logo/logo.png'">
+            </div>
+            <div class="card-person-info">
+              <span class="card-client-name">${proj.nome_cliente || 'Sem Nome'}</span>
+              <span class="card-session-type">${proj.tipo_ensaio || 'Ensaio'}</span>
+            </div>
+          </div>
+          <div class="card-tags-row">
+            <span class="tag-badge">${proj.categoria_tag || 'Geral'}</span>
+            ${st === 'novos' ? '<span class="tag-badge tag-novo">Novo</span>' : ''}
+            ${st === 'entrega' ? '<span class="tag-badge tag-pronto">Pronto</span>' : ''}
+            ${st === 'finalizados' ? '<span class="tag-badge tag-finalizado">Finalizado</span>' : ''}
+          </div>
+          <div class="card-meta-row">
+            <span class="card-meta-item">📋 ${proj.sessoes || 1} sessão(ões)</span>
+            <span class="card-meta-item">⏱ ${proj.prazo || 'sem prazo'}</span>
+          </div>
+          <div class="card-actions-row" style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #EAE0D5; display:flex; justify-content: space-between; align-items:center; gap: 6px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 5px; align-items: center;">
+              <a href="galeria-config.html?id=${proj.galeria_id || proj.id}&projeto_id=${proj.id}" class="btn-config-galeria" style="background: #FAF5EE; border: 1px solid #D8CAB9; color: #6B5546; font-size: 0.72rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='#F3ECE3';this.style.borderColor='#9E744B'" onmouseout="this.style.background='#FAF5EE';this.style.borderColor='#D8CAB9'" title="Configurar a galeria deste projeto">
+                ⚙️ Config. Galeria
+              </a>
+              <button type="button" class="btn-remover-card" onclick="removerProjetoCard(${proj.id}, '${(proj.nome_cliente || '').replace(/'/g, "\\'")}')" title="Excluir este projeto do Kanban">
+                🗑️ Remover
+              </button>
+            </div>
+            <select class="select-mover-status" data-id="${proj.id}" title="Mover etapa do projeto">
+              <option value="novos" ${st==='novos'?'selected':''}>Novos</option>
+              <option value="andamento" ${st==='andamento'?'selected':''}>Em andamento</option>
+              <option value="revisao" ${st==='revisao'?'selected':''}>Em revisão</option>
+              <option value="entrega" ${st==='entrega'?'selected':''}>Entrega</option>
+              <option value="finalizados" ${st==='finalizados'?'selected':''}>Finalizados</option>
+            </select>
+          </div>
+        `;
+
+        const sel = card.querySelector('.select-mover-status');
+        sel.addEventListener('change', async (e) => {
+          const novoSt = e.target.value;
+          try {
+            const r = await fetch(`/api/projetos/${proj.id}/status`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: novoSt })
+            });
+            const d = await r.json();
+            if (d.success) {
+              showToast(`✓ Projeto de "${proj.nome_cliente}" movido para: ${novoSt.toUpperCase()}`);
+              window.carregarProjetosGlobal();
+            }
+          } catch (err) {
+            showToast('Erro ao atualizar status do projeto.', 'error');
+          }
+        });
+
+        col.appendChild(card);
+      });
+
+      // 5. Atualiza os contadores das colunas
+      Object.keys(counts).forEach(k => {
+        const col = colunas[k];
+        if (!col) return;
+        const badge = col.querySelector('.col-badge-count');
+        if (badge) badge.textContent = counts[k];
+      });
+    }
+
+    window.carregarProjetosGlobal = async function() {
+      try {
+        const res = await fetch('/api/projetos');
+        listaProjetosCache = await res.json();
+        atualizarSelectClientes(listaProjetosCache);
+        renderizarKanbanComFiltros();
+      } catch (err) {
+        console.error('Erro ao carregar projetos:', err);
+      }
+    };
+
+    // Eventos dos Controles de Filtro
+    const searchInput = document.getElementById('kanbanSearchInput') || document.querySelector('.search-box-pill input');
+    if (searchInput) {
+      searchInput.addEventListener('input', () => renderizarKanbanComFiltros());
+    }
+
+    const filtroPeriodo = document.getElementById('filtroPeriodo');
+    if (filtroPeriodo) {
+      filtroPeriodo.addEventListener('change', () => renderizarKanbanComFiltros());
+    }
+
+    const filtroCliente = document.getElementById('filtroCliente');
+    if (filtroCliente) {
+      filtroCliente.addEventListener('change', () => renderizarKanbanComFiltros());
+    }
+
+    const filtroEtapa = document.getElementById('filtroEtapa');
+    if (filtroEtapa) {
+      filtroEtapa.addEventListener('change', (e) => {
+        const valor = e.target.value;
+        const kanbanTabs = document.querySelectorAll('.kanban-nav-tabs .kanban-tab-item');
+        kanbanTabs.forEach(t => {
+          const tabVal = t.getAttribute('data-tab') || t.getAttribute('href')?.replace('#', '');
+          if ((valor === 'todas' && (tabVal === 'todos' || tabVal === 'todas')) || tabVal === valor) {
+            t.classList.add('active');
+          } else {
+            t.classList.remove('active');
+          }
+        });
+        filtroTabAtiva = valor === 'todas' ? 'todos' : valor;
+        renderizarKanbanComFiltros();
+      });
+    }
+
+    const filtroCategoria = document.getElementById('filtroCategoria');
+    if (filtroCategoria) {
+      filtroCategoria.addEventListener('change', () => renderizarKanbanComFiltros());
+    }
+
+    const filtroOrdenacao = document.getElementById('filtroOrdenacao');
+    if (filtroOrdenacao) {
+      filtroOrdenacao.addEventListener('change', () => renderizarKanbanComFiltros());
+    }
+
+    // Abas de navegação do Kanban (Top tabs)
+    const kanbanTabs = document.querySelectorAll('.kanban-nav-tabs .kanban-tab-item');
+    kanbanTabs.forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tabVal = tab.getAttribute('data-tab') || tab.getAttribute('href')?.replace('#', '');
+        
+        kanbanTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        filtroTabAtiva = tabVal;
+
+        if (filtroEtapa) {
+          filtroEtapa.value = (tabVal === 'todos' || tabVal === 'todas') ? 'todas' : tabVal;
+        }
+
+        if (tabVal === 'novos') document.getElementById('colNovos')?.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+        else if (tabVal === 'andamento') document.getElementById('colAndamento')?.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+        else if (tabVal === 'entrega' || tabVal === 'prova') (document.getElementById('colEntrega') || document.getElementById('colProva'))?.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+        else if (tabVal === 'finalizados') document.getElementById('colFinalizados')?.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+
+        renderizarKanbanComFiltros();
+      });
+    });
+
+    // Botão "+ Novo projeto"
+    const btnNovoProj = document.getElementById('btnNovoProjeto') || document.querySelector('.btn-novo-projeto');
+    if (btnNovoProj) {
+      btnNovoProj.addEventListener('click', () => {
+        if (typeof window.abrirModalNovoProjeto === 'function') {
+          window.abrirModalNovoProjeto();
+        }
+      });
+    }
+
+    // Carrega inicialmente
+    window.carregarProjetosGlobal();
+  }
+
+  // ============================================================================
+  // 5. TELA: CONFIGURAÇÕES DA GALERIA (galeria-config.html)
+  // ============================================================================
+  const galConfigId = new URLSearchParams(window.location.search).get('id') || new URLSearchParams(window.location.search).get('projeto_id') || '1';
+
+  window.uploadNovaCapaGaleria = function(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      const base64 = e.target.result;
+      const imgPreview = document.getElementById('imgPreviewCapaDesign');
+      if (imgPreview) imgPreview.src = base64;
+      showToast('Enviando e definindo foto de capa...');
+      try {
+        const upRes = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64 })
+        });
+        const upData = await upRes.json();
+        const capaUrl = (upData.success && upData.url) ? upData.url : base64;
+
+        await fetch(`/api/galeria/${galConfigId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ foto_capa: capaUrl })
+        });
+        showToast('✓ Foto de capa da galeria atualizada com sucesso!');
+      } catch (err) {
+        showToast('Erro ao atualizar foto de capa.', 'error');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const adminMain = document.getElementById('adminMainContent');
+  if (adminMain) {
+    // Carrega dados da galeria
+    window.carregarDadosGaleria = async function() {
+      try {
+        const res = await fetch(`/api/galeria/${galConfigId}`);
+        const data = await res.json();
+        window.galeriaConfigAtual = data;
+        if (data) {
+          if (data.foto_capa) {
+            const imgPreview = document.getElementById('imgPreviewCapaDesign');
+            if (imgPreview) imgPreview.src = data.foto_capa;
+            const imgLateral = document.getElementById('imgPreviewCapaGaleriaLateral');
+            if (imgLateral) imgLateral.src = data.foto_capa;
+          }
+          const inpValor = document.getElementById('inputValorFotoExtra');
+          if (inpValor && data.valor_foto_extra != null) {
+            inpValor.value = parseFloat(data.valor_foto_extra).toFixed(2);
+          }
+          const inpLimite = document.getElementById('inputLimitePacote');
+          if (inpLimite && data.limite_pacote != null) {
+            inpLimite.value = data.limite_pacote;
+          }
+          const chkExtras = document.getElementById('chkPermitirExtras');
+          if (chkExtras && data.permitir_extras != null) {
+            chkExtras.checked = !!data.permitir_extras;
+          }
+          const spanTitle = document.querySelector('.sidebar-project-title');
+          if (spanTitle && data.nome) {
+            spanTitle.textContent = data.nome;
+          }
+        }
+      } catch (e) {
+        console.warn('Erro ao carregar dados da galeria:', e);
+      }
+    };
+    window.carregarDadosGaleria();
+
+    // ── SUBIR FOTOS PARA A GALERIA DO CLIENTE ──
+    window.uploadFotosParaGaleria = async function(input) {
+      const files = input.files;
+      if (!files || files.length === 0) return;
+
+      const progressBox = document.getElementById('progressUploadGaleria');
+      const bar = document.getElementById('barUploadGaleria');
+      const statusTxt = document.getElementById('txtUploadGaleriaStatus');
+      const pctTxt = document.getElementById('txtUploadGaleriaPorcentagem');
+
+      if (progressBox) progressBox.style.display = 'block';
+      if (bar) bar.style.width = '15%';
+      if (pctTxt) pctTxt.textContent = '15%';
+      if (statusTxt) statusTxt.textContent = `Preparando envio de ${files.length} foto(s)...`;
+
+      try {
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) {
+          formData.append('fotos', files[i]);
+        }
+
+        if (bar) bar.style.width = '50%';
+        if (pctTxt) pctTxt.textContent = '50%';
+        if (statusTxt) statusTxt.textContent = `Enviando ${files.length} foto(s) para o servidor...`;
+
+        const res = await fetch(`/api/galeria/${galConfigId}/upload-fotos`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+
+        if (bar) bar.style.width = '100%';
+        if (pctTxt) pctTxt.textContent = '100%';
+
+        if (data.success) {
+          const totalInseridas = (data.inseridas && data.inseridas.length) || data.count || files.length;
+          showToast(`✓ ${totalInseridas} foto(s) adicionadas com sucesso!`);
+          if (statusTxt) statusTxt.textContent = `✓ Upload concluído! ${totalInseridas} fotos prontas.`;
+        } else {
+          showToast(data.error || 'Erro no envio das fotos.', 'error');
+        }
+      } catch (err) {
+        console.error('Erro no upload multipart:', err);
+        showToast('Erro ao realizar upload das fotos.', 'error');
+      }
+
+      setTimeout(() => {
+        if (progressBox) progressBox.style.display = 'none';
+      }, 2000);
+
+      input.value = '';
+      if (typeof window.carregarFotosGaleriaConfig === 'function') {
+        window.carregarFotosGaleriaConfig();
+      }
+    };
+
+    // ── CARREGAR E RENDERIZAR FOTOS DA GALERIA ──
+    window.carregarFotosGaleriaConfig = async function() {
+      const grid = document.getElementById('gridFotosGaleriaAdmin');
+      if (!grid) return;
+
+      try {
+        const [resFotos, resGal] = await Promise.all([
+          fetch(`/api/galeria/${galConfigId}/fotos`),
+          fetch(`/api/galeria/${galConfigId}`)
+        ]);
+        const dFotos = await resFotos.json();
+        const gal = await resGal.json();
+
+        const fotos = dFotos.fotos || [];
+        window.todasFotosGaleriaCache = fotos;
+        window.capaAtualGaleria = gal.foto_capa || '';
+
+        const imgCapa = document.getElementById('imgPreviewCapaGaleriaLateral');
+        if (imgCapa && gal.foto_capa) imgCapa.src = gal.foto_capa;
+
+        const countEl = document.getElementById('countFotosGaleria');
+        if (countEl) countEl.textContent = `${fotos.length} foto(s)`;
+
+        const cardFotos = document.getElementById('cardFotosGaleria');
+        if (fotos.length === 0) {
+          if (cardFotos) cardFotos.style.display = 'none';
+          grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #888; padding: 2rem;">Nenhuma foto na galeria ainda. Clique em "Selecionar do computador" acima.</div>';
+          window.carregarFotosSelecionadas();
+          return;
+        }
+
+        if (cardFotos) cardFotos.style.display = 'block';
+        window.renderizarGridFotosAdmin(fotos);
+        window.carregarFotosSelecionadas();
+      } catch (err) {
+        console.error('Erro ao carregar fotos da galeria:', err);
+      }
+    };
+
+    window.renderizarGridFotosAdmin = function(fotos) {
+      const grid = document.getElementById('gridFotosGaleriaAdmin');
+      if (!grid) return;
+
+      grid.innerHTML = fotos.map(f => {
+        const isCapa = (window.capaAtualGaleria === f.arquivo);
+        const tagCapa = isCapa 
+          ? '<span style="position: absolute; top: 6px; left: 6px; background: #9E744B; color: #FFF; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 4;">⭐ Capa Oficial</span>'
+          : '';
+
+        const statusBadge = f.status === 'pacote'
+          ? '<span style="background: #2D1D14; color: #FFF; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px;">No pacote</span>'
+          : f.status === 'extra'
+          ? '<span style="background: #9E744B; color: #FFF; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px;">Extra</span>'
+          : '<span style="background: #E8DDD0; color: #6B5546; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px;">Não selecionada</span>';
+
+        return `
+          <div class="admin-photo-card" style="position: relative;">
+            <div style="position: relative; height: 120px; overflow: hidden; background: #EFE6DC;">
+              <img src="${f.arquivo}" alt="${f.numero}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="abrirLightbox('${f.arquivo}', '${f.numero}')">
+              <div class="watermark-overlay" style="opacity: 0.25;"></div>
+              ${tagCapa}
+            </div>
+            <div style="padding: 0.65rem; display: flex; flex-direction: column; gap: 0.4rem; flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="font-size: 0.78rem; color: #2D1D14; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${f.numero}">${f.numero}</strong>
+                ${statusBadge}
+              </div>
+              <div style="display: flex; gap: 0.35rem; margin-top: auto; padding-top: 4px;">
+                <button type="button" onclick="definirCapaGaleria(${f.id})" style="flex: 1; background: ${isCapa ? '#E8DDD0' : '#FAF5EE'}; border: 1px solid #D8CAB9; color: #6B5546; font-size: 0.7rem; font-weight: 600; padding: 4px 6px; border-radius: 6px; cursor: pointer; transition: all 0.2s;" title="Definir como foto de capa">
+                  ${isCapa ? '⭐ Capa' : 'Definir Capa'}
+                </button>
+                <button type="button" onclick="excluirFotoGaleria(${f.id})" style="background: #FFF; border: 1px solid #D8CAB9; color: #A83232; font-size: 0.7rem; font-weight: 600; padding: 4px 6px; border-radius: 6px; cursor: pointer;" title="Excluir foto da galeria">
+                  🗑️
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    };
+
+    window.definirCapaGaleria = async function(fotoId) {
+      try {
+        const res = await fetch(`/api/galeria/${galConfigId}/fotos/${fotoId}/capa`, { method: 'PUT' });
+        const d = await res.json();
+        if (d.success) {
+          showToast('✓ Foto definida como capa da galeria com sucesso!');
+          window.carregarFotosGaleriaConfig();
+        }
+      } catch (err) {
+        showToast('Erro ao definir foto de capa.', 'error');
+      }
+    };
+
+    window.excluirFotoGaleria = async function(fotoId) {
+      if (!confirm('Deseja realmente remover esta foto da galeria?')) return;
+      try {
+        const res = await fetch(`/api/galeria/${galConfigId}/fotos/${fotoId}`, { method: 'DELETE' });
+        const d = await res.json();
+        if (d.success) {
+          showToast('Foto excluída da galeria.');
+          window.carregarFotosGaleriaConfig();
+        }
+      } catch (err) {
+        showToast('Erro ao excluir foto.', 'error');
+      }
+    };
+
+    window.ordenarFotosGaleriaAdmin = function(tipo) {
+      if (!window.todasFotosGaleriaCache) return;
+      let fotos = [...window.todasFotosGaleriaCache];
+      if (tipo === 'nome') {
+        fotos.sort((a, b) => (a.numero || '').localeCompare(b.numero || '', undefined, { numeric: true }));
+      } else {
+        fotos.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+      }
+      window.renderizarGridFotosAdmin(fotos);
+    };
+
+    // Busca de foto em tempo real
+    const buscaFotosInp = document.getElementById('buscaFotosGaleriaAdmin');
+    if (buscaFotosInp) {
+      buscaFotosInp.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase().trim();
+        if (!window.todasFotosGaleriaCache) return;
+        const filtradas = window.todasFotosGaleriaCache.filter(f => 
+          (f.numero || '').toLowerCase().includes(q) || (f.titulo || '').toLowerCase().includes(q)
+        );
+        window.renderizarGridFotosAdmin(filtradas);
+      });
+    }
+
+    // ── FOTOS ESCOLHIDAS E EXPORTAÇÃO PARA WINDOWS 10 E 11 ──
+    window.carregarFotosSelecionadas = async function() {
+      try {
+        const res = await fetch(`/api/galeria/${galConfigId}/selecionadas`);
+        const d = await res.json();
+        window.selecionadasCache = d;
+
+        const txtWindows = document.getElementById('txtBuscaWindows');
+        if (txtWindows) {
+          txtWindows.value = d.texto_windows || 'Nenhuma foto selecionada pelo cliente ainda.';
+        }
+
+        const badge = document.getElementById('badgeTotalEscolhidas');
+        if (badge) {
+          badge.textContent = `${d.total} escolhidas (${d.pacote_count} pacote + ${d.extra_count} extras)`;
+        }
+
+        const listaVisual = document.getElementById('listaVisualEscolhidas');
+        if (listaVisual) {
+          if (!d.fotos || d.fotos.length === 0) {
+            listaVisual.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #888; font-size: 0.78rem; padding: 1rem;">Nenhuma foto selecionada pelo cliente ainda.</div>';
+          } else {
+            listaVisual.innerHTML = d.fotos.map(f => `
+              <div style="background: #FFF; border: 1px solid #D8CAB9; border-radius: 6px; overflow: hidden; text-align: center; padding: 4px;">
+                <img src="${f.arquivo}" alt="${f.numero}" style="width: 100%; height: 65px; object-fit: cover; border-radius: 4px; cursor: pointer;" onclick="abrirLightbox('${f.arquivo}', '${f.numero}')">
+                <span style="display: block; font-size: 0.7rem; font-weight: 700; color: #2D1D14; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${f.numero}</span>
+                <span style="display: block; font-size: 0.65rem; color: ${f.status === 'extra' ? '#9E744B' : '#2D1D14'}; font-weight: 600;">${f.status === 'extra' ? 'Extra' : 'Pacote'}</span>
+              </div>
+            `).join('');
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao carregar selecionadas:', err);
+      }
+    };
+
+    window.copiarFormatoBusca = function(tipo) {
+      if (!window.selecionadasCache || !window.selecionadasCache.total) {
+        showToast('Nenhuma foto selecionada para copiar ainda.', 'error');
+        return;
+      }
+      let texto = '';
+      let msg = '';
+      if (tipo === 'windows') {
+        texto = window.selecionadasCache.texto_windows || '';
+        msg = '✓ Linha de busca do Windows 10/11 copiada! Cole no Explorer (Ctrl+V).';
+      } else if (tipo === 'virgula') {
+        texto = window.selecionadasCache.texto_virgula || '';
+        msg = '✓ Lista com vírgulas copiada para a área de transferência!';
+      } else {
+        texto = window.selecionadasCache.texto_linhas || '';
+        msg = '✓ Lista linha por linha copiada para a área de transferência!';
+      }
+      if (!texto) {
+        showToast('Lista vazia.', 'error');
+        return;
+      }
+      navigator.clipboard.writeText(texto).then(() => {
+        showToast(msg);
+      }).catch(() => {
+        const ta = document.getElementById('txtBuscaWindows');
+        if (ta) { ta.select(); document.execCommand('copy'); showToast(msg); }
+      });
+    };
+
+    // ── WHATSAPP CONVITE PERSONALIZADO COM USUÁRIO E SENHA ──
+    window.atualizarPreviewMensagemWhatsApp = function() {
+      const nome = (document.getElementById('waNomeCliente') ? document.getElementById('waNomeCliente').value.trim() : '') || 'Cliente';
+      const user = (document.getElementById('waUsuarioCliente') ? document.getElementById('waUsuarioCliente').value.trim() : '') || 'cliente@exemplo.com';
+      const pass = (document.getElementById('waSenhaCliente') ? document.getElementById('waSenhaCliente').value.trim() : '') || '123456';
+      const origin = window.location.origin || 'http://localhost:8082';
+      const loginUrl = `${origin}/login-cliente.html`;
+
+      const msg = `📸 *Olá, ${nome}!*
+
+Suas fotos do ensaio já estão disponíveis para você escolher na *Casa da Foto Studio*! ✨
+
+Acesse sua galeria exclusiva pelo link abaixo:
+🔗 *Link de Acesso:* ${loginUrl}
+👤 *Usuário / E-mail:* ${user}
+🔑 *Senha:* ${pass}
+
+💡 *Como funciona a escolha:*
+1. Acesse o link acima e faça o login com seu usuário e senha.
+2. Você pode marcar com calma as fotos incluídas no seu pacote e também selecionar fotos extras.
+3. Quando concluir, revise a sua lista e clique em *Enviar seleção ao fotógrafo*.
+
+Qualquer dúvida estamos à sua total disposição! 🤍`;
+
+      const ta = document.getElementById('waMensagemTexto');
+      if (ta) ta.value = msg;
+      return { msg, loginUrl };
+    };
+
+    window.enviarMensagemWhatsApp = function() {
+      const telInput = document.getElementById('waTelefoneCliente');
+      let tel = telInput ? telInput.value.replace(/\D/g, '') : '';
+      if (!tel) {
+        showToast('Informe o número de WhatsApp do cliente com DDD.', 'error');
+        return;
+      }
+      if (tel.length <= 11 && !tel.startsWith('55')) {
+        tel = '55' + tel;
+      }
+      const { msg } = window.atualizarPreviewMensagemWhatsApp();
+      const url = `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
+    };
+
+    window.enviarWhatsAppLateral = function() {
+      const telInput = document.getElementById('waTelLateral');
+      let tel = telInput ? telInput.value.replace(/\D/g, '') : '';
+      if (!tel) {
+        showToast('Informe o número de WhatsApp do cliente com DDD.', 'error');
+        return;
+      }
+      if (tel.length <= 11 && !tel.startsWith('55')) {
+        tel = '55' + tel;
+      }
+      const { msg } = window.atualizarPreviewMensagemWhatsApp();
+      const url = `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
+    };
+
+    window.copiarMensagemWhatsApp = function() {
+      const { msg } = window.atualizarPreviewMensagemWhatsApp();
+      navigator.clipboard.writeText(msg).then(() => {
+        showToast('✓ Mensagem completa do WhatsApp copiada!');
+      }).catch(() => {
+        const ta = document.getElementById('waMensagemTexto');
+        if (ta) { ta.select(); document.execCommand('copy'); showToast('✓ Mensagem copiada!'); }
+      });
+    };
+
+    window.copiarLinkLoginCliente = function() {
+      const origin = window.location.origin || 'http://localhost:8082';
+      const loginUrl = `${origin}/login-cliente.html`;
+      navigator.clipboard.writeText(loginUrl).then(() => {
+        showToast('✓ Link da tela de login copiado!');
+      });
+    };
+
+    // ── REGRAS DE SELEÇÃO E VALOR DA FOTO EXTRA ──
+    window.salvarRegrasSelecao = async function() {
+      const btn = document.getElementById('btnSalvarRegras');
+      const origText = btn ? btn.innerHTML : '';
+      if (btn) { btn.disabled = true; btn.innerHTML = 'Salvando...'; }
+
+      const limite = parseInt(document.getElementById('inputLimitePacote')?.value) || 10;
+      const valorExtra = parseFloat(document.getElementById('inputValorFotoExtra')?.value) || 25.0;
+      const chkExtras = document.getElementById('chkPermitirExtras');
+      const permitirExtras = chkExtras ? (chkExtras.checked ? 1 : 0) : 1;
+
+      try {
+        const res = await fetch(`/api/galeria/${galConfigId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            limite_pacote: limite,
+            valor_foto_extra: valorExtra,
+            permitir_extras: permitirExtras
+          })
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast(`✓ Regras salvas! Pacote: ${limite} fotos · Valor extra: R$ ${valorExtra.toFixed(2)}.`);
+          window.carregarDadosGaleria();
+        } else {
+          showToast('Erro ao salvar regras.', 'error');
+        }
+      } catch (err) {
+        showToast('Erro de conexão ao salvar regras.', 'error');
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+      }
+    };
+
+    // ── GESTÃO DE DESTINATÁRIOS (TAB CLIENTES) ──
+    // ── GESTÃO DE DESTINATÁRIOS (TAB CLIENTES) ──
+    window.destinatariosCache = [];
+
+    window.abrirModalAdicionarCliente = function() {
+      const modal = document.getElementById('modalAddCliente');
+      if (modal) {
+        modal.style.display = 'flex';
+        const inputNome = document.getElementById('modalNomeCliente');
+        if (inputNome) setTimeout(() => inputNome.focus(), 50);
+      }
+    };
+
+    window.fecharModalAdicionarCliente = function() {
+      const modal = document.getElementById('modalAddCliente');
+      if (modal) modal.style.display = 'none';
+    };
+
+    window.salvarNovoDestinatarioModal = async function() {
+      const nome = document.getElementById('modalNomeCliente')?.value.trim();
+      const email = document.getElementById('modalEmailCliente')?.value.trim();
+      const senha = document.getElementById('modalSenhaCliente')?.value.trim() || '123456';
+      const telefone = document.getElementById('modalTelefoneCliente')?.value.trim();
+      const permissao = document.getElementById('modalPermissaoCliente')?.value;
+      const btn = document.getElementById('btnSalvarModalCliente');
+
+      if (!nome || !email) {
+        showToast('Preencha o nome e o e-mail do cliente.', 'error');
+        return;
+      }
+
+      if (btn) { btn.disabled = true; btn.innerHTML = 'Salvando...'; }
+
+      try {
+        const res = await fetch(`/api/galeria/${galConfigId}/destinatarios`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome, email, senha, permissao })
+        });
+        const d = await res.json();
+
+        if (res.ok && d.success) {
+          showToast(`✓ Cliente "${nome}" cadastrado com sucesso!`);
+          window.fecharModalAdicionarCliente();
+
+          // Preenche os campos do gerador de WhatsApp automaticamente com este cliente
+          const waNome = document.getElementById('waNomeCliente');
+          const waEmail = document.getElementById('waUsuarioCliente');
+          const waSenha = document.getElementById('waSenhaCliente');
+          const waTel = document.getElementById('waTelefoneCliente');
+          if (waNome) waNome.value = nome;
+          if (waEmail) waEmail.value = email;
+          if (waSenha) waSenha.value = senha;
+          if (waTel && telefone) waTel.value = telefone;
+          if (typeof window.atualizarPreviewMensagemWhatsApp === 'function') {
+            window.atualizarPreviewMensagemWhatsApp();
+          }
+
+          // Limpa o formulário do modal
+          document.getElementById('modalNomeCliente').value = '';
+          document.getElementById('modalEmailCliente').value = '';
+          if (document.getElementById('modalTelefoneCliente')) document.getElementById('modalTelefoneCliente').value = '';
+
+          await window.carregarDestinatariosConfig();
+          if (typeof window.carregarHistoricoAtividades === 'function') {
+            window.carregarHistoricoAtividades();
+          }
+        } else {
+          showToast(d.error || 'Erro ao cadastrar cliente.', 'error');
+        }
+      } catch (err) {
+        showToast('Erro de comunicação com o servidor.', 'error');
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '✓ Salvar e Liberar Acesso'; }
+      }
+    };
+
+    window.renderizarDestinatariosTabela = function(lista) {
+      const container = document.getElementById('listaDestinatariosTabela');
+      if (!container) return;
+
+      if (!lista || lista.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: #888; padding: 1.75rem;">Nenhum destinatário encontrado com os filtros aplicados. Clique em "+ Adicionar destinatário" para cadastrar.</div>';
+        return;
+      }
+
+      container.innerHTML = lista.map(d => `
+        <div style="display: grid; grid-template-columns: 1.4fr 1.2fr 1fr 1fr 0.8fr; padding: 0.9rem 1rem; align-items: center; border-bottom: 1px solid #FAF5EE;">
+          <div>
+            <strong style="display: block; color: var(--text-dark); font-size: 0.88rem;">${d.nome}</strong>
+            <span style="color: var(--text-muted); font-size: 0.74rem;">✉️ ${d.email}</span>
+            ${d.principal ? '<span class="preview-pill-tag" style="margin-top: 3px; display: inline-block; font-size: 0.65rem;">Principal</span>' : ''}
+          </div>
+          <div>
+            <span class="preview-pill-tag" style="font-weight: 600;">${d.status_convite || 'Convite preparado'}</span>
+            <span style="display: block; font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">${d.data_convite || ''}</span>
+          </div>
+          <div>
+            <strong style="display: block; color: var(--text-dark); font-size: 0.8rem;">${d.ultimo_acesso || 'Aguardando'}</strong>
+            <span style="font-size: 0.7rem; color: var(--text-muted);">${d.total_acessos || 0} acessos</span>
+          </div>
+          <div>
+            <strong style="display: block; color: var(--text-dark); font-size: 0.8rem;">${d.fotos_pacote_count || 0} pct · ${d.fotos_extras_count || 0} ext</strong>
+            <span class="preview-pill-tag" style="font-size: 0.65rem;">${(d.fotos_pacote_count || d.fotos_extras_count) ? 'Em andamento' : 'Aguardando'}</span>
+          </div>
+          <div style="text-align: right; display: flex; gap: 0.4rem; justify-content: flex-end; align-items: center;">
+            <button type="button" onclick="prepararWhatsAppCliente('${d.nome.replace(/'/g, "\\'")}', '${d.email}')" style="background: #E8F8F0; border: 1px solid #A3E9C7; color: #1E8E5A; font-size: 0.72rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer;" title="Preparar mensagem de WhatsApp para este cliente">
+              💬 WhatsApp
+            </button>
+            <button type="button" onclick="excluirDestinatarioConfig(${d.id}, '${d.nome.replace(/'/g, "\\'")}')" style="background: #FFF; border: 1px solid #D8CAB9; color: #A83232; font-size: 0.72rem; padding: 4px 8px; border-radius: 6px; cursor: pointer;" title="Remover cliente desta galeria">
+              🗑️
+            </button>
+          </div>
+        </div>
+      `).join('');
+    };
+
+    window.filtrarDestinatariosTabela = function() {
+      const q = (document.getElementById('filtroBuscaDestinatario')?.value || '').toLowerCase().trim();
+      const status = document.getElementById('filtroStatusDestinatario')?.value || '';
+
+      let filtrados = window.destinatariosCache || [];
+      if (q) {
+        filtrados = filtrados.filter(d => 
+          (d.nome || '').toLowerCase().includes(q) || 
+          (d.email || '').toLowerCase().includes(q)
+        );
+      }
+      if (status) {
+        filtrados = filtrados.filter(d => (d.status_convite || '') === status);
+      }
+
+      window.renderizarDestinatariosTabela(filtrados);
+    };
+
+    window.prepararWhatsAppCliente = function(nome, email) {
+      const waNome = document.getElementById('waNomeCliente');
+      const waEmail = document.getElementById('waUsuarioCliente');
+      if (waNome) waNome.value = nome;
+      if (waEmail) waEmail.value = email;
+      if (typeof window.atualizarPreviewMensagemWhatsApp === 'function') {
+        window.atualizarPreviewMensagemWhatsApp();
+      }
+      showToast(`Dados de "${nome}" preenchidos no WhatsApp abaixo.`);
+      document.getElementById('waNomeCliente')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    window.carregarDestinatariosConfig = async function() {
+      const container = document.getElementById('listaDestinatariosTabela');
+      if (!container) return;
+
+      try {
+        const res = await fetch(`/api/galeria/${galConfigId}/destinatarios`);
+        const destinatarios = await res.json();
+        window.destinatariosCache = Array.isArray(destinatarios) ? destinatarios : [];
+
+        const sub = document.getElementById('destinatariosSubtitle');
+        if (sub) {
+          sub.textContent = `${window.destinatariosCache.length} cliente(s) convidado(s) para esta galeria.`;
+        }
+
+        window.filtrarDestinatariosTabela();
+      } catch (err) {
+        console.error('Erro ao carregar destinatários:', err);
+      }
+    };
+
+    window.excluirDestinatarioConfig = async function(id, nome) {
+      if (!confirm(`Deseja realmente remover o destinatário "${nome}"?`)) return;
+      try {
+        const res = await fetch(`/api/galeria/${galConfigId}/destinatarios/${id}`, { method: 'DELETE' });
+        const d = await res.json();
+        if (d.success) {
+          showToast(`✓ Destinatário "${nome}" removido.`);
+          window.carregarDestinatariosConfig();
+        } else {
+          showToast('Erro ao excluir destinatário.', 'error');
+        }
+      } catch (e) {
+        showToast('Erro de conexão.', 'error');
+      }
+    };
+
+    const btnNovoConviteBtn = document.getElementById('btnPrepararNovoConvite');
+    if (btnNovoConviteBtn) {
+      btnNovoConviteBtn.addEventListener('click', async () => {
+        const inputNome = document.getElementById('inputNomeNovoConvite');
+        const inputEmail = document.getElementById('inputEmailNovoConvite');
+        const nome = inputNome ? inputNome.value.trim() : '';
+        const email = inputEmail ? inputEmail.value.trim() : '';
+
+        if (!nome || !email) {
+          showToast('Preencha nome e e-mail para cadastrar o destinatário.', 'error');
+          return;
+        }
+
+        try {
+          const res = await fetch(`/api/galeria/${galConfigId}/destinatarios`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, email, senha: '123456' })
+          });
+          const d = await res.json();
+          if (d.success) {
+            showToast(`✓ Cliente "${nome}" cadastrado com sucesso!`);
+            if (inputNome) inputNome.value = '';
+            if (inputEmail) inputEmail.value = '';
+            window.carregarDestinatariosConfig();
+            if (typeof window.carregarHistoricoAtividades === 'function') {
+              window.carregarHistoricoAtividades();
+            }
+          } else {
+            showToast(d.error || 'Erro ao registrar convite.', 'error');
+          }
+        } catch (e) {
+          showToast('Erro ao comunicar com o servidor.', 'error');
+        }
+      });
+    }
+
+    // ── GESTÃO DE HISTÓRICO E ATIVIDADES (TAB HISTÓRICO & TAB ATIVIDADES) ──
+    window.carregarHistoricoAtividades = async function() {
+      const container = document.getElementById('listaHistoricoAtividades');
+      if (!container) return;
+
+      try {
+        const res = await fetch(`/api/galeria/${galConfigId}/atividades`);
+        const atividades = await res.json();
+
+        const badge = document.getElementById('badgeTotalHistorico');
+        if (badge) badge.textContent = `${atividades.length} registro(s)`;
+
+        const countTxt = document.getElementById('countHistoricoTexto');
+        if (countTxt) countTxt.textContent = `${atividades.length} evento(s) cronológico(s) registrados no banco de dados.`;
+
+        if (!atividades || atividades.length === 0) {
+          container.innerHTML = '<div style="text-align: center; color: #888; padding: 1.5rem;">Nenhuma atividade registrada para esta galeria ainda.</div>';
+          return;
+        }
+
+        container.innerHTML = atividades.map(a => `
+          <div style="padding: 0.85rem; border: 1px solid #E8DDD0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; background: #FFF;">
+            <div style="display: flex; gap: 0.85rem; align-items: center;">
+              <span style="color: var(--text-muted); font-size: 0.73rem; width: 85px; line-height: 1.3;">${a.data_hora}</span>
+              <div>
+                <strong style="color: var(--text-dark); font-size: 0.85rem;">${a.titulo}</strong>
+                <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">${a.descricao || ''}</div>
+              </div>
+            </div>
+            <span class="preview-pill-tag" style="${a.autor_tipo === 'Cliente' ? 'background:#FAF5EE; color:#666;' : ''}">${a.autor_tipo}</span>
+          </div>
+        `).join('');
+
+      } catch (err) {
+        console.error('Erro ao carregar histórico:', err);
+      }
+    };
+
+    window.exportarHistoricoAtividades = async function() {
+      try {
+        const res = await fetch(`/api/galeria/${galConfigId}/atividades`);
+        const atividades = await res.json();
+        if (!atividades || atividades.length === 0) {
+          showToast('Nenhuma atividade para exportar.', 'error');
+          return;
+        }
+
+        let conteudo = `CASA DA FOTO STUDIO - HISTÓRICO DE ATIVIDADES DA GALERIA #${galConfigId}\n`;
+        conteudo += `Gerado em: ${new Date().toLocaleString('pt-BR')}\n`;
+        conteudo += `---------------------------------------------------------\n\n`;
+
+        atividades.forEach(a => {
+          conteudo += `[${a.data_hora}] (${a.autor_tipo}) ${a.titulo}\n`;
+          if (a.descricao) conteudo += `  Detalhes: ${a.descricao}\n`;
+          conteudo += `\n`;
+        });
+
+        const blob = new Blob([conteudo], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `historico_galeria_${galConfigId}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('✓ Arquivo de histórico exportado com sucesso!');
+      } catch (e) {
+        showToast('Erro ao exportar histórico.', 'error');
+      }
+    };
+
+    // Inicializa carregamentos da galeria
+    window.carregarFotosGaleriaConfig();
+    window.carregarDestinatariosConfig();
+    window.carregarHistoricoAtividades();
+    window.atualizarPreviewMensagemWhatsApp();
+
+    // Salvar preferências gerais de todas as abas
+    const salvarBtns = document.querySelectorAll('.btn-salvar-admin');
+    salvarBtns.forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        if (btn.id === 'btnPrepararNovoConvite' || btn.id === 'btnExportarHistorico' || btn.textContent.includes('Adicionar') || btn.textContent.includes('Exportar') || btn.textContent.includes('Reenviar') || btn.textContent.includes('Enviar') || btn.textContent.includes('Regras')) {
+          return;
+        }
+
+        e.preventDefault();
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span>Salvando no banco...</span>';
+
+        const payload = {};
+        const inputNome = document.querySelector('#tab-dados input[type="text"]');
+        if (inputNome && inputNome.value) payload.nome = inputNome.value;
+
+        const selectCat = document.querySelector('#tab-dados select');
+        if (selectCat) payload.categoria = selectCat.value;
+
+        try {
+          const res = await fetch(`/api/galeria/${galConfigId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast('✓ Configurações salvas no banco de dados SQLite!');
+            window.carregarHistoricoAtividades();
+          } else {
+            showToast('Erro ao salvar.', 'error');
+          }
+        } catch (err) {
+          showToast('Erro ao salvar no banco.', 'error');
+        } finally {
+          btn.innerHTML = originalText;
+        }
+      });
+    });
+  }
+
+
+  // ============================================================================
+  // 6. FORMULÁRIO DE CONTATO (index.html)
+  // ============================================================================
+  const contactCard = document.querySelector('.contact-hero-card');
+  if (contactCard && !document.getElementById('formContatoSite')) {
+    const contactForm = document.createElement('form');
+    contactForm.id = 'formContatoSite';
+    contactForm.style.marginTop = '1rem';
+    contactForm.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:0.6rem;">
+        <input type="text" id="contatoNome" placeholder="Seu nome" required style="width:100%; padding:0.55rem 0.85rem; border-radius:8px; border:1px solid #D8CAB9; font-size:0.84rem;">
+        <input type="tel" id="contatoTel" placeholder="WhatsApp / Telefone" required style="width:100%; padding:0.55rem 0.85rem; border-radius:8px; border:1px solid #D8CAB9; font-size:0.84rem;">
+        <textarea id="contatoMsg" placeholder="Como podemos ajudar no seu ensaio?" rows="2" required style="width:100%; padding:0.55rem 0.85rem; border-radius:8px; border:1px solid #D8CAB9; font-size:0.84rem; resize:none;"></textarea>
+        <button type="submit" style="background:#352319; color:#FFF; border:none; border-radius:9999px; padding:0.6rem; font-size:0.84rem; font-weight:600; cursor:pointer; transition: background 0.2s;">
+          Enviar mensagem →
+        </button>
+      </div>
+    `;
+
+    contactForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nome = document.getElementById('contatoNome').value;
+      const telefone = document.getElementById('contatoTel').value;
+      const mensagem = document.getElementById('contatoMsg').value;
+
+      try {
+        const res = await fetch('/api/contato', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome, telefone, mensagem })
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast('🎉 Mensagem enviada e salva com sucesso!');
+          contactForm.reset();
+        }
+      } catch (err) {
+        showToast('Erro ao enviar mensagem.', 'error');
+      }
+    });
+
+    contactCard.appendChild(contactForm);
+  }
+
+  // ============================================================================
+  // 7. CARREGAMENTO DINÂMICO E CONTROLES DA PÁGINA INICIAL (index.html)
+  // ============================================================================
+  const heroCatRow = document.getElementById('heroCategoriesRow');
+  const carouselCardsGrid = document.getElementById('carouselCardsGrid');
+  const carouselFilterPills = document.getElementById('carouselFilterPills');
+
+  // Carrega os textos configurados pelo Admin na Home
+  carregarTextosCustomizadosHome();
+
+  async function carregarTextosCustomizadosHome() {
+    try {
+      const res = await fetch('/api/site/textos');
+      const t = await res.json();
+      if (!t) return;
+
+      const setTxt = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && val) el.textContent = val;
+      };
+
+      setTxt('heroTag', t.hero_tag);
+      setTxt('heroTitle', t.hero_titulo);
+      setTxt('heroDescription', t.hero_descricao);
+      setTxt('headerBrandSlogan', t.header_slogan);
+      setTxt('contactCardTitle', t.contato_titulo);
+      setTxt('contactCardDesc', t.contato_descricao);
+      setTxt('aboutTag', t.sobre_tag);
+      setTxt('aboutTitle', t.sobre_titulo);
+      setTxt('aboutText', t.sobre_texto);
+
+      // WhatsApp no Hero
+      const btnWhats = document.getElementById('btnHeroWhatsApp');
+      if (btnWhats) {
+        const num = (t.contato_whatsapp || '11987654321').replace(/\D/g, '');
+        btnWhats.href = `https://wa.me/55${num}?text=Ol%C3%A1%2C+gostaria+de+informações+sobre+os+ensaios+do+estúdio!`;
+        btnWhats.target = '_blank';
+      }
+    } catch (e) {
+      console.log('Textos padrão mantidos:', e);
+    }
+  }
+
+  // Controles do Carrossel (Anterior / Próximo)
+  const btnAnt = document.getElementById('btnAnterior');
+  const btnProx = document.getElementById('btnProximo');
+  if (btnAnt && carouselCardsGrid) {
+    btnAnt.addEventListener('click', () => {
+      carouselCardsGrid.scrollBy({ left: -360, behavior: 'smooth' });
+    });
+  }
+  if (btnProx && carouselCardsGrid) {
+    btnProx.addEventListener('click', () => {
+      carouselCardsGrid.scrollBy({ left: 360, behavior: 'smooth' });
+    });
+  }
+
+  // Botão Fale Conosco na Home
+  const btnFale = document.getElementById('btnFaleConosco');
+  if (btnFale) {
+    btnFale.addEventListener('click', (e) => {
+      e.preventDefault();
+      const inputNome = document.getElementById('contatoNome');
+      if (inputNome) {
+        inputNome.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => inputNome.focus(), 400);
+      } else {
+        abrirModalOrcamento('Contato com o Estúdio');
+      }
+    });
+  }
+
+  if (heroCatRow || carouselCardsGrid) {
+    carregarDadosSitePublico();
+  }
+
+  async function carregarDadosSitePublico() {
+    try {
+      const resCat = await fetch('/api/site/categorias');
+      const categorias = await resCat.json();
+
+      if (heroCatRow) {
+        if (categorias && categorias.length > 0) {
+          heroCatRow.innerHTML = categorias.map(c => 
+            `<button type="button" class="tag-badge" onclick="filtrarFotosPorCategoria('${c.nome}')" style="cursor:pointer; background:#FAF5EE; color:#6B5546; border:1px solid #D8CAB9; padding:0.4rem 1rem; font-size:0.84rem; font-weight:600; border-radius:9999px;">${c.nome}</button>`
+          ).join(' ');
+        } else {
+          heroCatRow.innerHTML = `
+            <span class="empty-site-hint" style="font-size: 0.82rem; color: #8C7B6D; font-style: italic;">
+              Novos ensaios e categorias em breve.
+            </span>
+          `;
+        }
+      }
+
+      if (carouselFilterPills) {
+        if (categorias && categorias.length > 0) {
+          carouselFilterPills.innerHTML = `
+            <button type="button" class="select-filter-pill active-pill" data-cat="Todas" style="cursor:pointer; background:#352319; color:#FFF; border-color:#352319;">Todas</button>
+            ${categorias.map(c => `<button type="button" class="select-filter-pill" data-cat="${c.nome}" style="cursor:pointer;">${c.nome}</button>`).join(' ')}
+          `;
+
+          carouselFilterPills.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+              carouselFilterPills.querySelectorAll('button').forEach(b => {
+                b.style.backgroundColor = '#FAF6F0';
+                b.style.color = '#5C4A3E';
+                b.style.borderColor = '#D8CAB9';
+              });
+              btn.style.backgroundColor = '#352319';
+              btn.style.color = '#FFFFFF';
+              btn.style.borderColor = '#352319';
+              filtrarFotosCarrossel(btn.dataset.cat);
+            });
+          });
+        } else {
+          carouselFilterPills.innerHTML = '';
+        }
+      }
+
+      filtrarFotosCarrossel('Todas');
+
+    } catch (err) {
+      console.error('Erro ao carregar dados do site:', err);
+    }
+  }
+
+  window.filtrarFotosPorCategoria = function(cat) {
+    const section = document.getElementById('destaques');
+    if (section) section.scrollIntoView({ behavior: 'smooth' });
+    filtrarFotosCarrossel(cat);
+  };
+
+  async function filtrarFotosCarrossel(categoria) {
+    if (!carouselCardsGrid) return;
+    try {
+      const url = (categoria && categoria !== 'Todas') ? `/api/site/fotos?categoria=${encodeURIComponent(categoria)}` : '/api/site/fotos';
+      const res = await fetch(url);
+      const fotos = await res.json();
+
+      if (fotos && fotos.length > 0) {
+        carouselCardsGrid.innerHTML = fotos.map(f => `
+          <div class="kanban-item-card" style="padding: 0; overflow: hidden; border-radius: 16px; border: 1px solid #E8DDD0; background: #FFF; box-shadow: 0 4px 12px rgba(45,29,20,0.06);">
+            <div style="position: relative; height: 260px; overflow: hidden; cursor: pointer;" onclick="abrirLightbox('${f.arquivo}', '${f.titulo}')">
+              <img src="${f.arquivo}" alt="${f.titulo}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+              <span class="tag-badge" style="position: absolute; top: 12px; left: 12px; background: rgba(53, 35, 25, 0.85); color: #FAF5EE; backdrop-filter: blur(4px); border: none; font-size: 0.72rem; padding: 0.3rem 0.8rem;">
+                ${f.categoria_nome}
+              </span>
+            </div>
+            <div style="padding: 1.1rem 1.25rem;">
+              <h3 style="font-size: 1.05rem; font-weight: 700; color: #2D1D14; margin-bottom: 0.25rem;">${f.titulo}</h3>
+              <span style="font-size: 0.78rem; color: #8C7B6D;">Ensaio Estúdio Casa da Foto</span>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        carouselCardsGrid.innerHTML = `
+          <div class="empty-site-banner" style="grid-column: 1 / -1; width: 100%; text-align: center; padding: 3.5rem 1.5rem; background: #FAF5EE; border: 1.5px dashed #D8CAB9; border-radius: 18px;">
+            <span style="font-size: 2.2rem; display: block; margin-bottom: 0.5rem;">📷</span>
+            <strong style="display: block; font-size: 1.15rem; color: #2D1D14; margin-bottom: 0.35rem;">Novas fotos e ensaios em breve</strong>
+            <span style="color: #7A6A5E; font-size: 0.88rem; display: block;">Estamos preparando novos ensaios com muito carinho.</span>
+          </div>
+        `;
+      }
+    } catch (err) {
+      console.error('Erro ao filtrar fotos:', err);
+    }
+  }
+
+  // ============================================================================
+  // 8. TELA: PACOTES DE ENSAIO (pacotes.html)
+  // ============================================================================
+  const pacotesSection = document.getElementById('nossosPacotes') || document.getElementById('gridPacotesSite');
+  if (pacotesSection) {
+    let pacotesSiteCache = [];
+
+    async function carregarPacotesSite() {
+      const grid = document.getElementById('gridPacotesSite');
+      if (!grid) return;
+
+      try {
+        const res = await fetch('/api/site/pacotes');
+        pacotesSiteCache = await res.json();
+
+        renderizarPacotesSite(pacotesSiteCache);
+      } catch (err) {
+        console.error('Erro ao carregar pacotes:', err);
+      }
+    }
+
+    function renderizarPacotesSite(lista) {
+      const grid = document.getElementById('gridPacotesSite');
+      if (!grid) return;
+
+      if (!lista || lista.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; width: 100%; text-align: center; padding: 4rem 1.5rem; background: #FAF5EE; border: 1.5px dashed #D8CAB9; border-radius: 18px;">
+            <span style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem;">🎁</span>
+            <strong style="display: block; font-size: 1.25rem; color: #2D1D14; margin-bottom: 0.4rem;">Novos pacotes de ensaio em breve</strong>
+            <p style="color: #6B5E55; font-size: 0.9rem; max-width: 480px; margin: 0 auto; line-height: 1.5;">Entre em contato conosco para conhecer nossas opções personalizadas.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = lista.map(p => `
+        <article class="package-card" data-titulo="${(p.titulo || '').toLowerCase()}" data-descricao="${(p.descricao || '').toLowerCase()}">
+          <div class="package-card-thumb">
+            <img src="${p.imagem || 'assets/logo/logo.png'}" alt="${p.titulo}" onerror="this.src='assets/logo/logo.png'">
+          </div>
+          <div class="package-card-content">
+            <h3 class="package-card-title">${p.titulo}</h3>
+            <span class="preview-pill-tag" style="background:#FAF5EE; color:#8C5F35; border:1px solid #D8CAB9; font-weight:700; font-size:0.75rem; margin:0 0 8px 0; align-self: flex-start;">
+              ${p.valor || 'Sob consulta'}
+            </span>
+            <p class="package-card-desc">
+              ${p.descricao || 'Atendimento acolhedor, cenários preparados e fotos em alta resolução.'}
+            </p>
+            <a href="javascript:void(0)" class="btn-consultar-valores" onclick="abrirModalOrcamento('${(p.titulo || 'Pacote de Ensaio').replace(/'/g, "\\'")}')">
+              Consultar valores
+            </a>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function filtrarPacotes(termo) {
+      termo = termo.toLowerCase().trim();
+      const cards = document.querySelectorAll('#gridPacotesSite .package-card');
+      cards.forEach(card => {
+        const title = card.getAttribute('data-titulo') || '';
+        const desc = card.getAttribute('data-descricao') || '';
+        if (termo === 'todos' || termo === 'ensaio familiar' && (title.includes('família') || title.includes('familia')) || title.includes(termo) || desc.includes(termo)) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    const heroPills = document.querySelectorAll('.hero-pills-row .pill-btn');
+    heroPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        heroPills.forEach(p => p.classList.remove('active-pill'));
+        pill.classList.add('active-pill');
+        const cat = pill.textContent.trim().toLowerCase();
+        filtrarPacotes(cat);
+      });
+    });
+
+    const secPills = document.querySelectorAll('.packages-filter-pills .filter-pill');
+    secPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        secPills.forEach(p => { p.style.background = '#FAF6F0'; p.style.color = '#5C4A3E'; });
+        pill.style.background = '#352319';
+        pill.style.color = '#FFFFFF';
+        const cat = pill.textContent.trim().toLowerCase();
+        filtrarPacotes(cat);
+      });
+    });
+
+    const btnFalePacotes = document.getElementById('btnFaleConoscoPacotes');
+    if (btnFalePacotes) {
+      btnFalePacotes.addEventListener('click', (e) => {
+        e.preventDefault();
+        abrirModalOrcamento('Informações Gerais de Pacotes');
+      });
+    }
+
+    carregarPacotesSite();
+  }
+
+
+  // ============================================================================
+  // 9. MODAIS E LIGHTBOX INTERATIVOS
+  // ============================================================================
+
+  // Lightbox de Fotos em Tela Cheia
+  window.abrirLightbox = function(imgSrc, titulo) {
+    let lb = document.getElementById('appLightbox');
+    if (!lb) {
+      lb = document.createElement('div');
+      lb.id = 'appLightbox';
+      lb.style.cssText = `
+        position: fixed; inset: 0; z-index: 100000;
+        background: rgba(15, 10, 6, 0.92);
+        backdrop-filter: blur(8px);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 24px; animation: fadeIn 0.25s ease;
+      `;
+      document.body.appendChild(lb);
+    }
+    lb.innerHTML = `
+      <div style="position: relative; max-width: 90vw; max-height: 85vh; text-align: center; display: inline-block;">
+        <button type="button" onclick="document.getElementById('appLightbox').style.display='none'" style="position: absolute; top: -45px; right: 0; background: none; border: none; color: #FFF; font-size: 2rem; cursor: pointer;">✕</button>
+        <div style="position: relative; display: inline-block; overflow: hidden; border-radius: 12px;">
+          <img src="${imgSrc}" alt="${titulo}" style="max-width: 100%; max-height: 80vh; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); object-fit: contain; display: block;">
+          <div class="watermark-overlay-large" style="position: absolute; inset: 0; background: url('assets/logo/logo.png') center center / 45% no-repeat; opacity: 0.35; pointer-events: none; border-radius: 12px;" title="Casa da Foto - Marca d'água"></div>
+        </div>
+        <div style="color: #FAF5EE; font-size: 1.1rem; font-weight: 600; margin-top: 12px;">${titulo || ''}</div>
+      </div>
+    `;
+    lb.style.display = 'flex';
+    lb.onclick = (e) => { if (e.target === lb) lb.style.display = 'none'; };
+  };
+
+  // Modal de Consulta de Orçamento / Pacotes
+  window.abrirModalOrcamento = function(nomePacote) {
+    let modal = document.getElementById('appModalOrcamento');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'appModalOrcamento';
+      modal.style.cssText = `
+        position: fixed; inset: 0; z-index: 99999;
+        background: rgba(20, 14, 10, 0.7); backdrop-filter: blur(5px);
+        display: flex; align-items: center; justify-content: center;
+        padding: 20px;
+      `;
+      document.body.appendChild(modal);
+    }
+    modal.innerHTML = `
+      <div style="background: #FAF5EE; border: 1px solid #D8CAB9; border-radius: 18px; max-width: 440px; width: 100%; padding: 2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.3); position: relative;">
+        <button type="button" onclick="document.getElementById('appModalOrcamento').style.display='none'" style="position: absolute; top: 18px; right: 20px; background: none; border: none; font-size: 1.3rem; color: #6B5546; cursor: pointer;">✕</button>
+        <span style="font-size: 0.76rem; font-weight: 700; color: #9E744B; letter-spacing: 0.08em; display: block; margin-bottom: 4px;">ORÇAMENTO & RESERVAS</span>
+        <h3 style="font-size: 1.3rem; color: #2D1D14; font-weight: 800; margin-bottom: 0.5rem;">${nomePacote}</h3>
+        <p style="font-size: 0.85rem; color: #6B5E55; line-height: 1.5; margin-bottom: 1.25rem;">Envie seus dados para receber valores detalhados e datas disponíveis para o seu ensaio.</p>
+        
+        <form onsubmit="event.preventDefault(); enviarFormOrcamento('${nomePacote}');">
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem;">
+            <input type="text" id="orcNome" placeholder="Seu nome completo" required style="padding: 0.65rem 0.9rem; border-radius: 8px; border: 1px solid #D8CAB9; font-size: 0.88rem;">
+            <input type="tel" id="orcTel" placeholder="WhatsApp para retorno" required style="padding: 0.65rem 0.9rem; border-radius: 8px; border: 1px solid #D8CAB9; font-size: 0.88rem;">
+            <textarea id="orcObs" placeholder="Alguma preferência de data ou ideia especial?" rows="2" style="padding: 0.65rem 0.9rem; border-radius: 8px; border: 1px solid #D8CAB9; font-size: 0.88rem; resize: none;"></textarea>
+          </div>
+          <button type="submit" style="width: 100%; background: #352319; color: #FAF5EE; border: none; padding: 0.75rem; border-radius: 9999px; font-weight: 700; cursor: pointer; font-size: 0.9rem;">
+            Solicitar Proposta →
+          </button>
+        </form>
+      </div>
+    `;
+    modal.style.display = 'flex';
+  };
+
+  window.enviarFormOrcamento = async function(pacote) {
+    const nome = document.getElementById('orcNome').value;
+    const tel = document.getElementById('orcTel').value;
+    const obs = document.getElementById('orcObs').value;
+    try {
+      const res = await fetch('/api/contato', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, telefone: tel, mensagem: `[Interesse no ${pacote}]: ${obs || 'Gostaria de saber valores e datas.'}` })
+      });
+      const d = await res.json();
+      if (d.success) {
+        showToast(`🎉 Solicitação para ${pacote} enviada com sucesso!`);
+        document.getElementById('appModalOrcamento').style.display = 'none';
+      }
+    } catch (err) {
+      showToast('Erro ao enviar solicitação.', 'error');
+    }
+  };
+
+  // Modal para "+ Novo projeto"
+  window.capaBase64Temp = null;
+  window.previewCapaNovoProjeto = function(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      window.capaBase64Temp = e.target.result;
+      const previewWrap = document.getElementById('novoProjCapaPreviewWrap');
+      const previewImg = document.getElementById('novoProjCapaPreviewImg');
+      const nomeSpan = document.getElementById('novoProjCapaNome');
+      if (previewImg) previewImg.src = e.target.result;
+      if (previewWrap) previewWrap.style.display = 'flex';
+      if (nomeSpan) nomeSpan.textContent = file.name;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Modal para "+ Novo projeto" e Galeria com Foto de Capa
+  window.abrirModalNovoProjeto = function() {
+    window.capaBase64Temp = null;
+    let modal = document.getElementById('appModalNovoProjeto');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'appModalNovoProjeto';
+      modal.style.cssText = `
+        position: fixed; inset: 0; z-index: 99999;
+        background: rgba(20, 14, 10, 0.7); backdrop-filter: blur(5px);
+        display: flex; align-items: center; justify-content: center;
+        padding: 20px;
+      `;
+      document.body.appendChild(modal);
+    }
+    modal.innerHTML = `
+      <div style="background: #FAF5EE; border: 1px solid #D8CAB9; border-radius: 18px; max-width: 460px; width: 100%; padding: 2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.3); position: relative; max-height: 90vh; overflow-y: auto;">
+        <button type="button" onclick="document.getElementById('appModalNovoProjeto').style.display='none'" style="position: absolute; top: 18px; right: 20px; background: none; border: none; font-size: 1.3rem; color: #6B5546; cursor: pointer;">✕</button>
+        <span style="font-size: 0.76rem; font-weight: 700; color: #9E744B; letter-spacing: 0.08em; display: block; margin-bottom: 4px;">GESTÃO DE ENSAIOS E GALERIA</span>
+        <h3 style="font-size: 1.3rem; color: #2D1D14; font-weight: 800; margin-bottom: 1.25rem;">+ Cadastrar Projeto & Galeria</h3>
+        
+        <form onsubmit="event.preventDefault(); salvarNovoProjetoModal();">
+          <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 1.25rem;">
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:700; color:#5C4A3E; margin-bottom:3px;">Nome do Cliente *</label>
+              <input type="text" id="novoProjCliente" placeholder="Ex: Juliana & Marcos" required style="width:100%; padding: 0.65rem 0.9rem; border-radius: 8px; border: 1px solid #D8CAB9; font-size: 0.88rem;">
+            </div>
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:700; color:#5C4A3E; margin-bottom:3px;">Tipo de Ensaio</label>
+              <select id="novoProjTipo" style="width:100%; padding: 0.65rem 0.9rem; border-radius: 8px; border: 1px solid #D8CAB9; font-size: 0.88rem;">
+                <option value="Ensaio Família">Ensaio Família</option>
+                <option value="Ensaio Gestante">Ensaio Gestante</option>
+                <option value="Ensaio Bebê">Ensaio Bebê</option>
+                <option value="Ensaio Casal">Ensaio Casal</option>
+                <option value="Retrato Pessoal">Retrato Pessoal</option>
+              </select>
+            </div>
+            
+            <!-- DEFINIÇÃO DA FOTO DE CAPA DA GALERIA -->
+            <div style="background: #FFFFFF; border: 1px solid #E5D9CC; border-radius: 10px; padding: 0.85rem;">
+              <label style="display:block; font-size:0.75rem; font-weight:700; color:#5C4A3E; margin-bottom:5px;">Foto de Capa da Galeria</label>
+              <div style="display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;">
+                <label for="novoProjCapaFile" style="cursor: pointer; background: #FAF5EE; border: 1px dashed #9E744B; border-radius: 8px; padding: 0.5rem 0.85rem; font-size: 0.78rem; font-weight: 700; color: #8C5F35; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;">
+                  📷 Selecionar Foto como Capa
+                </label>
+                <input type="file" id="novoProjCapaFile" accept="image/*" style="display: none;" onchange="previewCapaNovoProjeto(event)">
+                <span id="novoProjCapaNome" style="font-size: 0.73rem; color: #8A7667; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px;">Usa a Logo Oficial se vazio</span>
+              </div>
+              <div id="novoProjCapaPreviewWrap" style="display:none; margin-top: 8px; align-items: center; gap: 8px; background: #FAF6F0; padding: 6px 10px; border-radius: 8px; border: 1px solid #D8CAB9;">
+                <img id="novoProjCapaPreviewImg" src="" style="width: 65px; height: 45px; object-fit: cover; border-radius: 6px; border: 1px solid #D8CAB9;">
+                <div>
+                  <strong style="display:block; font-size:0.75rem; color:#2E7D32;">✓ Capa da Galeria Definida</strong>
+                  <span style="font-size:0.68rem; color:#6B5546;">Esta foto será exibida como destaque na galeria.</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+              <div>
+                <label style="display:block; font-size:0.75rem; font-weight:700; color:#5C4A3E; margin-bottom:3px;">Sessões</label>
+                <input type="number" id="novoProjSessoes" value="1" min="1" max="10" style="width:100%; padding: 0.65rem 0.9rem; border-radius: 8px; border: 1px solid #D8CAB9; font-size: 0.88rem;">
+              </div>
+              <div>
+                <label style="display:block; font-size:0.75rem; font-weight:700; color:#5C4A3E; margin-bottom:3px;">Prazo / Data</label>
+                <input type="text" id="novoProjPrazo" placeholder="Ex: 25 nov" style="width:100%; padding: 0.65rem 0.9rem; border-radius: 8px; border: 1px solid #D8CAB9; font-size: 0.88rem;">
+              </div>
+            </div>
+          </div>
+          <button type="submit" id="btnSalvarNovoProjSubmit" style="width: 100%; background: #352319; color: #FAF5EE; border: none; padding: 0.75rem; border-radius: 9999px; font-weight: 700; cursor: pointer; font-size: 0.9rem; transition: all 0.2s;">
+            Salvar Projeto e Criar Galeria →
+          </button>
+        </form>
+      </div>
+    `;
+    modal.style.display = 'flex';
+  };
+
+  window.salvarNovoProjetoModal = async function() {
+    const nome = document.getElementById('novoProjCliente').value.trim();
+    const tipo = document.getElementById('novoProjTipo').value;
+    const sessoes = parseInt(document.getElementById('novoProjSessoes').value || 1);
+    const prazo = document.getElementById('novoProjPrazo').value.trim() || 'sem prazo';
+    const btnSubmit = document.getElementById('btnSalvarNovoProjSubmit');
+    if (btnSubmit) btnSubmit.textContent = 'Criando galeria e salvando...';
+
+    let foto_capa = 'assets/logo/logo.png';
+
+    // Se o usuário selecionou uma foto de capa
+    if (window.capaBase64Temp) {
+      try {
+        const upRes = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: window.capaBase64Temp })
+        });
+        const upData = await upRes.json();
+        if (upData.success && upData.url) {
+          foto_capa = upData.url;
+        }
+      } catch (e) {
+        foto_capa = window.capaBase64Temp;
+      }
+    }
+
+    try {
+      const res = await fetch('/api/projetos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome_cliente: nome,
+          tipo_ensaio: tipo,
+          categoria_tag: tipo.split(' ').pop(),
+          status: 'novos',
+          sessoes: sessoes,
+          prazo: prazo,
+          foto_capa: foto_capa,
+          avatar_img: foto_capa
+        })
+      });
+      const d = await res.json();
+      if (d.success) {
+        showToast(`✓ Projeto e Galeria de "${nome}" cadastrados com capa definida!`);
+        document.getElementById('appModalNovoProjeto').style.display = 'none';
+        window.capaBase64Temp = null;
+        if (typeof window.carregarProjetosGlobal === 'function') {
+          window.carregarProjetosGlobal();
+        } else if (typeof carregarProjetos === 'function') {
+          carregarProjetos();
+        } else {
+          window.location.reload();
+        }
+      }
+    } catch (err) {
+      showToast('Erro ao criar projeto.', 'error');
+    } finally {
+      if (btnSubmit) btnSubmit.textContent = 'Salvar Projeto e Criar Galeria →';
+    }
+  };
+
+});

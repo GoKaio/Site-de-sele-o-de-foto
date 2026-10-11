@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login do Fotógrafo | Casa da Foto Studio</title>
+  <meta name="description" content="Acesso exclusivo para fotógrafos da Casa da Foto Studio gerenciarem galerias e acompanharem clientes.">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Full-Width Split Layout -->
+  <div class="auth-split-wrapper">
+
+    <!-- 1. PAINEL ESQUERDO INSTITUCIONAL (DARK BROWN #352319) -->
+    <aside class="auth-left-panel">
+      
+      <!-- Topo: Logo Oficial e Assinatura -->
+      <div>
+        <div class="auth-logo-row">
+          <div class="auth-logo-box">
+            <img src="assets/logo/logo.png" alt="Logo Oficial Casa da Foto" id="authLogoImg">
+          </div>
+          <div>
+            <div style="font-size: 0.76rem; font-weight: 700; color: #FAF5EE; letter-spacing: 0.08em;">ESTÚDIO CASA DA FOTO</div>
+            <div style="font-size: 0.7rem; color: #C5B5A5;">Momentos que ficam</div>
+          </div>
+        </div>
+
+        <!-- Moldura da Foto de Destaque -->
+        <div class="auth-hero-photo-wrap">
+          <img src="uploads/login_hero.jpg" id="authHeroImg" alt="Ensaio Infantil no estúdio" onerror="this.src='assets/logo/logo.png'">
+        </div>
+
+        <!-- Textos Inspiradores -->
+        <div class="auth-tag-line">
+          <span>——</span>
+          <span>SELEÇÃO DE FOTOS</span>
+        </div>
+        <h2 class="auth-left-title">Cada foto, uma história para guardar.</h2>
+        <p class="auth-left-desc">Um espaço para olhar com calma e escolher os momentos que ficam.</p>
+      </div>
+
+      <!-- Rodapé do Painel Esquerdo -->
+      <div class="auth-left-footer">
+        <span>Casa da Foto Studio</span>
+        <div style="color: #C59B6D; font-size: 0.9rem; letter-spacing: 0.25em;">· —— ·</div>
+      </div>
+
+    </aside>
+
+    <!-- 2. PAINEL DIREITO DE LOGIN DO FOTÓGRAFO (LIGHT SAND #FAF6F0) -->
+    <main class="auth-right-panel">
+      
+      <!-- Barra Superior com Link de Voltar -->
+      <div class="auth-top-bar">
+        <a href="login.html" class="auth-back-link">
+          <span>←</span>
+          <span>Voltar à escolha de perfil</span>
+        </a>
+        <span style="font-weight: 600;">Seleção de fotos</span>
+      </div>
+
+      <!-- Container Central do Formulário -->
+      <div class="auth-content-container">
+        
+        <span class="auth-overline">ÁREA DO FOTÓGRAFO</span>
+        <h1 class="auth-title">Bom ter você de volta.</h1>
+        <p class="auth-subtitle">Entre para organizar suas galerias e acompanhar a seleção de fotos dos seus clientes.</p>
+
+        <!-- Formulário de Login -->
+        <form id="formLoginFotografo">
+          
+          <!-- Campo E-mail -->
+          <div class="auth-form-group">
+            <label for="fotoEmail" class="field-label">E-mail</label>
+            <div class="auth-input-wrapper">
+              <span class="auth-input-icon-left">✉</span>
+              <input 
+                type="email" 
+                id="fotoEmail" 
+                class="auth-input-field" 
+                placeholder="Digite seu e-mail" 
+                value="contato@casadafoto.com" 
+                required
+              >
+            </div>
+          </div>
+
+          <!-- Campo Senha -->
+          <div class="auth-form-group">
+            <label for="fotoSenha" class="field-label">Senha</label>
+            <div class="auth-input-wrapper">
+              <span class="auth-input-icon-left">🔒</span>
+              <input 
+                type="password" 
+                id="fotoSenha" 
+                class="auth-input-field" 
+                placeholder="Digite sua senha" 
+                value="" 
+                required
+              >
+              <span class="auth-input-icon-right" id="togglePassEye" title="Mostrar/ocultar senha">👁</span>
+            </div>
+          </div>
+
+          <!-- Opções: Mostrar Senha e Esqueci Minha Senha -->
+          <div class="auth-row-options">
+            <label style="display: flex; align-items: center; gap: 0.45rem; cursor: pointer;">
+              <input type="checkbox" id="chkShowPass">
+              <span>Mostrar senha</span>
+            </label>
+            <a href="#" onclick="showToast('Caso tenha esquecido sua senha, contate a administração do estúdio.'); return false;">Esqueci minha senha</a>
+          </div>
+
+          <!-- Botão de Ação -->
+          <button type="submit" class="btn-auth-action" id="btnEntrarFotografo">
+            <span>Entrar</span>
+            <span>→</span>
+          </button>
+
+          <div class="auth-bottom-hint" style="margin-top: 0.6rem; margin-bottom: 1.5rem;">
+            Preencha o e-mail e a senha para entrar.
+          </div>
+
+        </form>
+
+        <!-- Card de Aviso Informativo -->
+        <div class="auth-info-banner">
+          <span style="font-size: 1.2rem; color: #9E744B; flex-shrink: 0;">ⓘ</span>
+          <div>
+            <strong>Este acesso é para fotógrafos.</strong>
+            <span>Para escolher as fotos do seu ensaio, volte à escolha de perfil e selecione "Sou cliente".</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Rodapé do Painel Direito -->
+      <div class="auth-footer-strip">
+        <span>Casa da Foto Studio · Momentos que ficam</span>
+        <span>Português (Brasil)</span>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Script para alternância de visualização de senha -->
+  <script>
+    const passField = document.getElementById('fotoSenha');
+    const chkShow = document.getElementById('chkShowPass');
+    const eyeBtn = document.getElementById('togglePassEye');
+
+    function togglePassword() {
+      if (passField.type === 'password') {
+        passField.type = 'text';
+        chkShow.checked = true;
+      } else {
+        passField.type = 'password';
+        chkShow.checked = false;
+      }
+    }
+
+    chkShow.addEventListener('change', () => {
+      passField.type = chkShow.checked ? 'text' : 'password';
+    });
+
+    eyeBtn.addEventListener('click', togglePassword);
+  </script>
+
+  <script src="app.js"></script>
+</body>
+</html>

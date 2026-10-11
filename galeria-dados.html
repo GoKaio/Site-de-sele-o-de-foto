@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script>window.location.replace("galeria-config.html" + window.location.search + "#dados");</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dados da galeria | Configurações da Galeria | Casa da Foto Studio</title>
+  <meta name="description" content="Painel de gerenciamento, dados, prazos, clientes e entrega da galeria.">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Full-Width Fluid Wrapper -->
+  <div class="site-wrapper" id="siteWrapper">
+
+    <!-- 1. HEADER DO PAINEL DO FOTÓGRAFO (100% FULL-WIDTH) -->
+    <header class="site-header admin-header" id="siteHeader">
+      <div class="content-wrap-wide admin-header-nav">
+        
+        <!-- Logo e Monograma -->
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+          <div class="header-logo-card" style="width: 155px; height: 74px; padding: 0.4rem 1rem;">
+            <img src="assets/logo/logo.png" alt="Logo Casa da Foto" id="headerLogoImg">
+          </div>
+          <div>
+            <span class="header-brand-name" style="font-size: 0.72rem;">ESTÚDIO CASA DA FOTO</span>
+            <span class="header-brand-slogan" style="font-size: 0.65rem;">Momentos que ficam</span>
+          </div>
+        </div>
+
+        <!-- Links Centrais -->
+        <nav class="admin-nav-center" aria-label="Navegação do Painel">
+          <a href="index.html" class="nav-item">Início</a>
+          <a href="projetos.html" class="nav-item active-nav">Projetos</a>
+          <a href="#clientes-menu" class="nav-item">Clientes</a>
+          <a href="#config-menu" class="nav-item">Configurações</a>
+        </nav>
+
+        <!-- Ações do Fotógrafo (Direita) -->
+        <div class="admin-nav-user-actions">
+          <span class="btn-painel-fotografo">PAINEL DO FOTÓGRAFO</span>
+          <span style="font-size: 1.25rem; color: #FFFFFF; cursor: pointer;">🔔</span>
+          <div class="user-avatar-circle">CF</div>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- 2. LAYOUT SPLIT: SIDEBAR DE CONFIGURAÇÕES + ÁREA DE CONTEÚDO -->
+    <div class="admin-layout-wrapper">
+      
+      <!-- SIDEBAR LATERAL ESQUERDA -->
+      <aside class="admin-sidebar" id="adminSidebar">
+        
+        <div>
+          <a href="projetos.html" class="sidebar-back-link">
+            <span>← Todos os projetos</span>
+          </a>
+
+          <div class="sidebar-project-header">
+            <span class="sidebar-project-tag">CONFIGURAÇÕES DA GALERIA</span>
+            <h2 class="sidebar-project-title">Exemplo de seleção</h2>
+            <span class="badge-status-andamento">Escolha em andamento</span>
+          </div>
+        </div>
+
+        <!-- Menu com os 10 Módulos das Telas do Figma -->
+        <ul class="sidebar-menu-list" id="sidebarMenu">
+          <li>
+            <a href="galeria-dados.html" class="sidebar-nav-btn active">
+              <span class="sidebar-btn-content">📁 Dados da galeria</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-fotos.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🖼️ Fotos</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-selecao.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🛒 Seleção e venda</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-prazo.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📅 Prazo e lembrete</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-acesso.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🔒 Acesso e privacidade</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-clientes.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">👥 Clientes</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-download.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📥 Download</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-design.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🎨 Design</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-atividades.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📊 Atividades do cliente</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-historico.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🕒 Histórico de atividades</span>
+            </a>
+          </li>
+        </ul>
+        <!-- Card de Ajuda no Rodapé da Sidebar -->
+        <div class="sidebar-help-card">
+          <strong>Cada detalhe, com cuidado.</strong>
+          <p>Organize a escolha e prepare uma entrega tranquila para seu cliente.</p>
+          <a href="#">Central de ajuda ↗</a>
+        </div>
+
+      </aside>
+      <!-- ÁREA DE CONTEÚDO PRINCIPAL (DIREITA) -->
+      <main class="admin-main-content" id="adminMainContent">
+        
+        <!-- Barra Superior: Breadcrumbs, Badge e Botão Prévia -->
+        <div class="admin-top-meta-row">
+          <div class="admin-breadcrumb">
+            Projetos &nbsp;/&nbsp; Exemplo de seleção &nbsp;/&nbsp; <strong id="breadcrumbTabName">Configurações</strong>
+          </div>
+          <span class="admin-badge-demo">Demonstração · sem valores comerciais</span>
+        </div>
+
+        <div class="admin-header-action-row">
+          <div>
+            <h1 class="admin-page-title" id="pageTitle">Dados da galeria</h1>
+            <p class="admin-page-subtitle" id="pageSubtitle">Organize as informações e a mensagem que acolhe o cliente na galeria.</p>
+          </div>
+          <a href="escolha-fotos.html" class="btn-previa-cliente">
+            <span>👁 Prévia do cliente</span>
+          </a>
+        </div>
+
+        <!-- CONTEÚDO DA TELA: DADOS DA GALERIA -->
+        <div class="tab-pane active" id="tab-dados">
+          <div class="admin-form-two-col">
+            
+            <!-- Coluna Esquerda: Formulários -->
+            <div>
+              <!-- Bloco 1: Informações da galeria -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Informações da galeria</h3>
+                <p class="panel-desc">Os dados abaixo aparecem na apresentação para o cliente.</p>
+
+                <div class="form-field-group">
+                  <label class="field-label">Nome da galeria</label>
+                  <input type="text" class="field-input" value="Exemplo de seleção">
+                </div>
+
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Categoria</label>
+                    <select class="field-select">
+                      <option selected>Galeria demonstrativa</option>
+                      <option>Ensaio Família</option>
+                      <option>Gestante</option>
+                      <option>Newborn</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="field-label">Data do trabalho</label>
+                    <select class="field-select">
+                      <option selected>08/10/2026</option>
+                      <option>10/10/2026</option>
+                      <option>15/10/2026</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Exibição das fotos</label>
+                    <select class="field-select">
+                      <option selected>Ultra HD - 4K (3840 pixels)</option>
+                      <option>Full HD (1920 pixels)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="field-label">Idioma</label>
+                    <select class="field-select">
+                      <option selected>Português (Brasil)</option>
+                      <option>English</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bloco 2: Mensagem de acesso -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Mensagem de acesso</h3>
+                <p class="panel-desc">Uma recepção cuidadosa antes da escolha das fotos.</p>
+
+                <div class="form-field-group">
+                  <label class="field-label">Mensagem para o cliente</label>
+                  <textarea class="field-textarea">Olá! Seus momentos estão aqui. Escolha suas favoritas para o pacote e, se desejar, marque fotos extras. Revise as duas listas antes de enviar sua seleção. Com carinho, Casa da Foto Studio.</textarea>
+                  <span class="field-hint-caption">Mensagem ilustrativa - exibida ao acessar a galeria</span>
+                </div>
+              </div>
+
+              <!-- Bloco 3: Comentários e compartilhamento -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Comentários e compartilhamento</h3>
+                
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Permitir comentários nas fotos</strong>
+                    <span>O cliente pode deixar observações para o fotógrafo.</span>
+                  </div>
+                  <label class="switch-toggle">
+                    <input type="checkbox" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Permitir compartilhamento em redes sociais</strong>
+                    <span>Mantenha a escolha restrita aos destinatários convidados.</span>
+                  </div>
+                  <label class="switch-toggle">
+                    <input type="checkbox">
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="admin-bottom-actions-row">
+                <span>Alterações apenas nesta galeria de demonstração.</span>
+                <button type="button" class="btn-salvar-admin">✓ Salvar</button>
+              </div>
+            </div>
+
+            <!-- Coluna Direita: Cards de Prévia -->
+            <div class="admin-side-cards-col">
+              <div class="admin-preview-box">
+                <h4>Como o cliente verá</h4>
+                <div class="admin-preview-img-frame">
+                  <img src="assets/images/familia.jpg" alt="Foto da família">
+                </div>
+                <div class="admin-preview-caption-title">Exemplo de seleção</div>
+                <span class="preview-pill-tag">Galeria demonstrativa</span>
+                <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
+                  12 fotos para explorar. Um convite para escolher os momentos que ficam.
+                </p>
+              </div>
+
+              <div class="admin-info-box-note">
+                <strong>Uma galeria, uma configuração</strong>
+                <p>Estas preferências valem apenas para esta galeria. A identidade do estúdio é mantida nas outras páginas.</p>
+              </div>
+
+              <div class="admin-timestamp-text">
+                Última atualização ilustrativa: 10 out. 2026, às 14:20.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </main>
+
+    </div>
+
+    <!-- Rodapé -->
+    <footer class="admin-footer-strip">
+      <div class="content-wrap-wide admin-footer-flex">
+        <span>Casa da Foto Studio · Momentos que ficam</span>
+        <span>Exemplo de seleção · Dados e estados ilustrativos</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- SCRIPT DE NAVEGAÇÃO INTERATIVA ENTRE AS 10 TELAS -->
+    <script src="app.js"></script>
+</body>
+</html>

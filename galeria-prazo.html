@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script>window.location.replace("galeria-config.html" + window.location.search + "#prazo");</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prazo e lembrete | Configurações da Galeria | Casa da Foto Studio</title>
+  <meta name="description" content="Painel de gerenciamento, dados, prazos, clientes e entrega da galeria.">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Full-Width Fluid Wrapper -->
+  <div class="site-wrapper" id="siteWrapper">
+
+    <!-- 1. HEADER DO PAINEL DO FOTÓGRAFO (100% FULL-WIDTH) -->
+    <header class="site-header admin-header" id="siteHeader">
+      <div class="content-wrap-wide admin-header-nav">
+        
+        <!-- Logo e Monograma -->
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+          <div class="header-logo-card" style="width: 155px; height: 74px; padding: 0.4rem 1rem;">
+            <img src="assets/logo/logo.png" alt="Logo Casa da Foto" id="headerLogoImg">
+          </div>
+          <div>
+            <span class="header-brand-name" style="font-size: 0.72rem;">ESTÚDIO CASA DA FOTO</span>
+            <span class="header-brand-slogan" style="font-size: 0.65rem;">Momentos que ficam</span>
+          </div>
+        </div>
+
+        <!-- Links Centrais -->
+        <nav class="admin-nav-center" aria-label="Navegação do Painel">
+          <a href="index.html" class="nav-item">Início</a>
+          <a href="projetos.html" class="nav-item active-nav">Projetos</a>
+          <a href="#clientes-menu" class="nav-item">Clientes</a>
+          <a href="#config-menu" class="nav-item">Configurações</a>
+        </nav>
+
+        <!-- Ações do Fotógrafo (Direita) -->
+        <div class="admin-nav-user-actions">
+          <span class="btn-painel-fotografo">PAINEL DO FOTÓGRAFO</span>
+          <span style="font-size: 1.25rem; color: #FFFFFF; cursor: pointer;">🔔</span>
+          <div class="user-avatar-circle">CF</div>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- 2. LAYOUT SPLIT: SIDEBAR DE CONFIGURAÇÕES + ÁREA DE CONTEÚDO -->
+    <div class="admin-layout-wrapper">
+      
+      <!-- SIDEBAR LATERAL ESQUERDA -->
+      <aside class="admin-sidebar" id="adminSidebar">
+        
+        <div>
+          <a href="projetos.html" class="sidebar-back-link">
+            <span>← Todos os projetos</span>
+          </a>
+
+          <div class="sidebar-project-header">
+            <span class="sidebar-project-tag">CONFIGURAÇÕES DA GALERIA</span>
+            <h2 class="sidebar-project-title">Exemplo de seleção</h2>
+            <span class="badge-status-andamento">Escolha em andamento</span>
+          </div>
+        </div>
+
+        <!-- Menu com os 10 Módulos das Telas do Figma -->
+        <ul class="sidebar-menu-list" id="sidebarMenu">
+          <li>
+            <a href="galeria-dados.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📁 Dados da galeria</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-fotos.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🖼️ Fotos</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-selecao.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🛒 Seleção e venda</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-prazo.html" class="sidebar-nav-btn active">
+              <span class="sidebar-btn-content">📅 Prazo e lembrete</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-acesso.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🔒 Acesso e privacidade</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-clientes.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">👥 Clientes</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-download.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📥 Download</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-design.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🎨 Design</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-atividades.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📊 Atividades do cliente</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-historico.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🕒 Histórico de atividades</span>
+            </a>
+          </li>
+        </ul>
+        <!-- Card de Ajuda no Rodapé da Sidebar -->
+        <div class="sidebar-help-card">
+          <strong>Cada detalhe, com cuidado.</strong>
+          <p>Organize a escolha e prepare uma entrega tranquila para seu cliente.</p>
+          <a href="#">Central de ajuda ↗</a>
+        </div>
+
+      </aside>
+      <!-- ÁREA DE CONTEÚDO PRINCIPAL (DIREITA) -->
+      <main class="admin-main-content" id="adminMainContent">
+        
+        <!-- Barra Superior: Breadcrumbs, Badge e Botão Prévia -->
+        <div class="admin-top-meta-row">
+          <div class="admin-breadcrumb">
+            Projetos &nbsp;/&nbsp; Exemplo de seleção &nbsp;/&nbsp; <strong id="breadcrumbTabName">Prazo e lembrete</strong>
+          </div>
+          <span class="admin-badge-demo">Demonstração · sem valores comerciais</span>
+        </div>
+
+        <div class="admin-header-action-row">
+          <div>
+            <h1 class="admin-page-title" id="pageTitle">Prazo e lembrete</h1>
+            <p class="admin-page-subtitle" id="pageSubtitle">Dê ao cliente tempo para escolher e prepare lembretes com a voz do estúdio.</p>
+          </div>
+          <a href="escolha-fotos.html" class="btn-previa-cliente">
+            <span>👁 Prévia do cliente</span>
+          </a>
+        </div>
+
+        <!-- CONTEÚDO DA TELA: PRAZO E LEMBRETE -->
+        <div class="tab-pane active" id="tab-prazo" >
+          <div class="admin-form-two-col">
+            <div>
+              <!-- Bloco 1: Prazo para a escolha -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Prazo para a escolha</h3>
+                
+                <div class="toggle-item-row" style="margin-bottom: 1.25rem;">
+                  <div class="toggle-label-wrap">
+                    <strong>Definir prazo de seleção</strong>
+                    <span>A data é apresentada ao cliente ao acessar a galeria.</span>
+                  </div>
+                  <label class="switch-toggle">
+                    <input type="checkbox" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Data limite</label>
+                    <select class="field-select">
+                      <option selected>20/10/2026</option>
+                      <option>25/10/2026</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="field-label">Horário</label>
+                    <select class="field-select">
+                      <option selected>23:59 - horário de Brasília</option>
+                      <option>18:00 - horário de Brasília</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-field-group">
+                  <label class="field-label">Ao encerrar o prazo</label>
+                  <select class="field-select">
+                    <option selected>Pausar novas escolhas e preservar a seleção</option>
+                    <option>Bloquear acesso completamente</option>
+                  </select>
+                  <span class="field-hint-caption">As 6 fotos do pacote e as 2 extras permanecem registradas após o prazo.</span>
+                </div>
+              </div>
+
+              <!-- Bloco 2: Lembretes de seleção -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Lembretes de seleção</h3>
+
+                <div class="toggle-item-row" style="margin-bottom: 1.25rem;">
+                  <div class="toggle-label-wrap">
+                    <strong>Lembretes por convite</strong>
+                    <span>Avisar apenas destinatários que ainda não finalizaram a escolha.</span>
+                  </div>
+                  <label class="switch-toggle">
+                    <input type="checkbox" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Primeiro lembrete</label>
+                    <select class="field-select">
+                      <option selected>3 dias antes - 17/10/2026</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="field-label">Último lembrete</label>
+                    <select class="field-select">
+                      <option selected>1 dia antes - 19/10/2026</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-field-group">
+                  <label class="field-label">Horário dos lembretes</label>
+                  <select class="field-select">
+                    <option selected>09:00 - horário de Brasília</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Bloco 3: Mensagem do lembrete -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Mensagem do lembrete</h3>
+                <div class="form-field-group">
+                  <label class="field-label">Texto para o cliente</label>
+                  <textarea class="field-textarea">Olá! Ainda dá tempo de escolher seus momentos favoritos. No exemplo, faltam 4 fotos para completar o pacote. Revise também suas 2 extras e envie sua seleção até 20/10. Estamos por aqui para ajudar!</textarea>
+                  <span class="field-hint-caption">O lembrete deixa de ser previsto quando a seleção final é recebida.</span>
+                </div>
+              </div>
+
+              <div class="admin-bottom-actions-row">
+                <span>Alterações apenas nesta galeria de demonstração.</span>
+                <button type="button" class="btn-salvar-admin">✓ Salvar alterações</button>
+              </div>
+            </div>
+
+            <!-- Coluna Direita: Agenda da galeria -->
+            <div class="admin-side-cards-col">
+              <div class="admin-preview-box">
+                <h4>Agenda da galeria</h4>
+                <span class="preview-pill-tag">10 dias para escolher</span>
+
+                <div style="margin-top: 1rem;">
+                  <div class="timeline-event-item">
+                    <div class="timeline-date-badge">10 OUT</div>
+                    <div class="timeline-event-desc">
+                      <strong>Escolha em andamento</strong>
+                      <span>6 do pacote · 2 extras</span>
+                    </div>
+                  </div>
+                  <div class="timeline-event-item">
+                    <div class="timeline-date-badge">17 OUT</div>
+                    <div class="timeline-event-desc">
+                      <strong>Primeiro lembrete</strong>
+                      <span>09:00 - previsto</span>
+                    </div>
+                  </div>
+                  <div class="timeline-event-item">
+                    <div class="timeline-date-badge">19 OUT</div>
+                    <div class="timeline-event-desc">
+                      <strong>Último lembrete</strong>
+                      <span>09:00 - previsto</span>
+                    </div>
+                  </div>
+                  <div class="timeline-event-item">
+                    <div class="timeline-date-badge">20 OUT</div>
+                    <div class="timeline-event-desc">
+                      <strong>Prazo de seleção</strong>
+                      <span>23:59 - encerramento</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="admin-info-box-note">
+                <strong>Sem pressa, com clareza</strong>
+                <p>Datas e lembretes são ilustrativos. Nenhuma mensagem será disparada por este painel.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+    </div>
+
+    <!-- Rodapé -->
+    <footer class="admin-footer-strip">
+      <div class="content-wrap-wide admin-footer-flex">
+        <span>Casa da Foto Studio · Momentos que ficam</span>
+        <span>Exemplo de seleção · Dados e estados ilustrativos</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- SCRIPT DE NAVEGAÇÃO INTERATIVA ENTRE AS 10 TELAS -->
+    <script src="app.js"></script>
+</body>
+</html>

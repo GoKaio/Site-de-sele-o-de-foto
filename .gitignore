@@ -1,0 +1,125 @@
+# ============================================================
+#  CASA DA FOTO STUDIO - .gitignore
+#  Inclui proteções de segurança, privacidade e limpeza
+# ============================================================
+
+# ── BANCO DE DADOS (NUNCA subir para o git!) ──
+*.db
+*.sqlite
+*.sqlite3
+banco.db
+*.db-wal
+*.db-shm
+banco.db-wal
+banco.db-shm
+
+# ── VARIÁVEIS DE AMBIENTE (SEGREDOS!) ──
+.env
+.env.local
+.env.production
+.env.staging
+*.env
+
+# ── PYTHON ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+
+# ── VIRTUAL ENVIRONMENTS ──
+.venv/
+venv/
+env/
+ENV/
+.virtualenv/
+.pip/
+
+# ── UPLOADS E MÍDIAS PRIVADAS (não subir fotos dos clientes!) ──
+uploads/
+media/private/
+assets/clientes/
+assets/galerias/
+assets/uploads/
+
+# ── LOGS ──
+*.log
+logs/
+log/
+server.log
+error.log
+access.log
+
+# ── TESTES ──
+test_suite.py
+tests/__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── EDITORES / IDEs ──
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+.history/
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+*.swp
+*.swo
+*~
+
+# ── NODE (se usar tooling frontend) ──
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+package-lock.json
+
+# ── ARQUIVOS DE BUILD ──
+*.min.js.map
+*.min.css.map
+
+# ── CERTIFICADOS E CHAVES ──
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+
+# ── ARQUIVOS TEMPORÁRIOS ──
+tmp/
+temp/
+.tmp/
+*.tmp
+*.bak
+*.backup
+*.orig
+
+# ── INICIAR SERVIDOR (bat com configurações locais) ──
+iniciar_servidor.bat
+
+# ── VERCEL ──
+.vercel/
+
+

@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Administrativo do Site | Casa da Foto Studio</title>
+  <meta name="description" content="Painel de controle para gerenciar categorias e fotos publicadas no site da Casa da Foto Studio.">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    if (!sessionStorage.getItem('admin_autenticado')) {
+      window.location.replace('admin-login.html');
+    }
+  </script>
+  <style>
+    .admin-dash-container {
+      max-width: 1200px;
+      margin: 2.5rem auto;
+      padding: 0 1.5rem;
+    }
+    .admin-section-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2.5rem;
+    }
+    @media (max-width: 850px) {
+      .admin-section-grid { grid-template-columns: 1fr; }
+    }
+    .badge-admin-status {
+      background: #FAF2E8;
+      color: #9E744B;
+      border: 1px solid #D8CAB9;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .item-row-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: #FAF5EE;
+      border: 1px solid #E8DDD0;
+      border-radius: 10px;
+      margin-bottom: 0.65rem;
+    }
+    .btn-delete-item {
+      background: #FFF;
+      border: 1px solid #D9534F;
+      color: #D9534F;
+      border-radius: 6px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-delete-item:hover {
+      background: #D9534F;
+      color: #FFF;
+    }
+  </style>
+</head>
+<body style="background-color: #F7F1E9;">
+
+  <!-- Header Administrativo -->
+  <header class="site-header admin-header">
+    <div class="content-wrap-wide admin-header-nav">
+      
+      <div style="display: flex; align-items: center; gap: 1.25rem;">
+        <div class="header-logo-card" style="width: 140px; height: 65px; padding: 0.3rem 0.8rem;">
+          <img src="assets/logo/logo.png" alt="Logo Oficial Casa da Foto">
+        </div>
+        <div>
+          <span class="header-brand-name" style="font-size: 0.74rem;">ESTÚDIO CASA DA FOTO</span>
+          <span class="header-brand-slogan" style="font-size: 0.68rem; color: #D8B788;">Painel de Gestão do Site</span>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 1.5rem;">
+        <a href="index.html" target="_blank" style="color: #FAF5EE; text-decoration: none; font-size: 0.88rem; font-weight: 600; display: flex; align-items: center; gap: 0.3rem;">
+          <span>👁 Ver Site ao Vivo</span>
+        </a>
+        <a href="projetos.html" style="color: #D8B788; text-decoration: none; font-size: 0.88rem; font-weight: 600;">
+          <span>Kanban de Projetos</span>
+        </a>
+        <a href="galeria-config.html" style="color: #FAF5EE; text-decoration: none; font-size: 0.88rem; font-weight: 600;">
+          <span>Configuração da Galeria</span>
+        </a>
+        <button type="button" onclick="logoutAdmin();" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #FFF; border-radius: 9999px; padding: 0.4rem 1.1rem; font-size: 0.8rem; cursor: pointer; font-weight: 600;">
+          Sair da Conta ↗
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Container Principal -->
+  <main class="admin-dash-container">
+    
+    <!-- Topo de Boas-Vindas -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
+      <div>
+        <h1 style="font-size: 2.1rem; color: #2D1D14; font-weight: 800; margin-bottom: 0.35rem;">Administração de Conteúdo</h1>
+        <p style="color: #7A6A5E; font-size: 0.95rem;">Adicione as categorias e fotos que serão exibidas na página inicial do site.</p>
+      </div>
+      <div style="text-align: right;">
+        <span class="badge-admin-status" id="badgeTotalStatus">Carregando dados...</span>
+      </div>
+    </div>
+
+    <!-- ==============================================================
+         BLOCO 0: LOGOTIPO OFICIAL DO ESTÚDIO & MARCA D'ÁGUA
+         ============================================================== -->
+    <div class="admin-card-panel" style="margin-bottom: 2rem; background: #FAF5EE; border: 1.5px solid #D8CAB9;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+        <div>
+          <h2 class="panel-title" style="margin: 0;">👑 Logotipo Oficial do Estúdio & Marca d'água</h2>
+          <p class="panel-desc" style="margin-top: 4px; margin-bottom: 0;">
+            Substitua a logomarca oficial do estúdio. Ela é exibida no cabeçalho do site e <strong>transformada automaticamente em marca d'água protetora translúcida</strong> sobre todas as fotos das galerias dos clientes.
+          </p>
+        </div>
+        <span class="preview-pill-tag" style="background: #2D1D14; color: #FAF5EE; font-weight: 700;">Logo Ativa & Marca d'água</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;">
+        <div style="background: #FFF; padding: 1rem; border-radius: 12px; border: 1px solid #D8CAB9; text-align: center; min-width: 170px;">
+          <img id="imgLogoAdminPreview" src="assets/logo/logo.png" alt="Logotipo Oficial" style="max-height: 80px; max-width: 160px; object-fit: contain; display: block; margin: 0 auto;">
+          <span style="font-size: 0.72rem; color: #7A6A5E; margin-top: 6px; display: block;">Logotipo Atual</span>
+        </div>
+
+        <div style="flex: 1; min-width: 280px;">
+          <label class="field-label" style="font-weight: 700;">Selecione o novo arquivo de Logo do seu Computador:</label>
+          <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <input type="file" id="inputUploadLogo" accept="image/png,image/jpeg,image/webp" class="field-input" style="flex: 1; padding: 0.45rem;" onchange="previewNovaLogo(event)">
+            <button type="button" onclick="salvarNovaLogo();" class="btn-salvar-admin" id="btnSalvarLogo" style="white-space: nowrap; padding: 0.65rem 1.4rem;">
+              💾 Atualizar Logotipo e Marca d'água
+            </button>
+          </div>
+          <span class="field-hint-caption" style="margin-top: 0.5rem;">Formatos recomendados: PNG transparente ou JPG de alta resolução.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==============================================================
+         BLOCO 0.5: FOTO DAS TELAS DE LOGIN
+         ============================================================== -->
+    <div class="admin-card-panel" style="margin-bottom: 2rem; background: #FAF5EE; border: 1.5px solid #D8CAB9;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+        <div>
+          <h2 class="panel-title" style="margin: 0;">🖼️ Foto das Telas de Login</h2>
+          <p class="panel-desc" style="margin-top: 4px; margin-bottom: 0;">
+            Personalize a foto principal que aparece em destaque lateral nas telas de acesso (Login do Cliente, Fotógrafo e Administrador).
+          </p>
+        </div>
+        <span class="preview-pill-tag" style="background: #2D1D14; color: #FAF5EE; font-weight: 700;">Destaque de Login</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;">
+        <div style="background: #FFF; padding: 0.5rem; border-radius: 12px; border: 1px solid #D8CAB9; text-align: center; width: 170px; height: 125px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+          <img id="imgLoginAdminPreview" src="uploads/login_hero.jpg" alt="Foto Atual de Login" style="max-height: 95px; width: 100%; object-fit: cover; border-radius: 8px;">
+          <span style="font-size: 0.7rem; color: #7A6A5E; margin-top: 4px; display: block;">Foto Atual</span>
+        </div>
+
+        <div style="flex: 1; min-width: 280px;">
+          <label class="field-label" style="font-weight: 700;">Selecione a nova foto de login do seu Computador:</label>
+          <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <input type="file" id="inputUploadFotoLogin" accept="image/png,image/jpeg,image/webp" class="field-input" style="flex: 1; padding: 0.45rem;" onchange="previewNovaFotoLogin(event)">
+            <button type="button" onclick="salvarNovaFotoLogin();" class="btn-salvar-admin" id="btnSalvarFotoLogin" style="white-space: nowrap; padding: 0.65rem 1.4rem;">
+              💾 Salvar Foto das Telas de Login
+            </button>
+          </div>
+          <span class="field-hint-caption" style="margin-top: 0.5rem;">Formatos recomendados: JPG ou PNG em alta resolução (orientação vertical ou quadrada).</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grade: Categorias e Fotos -->
+    <div class="admin-section-grid">
+
+      <!-- ==============================================================
+           BLOCO 1: GERENCIAR CATEGORIAS DO SITE
+           ============================================================== -->
+      <div class="admin-card-panel" style="margin-bottom: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+          <h2 class="panel-title" style="margin: 0;">🏷️ Categorias do Site</h2>
+          <span class="preview-pill-tag" id="countCategorias" style="margin: 0;">0 cadastradas</span>
+        </div>
+        <p class="panel-desc">Estas categorias aparecem como botões de filtro no início e no carrossel do site.</p>
+
+        <!-- Formulário Adicionar Categoria -->
+        <form id="formAddCategoria" onsubmit="event.preventDefault(); adicionarCategoria();" style="margin-bottom: 1.5rem;">
+          <div style="display: flex; gap: 0.65rem;">
+            <input 
+              type="text" 
+              id="inputNovaCategoria" 
+              class="field-input" 
+              placeholder="Ex: Ensaio Família, Gestante, Bebê, Casal, Retrato..." 
+              required
+              style="flex: 1;"
+            >
+            <button type="submit" class="btn-salvar-admin" style="white-space: nowrap;">
+              + Adicionar
+            </button>
+          </div>
+          <span class="field-hint-caption">O site começou zerado; adicione as categorias desejadas.</span>
+        </form>
+
+        <h3 style="font-size: 0.9rem; color: #2D1D14; margin-bottom: 0.75rem; font-weight: 700;">Categorias Atuais no Site:</h3>
+        <div id="listaCategorias" style="max-height: 280px; overflow-y: auto; padding-right: 4px;">
+          <!-- Carregado via JS -->
+          <div style="text-align: center; color: #999; padding: 1.5rem;">Nenhuma categoria cadastrada ainda.</div>
+        </div>
+      </div>
+
+      <!-- ==============================================================
+           BLOCO 2: GERENCIAR FOTOS DO SITE (CARROSSEL)
+           ============================================================== -->
+      <div class="admin-card-panel" style="margin-bottom: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+          <h2 class="panel-title" style="margin: 0;">📸 Fotos do Carrossel</h2>
+          <span class="preview-pill-tag" id="countFotos" style="margin: 0;">0 publicadas</span>
+        </div>
+        <p class="panel-desc">Suba fotos do seu computador para exibir no carrossel de fotos da página inicial.</p>
+
+        <!-- Formulário Adicionar Foto -->
+        <form id="formAddFoto" onsubmit="event.preventDefault(); adicionarFoto();" style="margin-bottom: 1.5rem;">
+          <div class="form-field-group">
+            <label class="field-label">Título do Registro</label>
+            <input type="text" id="inputTituloFoto" class="field-input" placeholder="Ex: Sessão Família Silva no Jardim" required>
+          </div>
+
+          <div class="form-row-2col">
+            <div>
+              <label class="field-label">Categoria Vinculada</label>
+              <select id="selectCategoriaFoto" class="field-select" required>
+                <option value="">Selecione uma categoria...</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Foto do Computador</label>
+              <input type="file" id="inputFotoArquivoUpload" accept="image/*" class="field-input" style="padding: 0.45rem;" required onchange="previewFotoNovaSite(event)">
+            </div>
+          </div>
+
+          <div id="previewFotoNovaContainer" style="display: none; margin-bottom: 1rem; align-items: center; gap: 1rem; background: #FAF5EE; padding: 0.75rem; border-radius: 8px; border: 1px dashed #D8CAB9;">
+            <img id="imgPreviewFotoNova" src="" style="width: 70px; height: 50px; object-fit: cover; border-radius: 6px;">
+            <span style="font-size: 0.78rem; color: #2D1D14; font-weight: 600;" id="txtPreviewFotoNovaNome"></span>
+          </div>
+
+          <button type="submit" class="btn-salvar-admin" id="btnPublicarFotoSite" style="width: 100%; justify-content: center;">
+            + Publicar Foto no Site
+          </button>
+        </form>
+
+        <h3 style="font-size: 0.9rem; color: #2D1D14; margin-bottom: 0.75rem; font-weight: 700;">Fotos Ativas no Carrossel:</h3>
+        <div id="listaFotos" style="max-height: 320px; overflow-y: auto; padding-right: 4px;">
+          <!-- Carregado via JS -->
+          <div style="text-align: center; color: #999; padding: 1.5rem;">Nenhuma foto publicada ainda.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==============================================================
+         BLOCO 3: GERENCIAR PACOTES DE ENSAIO DO SITE
+         ============================================================== -->
+    <div class="admin-card-panel" style="margin-bottom: 2.5rem; background: #FAF5EE; border: 1.5px solid #D8CAB9;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <h2 class="panel-title" style="margin: 0;">🎁 Pacotes de Ensaio do Site</h2>
+          <p class="panel-desc" style="margin-top: 4px; margin-bottom: 0;">
+            Cadastre pacotes com fotos diretamente do seu computador, valores e detalhes para exibição na página <strong>pacotes.html</strong>.
+          </p>
+        </div>
+        <span class="preview-pill-tag" id="countPacotes" style="margin: 0; font-weight: 700;">0 cadastrados</span>
+      </div>
+
+      <!-- Formulário para Criar Pacote -->
+      <form id="formAddPacote" onsubmit="event.preventDefault(); adicionarPacoteAdmin();" style="margin-bottom: 1.75rem; background: #FFF; padding: 1.25rem; border-radius: 12px; border: 1px solid #E8DDD0;">
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+          <div>
+            <label class="field-label">Título do Pacote *</label>
+            <input type="text" id="inputTituloPacote" class="field-input" placeholder="Ex: Ensaio Família Completo" required>
+          </div>
+          <div>
+            <label class="field-label">Valor / Investimento *</label>
+            <input type="text" id="inputValorPacote" class="field-input" placeholder="Ex: R$ 450,00 ou Sob consulta" required>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <label class="field-label">Foto do Pacote do seu Computador *</label>
+          <input type="file" id="inputFotoPacoteUpload" accept="image/*" class="field-input" style="padding: 0.45rem;" required onchange="previewFotoPacote(event)">
+          <div id="previewPacoteContainer" style="display: none; margin-top: 0.65rem; align-items: center; gap: 1rem; background: #FAF5EE; padding: 0.75rem; border-radius: 8px; border: 1px dashed #D8CAB9;">
+            <img id="imgPreviewPacote" src="" style="width: 80px; height: 60px; object-fit: cover; border-radius: 6px;">
+            <span style="font-size: 0.78rem; color: #2D1D14; font-weight: 600;" id="txtPreviewPacoteNome"></span>
+          </div>
+        </div>
+
+        <div class="form-field-group">
+          <label class="field-label">Descrição do Pacote</label>
+          <textarea id="inputDescricaoPacote" class="field-input" rows="3" placeholder="Ex: 1 hora de sessão, 20 fotos digitais tratadas em alta resolução e orientação de poses..."></textarea>
+        </div>
+
+        <button type="submit" class="btn-salvar-admin" id="btnSalvarPacote" style="width: 100%; justify-content: center; padding: 0.75rem;">
+          + Cadastrar e Publicar Pacote no Site
+        </button>
+      </form>
+
+      <h3 style="font-size: 0.95rem; color: #2D1D14; margin-bottom: 0.75rem; font-weight: 700;">Pacotes Ativos em Exibição:</h3>
+      <div id="listaPacotes" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+        <!-- Carregado via JS -->
+        <div style="text-align: center; color: #999; padding: 1.5rem; grid-column: 1 / -1;">Carregando pacotes...</div>
+      </div>
+    </div>
+
+    <!-- ==============================================================
+         BLOCO 4: PERSONALIZAR TEXTOS DA TELA INICIAL (HOME)
+         ============================================================== -->
+    <div class="admin-card-panel" style="margin-bottom: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h2 class="panel-title" style="margin: 0;">✏️ Personalizar Textos da Tela Inicial</h2>
+          <p class="panel-desc" style="margin-top: 4px;">Altere os títulos, slogans, história e dados de contato que aparecem no site público.</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="button" onclick="carregarTextosAdmin();" class="preview-pill-tag" style="cursor: pointer; border: 1px solid #D8CAB9; background: #FFF; font-weight: 600;">
+            🔄 Recarregar Textos
+          </button>
+        </div>
+      </div>
+
+      <form id="formTextosSite" onsubmit="event.preventDefault(); salvarTextosSite();">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+          
+          <!-- Coluna 1: Topo e Hero -->
+          <div style="background: #FAF5EE; padding: 1.25rem; border-radius: 12px; border: 1px solid #E8DDD0;">
+            <h3 style="font-size: 0.95rem; font-weight: 700; color: #2D1D14; margin-bottom: 1rem; border-bottom: 1px solid #E8DDD0; padding-bottom: 0.5rem;">
+              🏷️ Topo & Apresentação (Hero)
+            </h3>
+
+            <div class="form-field-group">
+              <label class="field-label" for="txtHeroTag">Tag / Categoria no Topo</label>
+              <input type="text" id="txtHeroTag" class="field-input" placeholder="Ex: ESTÚDIO FOTOGRÁFICO" required>
+            </div>
+
+            <div class="form-field-group">
+              <label class="field-label" for="txtHeroTitulo">Título Principal do Hero</label>
+              <input type="text" id="txtHeroTitulo" class="field-input" placeholder="Ex: Casa da Foto Studio" required>
+            </div>
+
+            <div class="form-field-group">
+              <label class="field-label" for="txtHeaderSlogan">Slogan do Cabeçalho</label>
+              <input type="text" id="txtHeaderSlogan" class="field-input" placeholder="Ex: Momentos que ficam" required>
+            </div>
+
+            <div class="form-field-group">
+              <label class="field-label" for="txtHeroDescricao">Descrição Principal do Estúdio</label>
+              <textarea id="txtHeroDescricao" class="field-input" rows="4" style="resize: vertical;" placeholder="Apresentação do estúdio..." required></textarea>
+            </div>
+          </div>
+
+          <!-- Coluna 2: Contato e Sobre -->
+          <div style="background: #FAF5EE; padding: 1.25rem; border-radius: 12px; border: 1px solid #E8DDD0;">
+            <h3 style="font-size: 0.95rem; font-weight: 700; color: #2D1D14; margin-bottom: 1rem; border-bottom: 1px solid #E8DDD0; padding-bottom: 0.5rem;">
+              📞 Contato & Sobre o Estúdio
+            </h3>
+
+            <div class="form-field-group">
+              <label class="field-label" for="txtContatoTitulo">Título do Card de Contato</label>
+              <input type="text" id="txtContatoTitulo" class="field-input" placeholder="Ex: Vamos conversar sobre o seu ensaio" required>
+            </div>
+
+            <div class="form-field-group">
+              <label class="field-label" for="txtContatoDescricao">Subtítulo do Card de Contato</label>
+              <input type="text" id="txtContatoDescricao" class="field-input" placeholder="Ex: Reservamos horários para família..." required>
+            </div>
+
+            <div class="form-row-2col">
+              <div>
+                <label class="field-label" for="txtContatoWhatsapp">WhatsApp para Contato</label>
+                <input type="text" id="txtContatoWhatsapp" class="field-input" placeholder="Ex: (11) 98765-4321">
+              </div>
+              <div>
+                <label class="field-label" for="txtContatoEmail">E-mail de Contato</label>
+                <input type="email" id="txtContatoEmail" class="field-input" placeholder="Ex: contato@casadafoto.com">
+              </div>
+            </div>
+
+            <div class="form-field-group">
+              <label class="field-label" for="txtSobreTitulo">Título da Seção "Sobre"</label>
+              <input type="text" id="txtSobreTitulo" class="field-input" placeholder="Ex: Sobre a Casa da foto studio" required>
+            </div>
+
+            <div class="form-field-group">
+              <label class="field-label" for="txtSobreTexto">Texto Completo da Seção "Sobre"</label>
+              <textarea id="txtSobreTexto" class="field-input" rows="3" style="resize: vertical;" placeholder="História e valores..." required></textarea>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; align-items: center; flex-wrap: wrap;">
+          <button type="button" onclick="restaurarTextosPadrao();" style="background: none; border: 1px solid #D8CAB9; color: #7A6A5E; padding: 0.6rem 1.25rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+            Restaurar Valores Padrão
+          </button>
+          <button type="submit" class="btn-salvar-admin" id="btnSalvarTextos" style="padding: 0.65rem 1.75rem; font-size: 0.9rem;">
+            💾 Salvar Alterações na Tela Inicial
+          </button>
+        </div>
+      </form>
+    <!-- ==============================================================
+         BLOCO 5: MENSAGENS E CONTATOS RECEBIDOS PELO SITE
+         ============================================================== -->
+    <div class="admin-card-panel">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 class="panel-title" style="margin: 0;">✉️ Mensagens de Clientes Recebidas</h2>
+        <span class="preview-pill-tag" id="countContatos" style="margin: 0;">0 mensagens</span>
+      </div>
+      <p class="panel-desc">Contatos e solicitações enviadas através do formulário na página inicial do site.</p>
+      
+      <div id="listaContatos" style="max-height: 250px; overflow-y: auto;">
+        <div style="text-align: center; color: #999; padding: 1.5rem;">Nenhuma mensagem recebida ainda.</div>
+      </div>
+    </div>
+
+    <!-- ==============================================================
+         BLOCO 6: GERENCIAR LOGINS DE FOTÓGRAFOS DO ESTÚDIO
+         ============================================================== -->
+    <div class="admin-card-panel" style="margin-bottom: 2rem; background: #FAF5EE; border: 1.5px solid #D8CAB9;" id="blocoFotografos">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <h2 class="panel-title" style="margin: 0;">📷 Gestão de Logins dos Fotógrafos</h2>
+          <p class="panel-desc" style="margin-top: 4px; margin-bottom: 0;">
+            Cadastre fotógrafos da equipe com nome, e-mail e senha. Eles poderão acessar a área de <strong>Projetos</strong> e <strong>Configuração da Galeria</strong> através da tela de login do fotógrafo.
+          </p>
+        </div>
+        <span class="preview-pill-tag" id="countFotografos" style="margin: 0; font-weight: 700; background: #352319; color: #FAF5EE;">0 fotógrafos</span>
+      </div>
+
+      <!-- Formulário para Criar Login de Fotógrafo -->
+      <form id="formAddFotografo" onsubmit="event.preventDefault(); adicionarFotografoAdmin();" style="margin-bottom: 1.75rem; background: #FFF; padding: 1.25rem; border-radius: 12px; border: 1px solid #E8DDD0;">
+        <div style="display: grid; grid-template-columns: 1.2fr 1.2fr 1fr auto; gap: 1rem; align-items: flex-end;">
+          <div>
+            <label class="field-label">Nome Completo *</label>
+            <input type="text" id="inputNomeFotografo" class="field-input" placeholder="Ex: Carlos Albuquerque" required>
+          </div>
+          <div>
+            <label class="field-label">E-mail de Acesso (Login) *</label>
+            <input type="email" id="inputEmailFotografo" class="field-input" placeholder="Ex: carlos@casadafoto.com" required>
+          </div>
+          <div>
+            <label class="field-label">Senha Inicial *</label>
+            <input type="password" id="inputSenhaFotografo" class="field-input" placeholder="Mínimo 4 caracteres" minlength="4" required>
+          </div>
+          <div>
+            <button type="submit" class="btn-salvar-admin" id="btnSalvarFotografo" style="white-space: nowrap; padding: 0.65rem 1.4rem;">
+              + Cadastrar Fotógrafo
+            </button>
+          </div>
+        </div>
+        <span class="field-hint-caption" style="margin-top: 0.5rem; display: block;">O fotógrafo utilizará este e-mail e senha na página <a href="login-fotografo.html" target="_blank" style="color: #9E744B; font-weight: 700; text-decoration: underline;">Login do Fotógrafo</a>.</span>
+      </form>
+
+      <h3 style="font-size: 0.95rem; color: #2D1D14; margin-bottom: 0.75rem; font-weight: 700;">Fotógrafos Ativos no Sistema:</h3>
+      <div id="listaFotografos" style="display: flex; flex-direction: column; gap: 0.65rem;">
+        <div style="text-align: center; color: #999; padding: 1.5rem;">Carregando fotógrafos...</div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    // Proteção de Acesso Administrativo
+    if (!sessionStorage.getItem('admin_autenticado')) {
+      window.location.href = 'admin-login.html';
+    }
+
+    function logoutAdmin() {
+      sessionStorage.removeItem('admin_autenticado');
+      window.location.href = 'admin-login.html';
+    }
+
+    // Carregamento de Dados da API
+    async function carregarTudo() {
+      await Promise.all([
+        carregarCategorias(),
+        carregarFotos(),
+        carregarPacotesAdmin(),
+        carregarContatos(),
+        carregarTextosAdmin(),
+        carregarFotoLoginAdmin(),
+        carregarFotografosAdmin()
+      ]);
+    }
+
+    // ── GESTÃO DE FOTÓGRAFOS DO ESTÚDIO ──
+    async function carregarFotografosAdmin() {
+      const container = document.getElementById('listaFotografos');
+      const countEl = document.getElementById('countFotografos');
+      if (!container) return;
+
+      try {
+        const res = await fetch('/api/admin/fotografos');
+        const fotos = await res.json();
+
+        if (countEl) countEl.textContent = `${fotos.length} fotógrafo(s)`;
+
+        if (!fotos || fotos.length === 0) {
+          container.innerHTML = '<div style="text-align: center; color: #999; padding: 1.5rem; background: #FFF; border-radius: 8px;">Nenhum fotógrafo cadastrado no momento.</div>';
+          return;
+        }
+
+        container.innerHTML = fotos.map(f => `
+          <div class="item-row-card" style="background: #FFF; box-shadow: 0 1px 4px rgba(0,0,0,0.03);">
+            <div style="display: flex; align-items: center; gap: 0.85rem;">
+              <div style="width: 42px; height: 42px; border-radius: 50%; background: #352319; color: #FAF5EE; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; flex-shrink: 0;">
+                ${(f.nome ? f.nome.substring(0, 2) : 'CF').toUpperCase()}
+              </div>
+              <div>
+                <strong style="color: #2D1D14; font-size: 0.92rem; display: block;">${f.nome}</strong>
+                <span style="color: #6B5546; font-size: 0.78rem;">✉️ ${f.email}</span>
+                ${f.ultimo_login ? `<span style="color: #888; font-size: 0.7rem; margin-left: 0.5rem;">• Último acesso: ${f.ultimo_login.substring(0, 16).replace('T', ' ')}</span>` : '<span style="color: #999; font-size: 0.7rem; margin-left: 0.5rem;">• Aguardando primeiro login</span>'}
+              </div>
+            </div>
+            <div style="display: flex; gap: 0.6rem; align-items: center;">
+              <span style="background: #E8F5E9; color: #2E7D32; font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 9999px;">Ativo</span>
+              <button type="button" class="btn-delete-item" onclick="deletarFotografoAdmin(${f.id}, '${f.nome.replace(/'/g, "\\'")}')" title="Excluir acesso deste fotógrafo">
+                Excluir Login 🗑️
+              </button>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Erro ao carregar fotógrafos:', err);
+      }
+    }
+
+    async function adicionarFotografoAdmin() {
+      const nome = document.getElementById('inputNomeFotografo').value.trim();
+      const email = document.getElementById('inputEmailFotografo').value.trim();
+      const senha = document.getElementById('inputSenhaFotografo').value.trim();
+      const btn = document.getElementById('btnSalvarFotografo');
+
+      if (!nome || !email || !senha) {
+        showToast('Preencha nome, e-mail e senha.', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span>Cadastrando...</span>';
+
+      try {
+        const res = await fetch('/api/admin/fotografos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome, email, senha })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          showToast(data.mensagem || '✓ Fotógrafo cadastrado com sucesso!');
+          document.getElementById('formAddFotografo').reset();
+          await carregarFotografosAdmin();
+        } else {
+          showToast(data.error || 'Erro ao cadastrar fotógrafo.', 'error');
+        }
+      } catch (err) {
+        showToast('Erro de comunicação com o servidor.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '+ Cadastrar Fotógrafo';
+      }
+    }
+
+    async function deletarFotografoAdmin(id, nome) {
+      if (!confirm(`Deseja realmente remover o acesso do fotógrafo "${nome}"?`)) return;
+
+      try {
+        const res = await fetch(`/api/admin/fotografos/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+
+        if (data.success) {
+          showToast(data.mensagem || '✓ Fotógrafo removido.');
+          await carregarFotografosAdmin();
+        } else {
+          showToast(data.error || 'Erro ao remover fotógrafo.', 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao comunicar com o servidor.', 'error');
+      }
+    }
+
+    // ── GESTÃO DE TEXTOS DA HOME ──
+    async function carregarTextosAdmin() {
+      try {
+        const res = await fetch('/api/site/textos');
+        const t = await res.json();
+        if (!t) return;
+
+        if (t.hero_tag) document.getElementById('txtHeroTag').value = t.hero_tag;
+        if (t.hero_titulo) document.getElementById('txtHeroTitulo').value = t.hero_titulo;
+        if (t.hero_descricao) document.getElementById('txtHeroDescricao').value = t.hero_descricao;
+        if (t.header_slogan) document.getElementById('txtHeaderSlogan').value = t.header_slogan;
+        if (t.contato_titulo) document.getElementById('txtContatoTitulo').value = t.contato_titulo;
+        if (t.contato_descricao) document.getElementById('txtContatoDescricao').value = t.contato_descricao;
+        if (t.contato_whatsapp) document.getElementById('txtContatoWhatsapp').value = t.contato_whatsapp;
+        if (t.contato_email) document.getElementById('txtContatoEmail').value = t.contato_email;
+        if (t.sobre_titulo) document.getElementById('txtSobreTitulo').value = t.sobre_titulo;
+        if (t.sobre_texto) document.getElementById('txtSobreTexto').value = t.sobre_texto;
+      } catch (err) {
+        console.error('Erro ao carregar textos do site:', err);
+      }
+    }
+
+    async function salvarTextosSite() {
+      const btn = document.getElementById('btnSalvarTextos');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span>Salvando...</span>';
+
+      const payload = {
+        hero_tag: document.getElementById('txtHeroTag').value,
+        hero_titulo: document.getElementById('txtHeroTitulo').value,
+        hero_descricao: document.getElementById('txtHeroDescricao').value,
+        header_slogan: document.getElementById('txtHeaderSlogan').value,
+        contato_titulo: document.getElementById('txtContatoTitulo').value,
+        contato_descricao: document.getElementById('txtContatoDescricao').value,
+        contato_whatsapp: document.getElementById('txtContatoWhatsapp').value,
+        contato_email: document.getElementById('txtContatoEmail').value,
+        sobre_titulo: document.getElementById('txtSobreTitulo').value,
+        sobre_texto: document.getElementById('txtSobreTexto').value
+      };
+
+      try {
+        const res = await fetch('/api/site/textos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast('✓ Textos da página inicial atualizados com sucesso!');
+        } else {
+          showToast(d.error || 'Erro ao salvar textos.', 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao comunicar com o servidor.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    function restaurarTextosPadrao() {
+      if (!confirm('Deseja restaurar os textos padrão do estúdio?')) return;
+      document.getElementById('txtHeroTag').value = 'ESTÚDIO FOTOGRÁFICO';
+      document.getElementById('txtHeroTitulo').value = 'Casa da Foto Studio';
+      document.getElementById('txtHeroDescricao').value = 'Espaço acolhedor para ensaios, registros familiares e momentos especiais. Trabalhamos com iluminação natural, cenários personalizados e um atendimento que torna cada sessão tranquila e autêntica.';
+      document.getElementById('txtHeaderSlogan').value = 'Momentos que ficam';
+      document.getElementById('txtContatoTitulo').value = 'Vamos conversar sobre o seu ensaio';
+      document.getElementById('txtContatoDescricao').value = 'Reservamos horários para família, gestantes, bebês, casais e retratos pessoais.';
+      document.getElementById('txtContatoWhatsapp').value = '(11) 98765-4321';
+      document.getElementById('txtContatoEmail').value = 'contato@casadafoto.com';
+      document.getElementById('txtSobreTitulo').value = 'Sobre a Casa da foto studio';
+      document.getElementById('txtSobreTexto').value = 'Trabalhamos com ensaios pensados para capturar momentos reais, com um ambiente acolhedor e uma equipe preparada para tornar cada sessão tranquila e autêntica. Oferecemos opções para família, gestantes, bebês, casais e retratos pessoais, sempre com foco em luz natural, cenários personalizados e um atendimento atencioso.';
+      salvarTextosSite();
+    }
+
+    async function carregarCategorias() {
+      try {
+        const res = await fetch('/api/site/categorias');
+        const categorias = await res.json();
+        
+        const lista = document.getElementById('listaCategorias');
+        const select = document.getElementById('selectCategoriaFoto');
+        const count = document.getElementById('countCategorias');
+
+        count.textContent = `${categorias.length} cadastrada(s)`;
+
+        if (categorias.length === 0) {
+          lista.innerHTML = '<div style="text-align:center; color:#888; padding:1.5rem; background:#FAF5EE; border-radius:8px;">Nenhuma categoria cadastrada ainda. Use o campo acima para adicionar a primeira.</div>';
+          select.innerHTML = '<option value="">Cadastre uma categoria primeiro...</option>';
+          return;
+        }
+
+        lista.innerHTML = categorias.map(c => `
+          <div class="item-row-card">
+            <div>
+              <strong style="color: #2D1D14; font-size: 0.92rem;">${c.nome}</strong>
+            </div>
+            <button type="button" class="btn-delete-item" onclick="excluirCategoria(${c.id}, '${c.nome}')">Excluir 🗑️</button>
+          </div>
+        `).join('');
+
+        select.innerHTML = '<option value="">Selecione uma categoria...</option>' + 
+          categorias.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
+
+      } catch (err) {
+        console.error('Erro ao carregar categorias:', err);
+      }
+    }
+
+    async function adicionarCategoria() {
+      const input = document.getElementById('inputNovaCategoria');
+      const nome = input.value.trim();
+      if (!nome) return;
+
+      try {
+        const res = await fetch('/api/site/categorias', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`Categoria "${nome}" cadastrada com sucesso!`);
+          input.value = '';
+          carregarCategorias();
+        } else {
+          showToast(data.error || 'Erro ao cadastrar categoria.', 'error');
+        }
+      } catch (err) {
+        showToast('Erro de conexão.', 'error');
+      }
+    }
+
+    async function excluirCategoria(id, nome) {
+      if (!confirm(`Deseja realmente excluir a categoria "${nome}"?`)) return;
+
+      try {
+        const res = await fetch(`/api/site/categorias/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`Categoria "${nome}" removida do site.`);
+          carregarCategorias();
+          carregarFotos();
+        }
+      } catch (err) {
+        showToast('Erro ao excluir.', 'error');
+      }
+    }
+
+    // ── GESTÃO DE LOGO E MARCA D'ÁGUA ──
+    let novaLogoBase64 = null;
+    function previewNovaLogo(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        novaLogoBase64 = e.target.result;
+        const img = document.getElementById('imgLogoAdminPreview');
+        if (img) img.src = novaLogoBase64;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function salvarNovaLogo() {
+      if (!novaLogoBase64) {
+        showToast('Por favor, selecione um arquivo de imagem para a nova logo.', 'error');
+        return;
+      }
+      const btn = document.getElementById('btnSalvarLogo');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = 'Salvando logo...';
+      try {
+        const res = await fetch('/api/site/logo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: novaLogoBase64 })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('✓ Logotipo oficial e marca d\'água atualizados com sucesso!');
+          const img = document.getElementById('imgLogoAdminPreview');
+          if (img) img.src = data.url;
+          novaLogoBase64 = null;
+          const inp = document.getElementById('inputUploadLogo');
+          if (inp) inp.value = '';
+        } else {
+          showToast(data.error || 'Erro ao atualizar logotipo.', 'error');
+        }
+      } catch (err) {
+        showToast('Erro de conexão ao salvar logo.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    // ── GESTÃO DE FOTO DAS TELAS DE LOGIN ──
+    let novaFotoLoginBase64 = null;
+    function previewNovaFotoLogin(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        novaFotoLoginBase64 = e.target.result;
+        const img = document.getElementById('imgLoginAdminPreview');
+        if (img) img.src = novaFotoLoginBase64;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function salvarNovaFotoLogin() {
+      if (!novaFotoLoginBase64) {
+        showToast('Por favor, selecione um arquivo de imagem para a nova foto de login.', 'error');
+        return;
+      }
+      const btn = document.getElementById('btnSalvarFotoLogin');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = 'Salvando foto...';
+      try {
+        const res = await fetch('/api/site/login-foto', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: novaFotoLoginBase64 })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('✓ Foto das telas de login atualizada com sucesso!');
+          const img = document.getElementById('imgLoginAdminPreview');
+          if (img) img.src = data.url;
+          novaFotoLoginBase64 = null;
+          const inp = document.getElementById('inputUploadFotoLogin');
+          if (inp) inp.value = '';
+        } else {
+          showToast(data.error || 'Erro ao atualizar foto de login.', 'error');
+        }
+      } catch (err) {
+        showToast('Erro de conexão ao salvar foto de login.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    async function carregarFotoLoginAdmin() {
+      try {
+        const res = await fetch('/api/site/login-foto');
+        const d = await res.json();
+        if (d && d.url) {
+          const img = document.getElementById('imgLoginAdminPreview');
+          if (img) img.src = d.url;
+        }
+      } catch (e) {
+        console.error('Erro ao carregar foto de login:', e);
+      }
+    }
+
+    // ── GESTÃO DE FOTOS DO SITE (CARROSSEL) ──
+    let novaFotoSiteBase64 = null;
+    function previewFotoNovaSite(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        novaFotoSiteBase64 = e.target.result;
+        const container = document.getElementById('previewFotoNovaContainer');
+        const img = document.getElementById('imgPreviewFotoNova');
+        const txt = document.getElementById('txtPreviewFotoNovaNome');
+        if (container && img && txt) {
+          container.style.display = 'flex';
+          img.src = novaFotoSiteBase64;
+          txt.textContent = file.name;
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function carregarFotos() {
+      try {
+        const res = await fetch('/api/site/fotos');
+        const fotos = await res.json();
+        
+        const lista = document.getElementById('listaFotos');
+        const count = document.getElementById('countFotos');
+
+        count.textContent = `${fotos.length} publicada(s)`;
+
+        if (fotos.length === 0) {
+          lista.innerHTML = '<div style="text-align:center; color:#888; padding:1.5rem; background:#FAF5EE; border-radius:8px;">Nenhuma foto publicada ainda no carrossel. Use o formulário acima para adicionar fotos do seu computador.</div>';
+          return;
+        }
+
+        lista.innerHTML = fotos.map(f => `
+          <div class="item-row-card" style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.75rem 1rem; background: #FFF; border: 1px solid #E8DDD0; border-radius: 10px; margin-bottom: 0.6rem;">
+            <div style="display: flex; align-items: center; gap: 0.85rem; min-width: 0;">
+              <img src="${f.arquivo}" alt="${f.titulo}" style="width: 52px; height: 52px; border-radius: 8px; object-fit: cover; border: 1px solid #D8CAB9; flex-shrink: 0;">
+              <div style="min-width: 0;">
+                <strong style="display: block; font-size: 0.88rem; color: #2D1D14; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${f.titulo}</strong>
+                <span class="preview-pill-tag" style="margin: 0; font-size: 0.68rem;">${f.categoria_nome}</span>
+              </div>
+            </div>
+            <div style="display: flex; gap: 0.4rem; align-items: center; flex-shrink: 0;">
+              <label style="cursor: pointer; background: #FAF5EE; border: 1px solid #D8CAB9; color: #6B5546; padding: 0.4rem 0.75rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" title="Escolha outra imagem do computador para substituir esta foto">
+                🔄 Mudar Foto
+                <input type="file" accept="image/*" style="display: none;" onchange="trocarFotoSite(${f.id}, this)">
+              </label>
+              <button type="button" class="btn-delete-item" onclick="excluirFoto(${f.id})" style="padding: 0.4rem 0.75rem; font-size: 0.75rem;">Remover 🗑️</button>
+            </div>
+          </div>
+        `).join('');
+
+      } catch (err) {
+        console.error('Erro ao carregar fotos:', err);
+      }
+    }
+
+    async function adicionarFoto() {
+      const titulo = document.getElementById('inputTituloFoto').value.trim();
+      const categoria_nome = document.getElementById('selectCategoriaFoto').value;
+
+      if (!titulo || !categoria_nome) {
+        showToast('Preencha o título e selecione uma categoria.', 'error');
+        return;
+      }
+
+      if (!novaFotoSiteBase64) {
+        showToast('Selecione uma foto do seu computador.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btnPublicarFotoSite');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = 'Publicando foto...';
+
+      try {
+        const res = await fetch('/api/site/fotos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            titulo, 
+            categoria_nome, 
+            image: novaFotoSiteBase64 
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`Foto "${titulo}" publicada com sucesso no site!`);
+          document.getElementById('inputTituloFoto').value = '';
+          const inpFile = document.getElementById('inputFotoArquivoUpload');
+          if (inpFile) inpFile.value = '';
+          const previewBox = document.getElementById('previewFotoNovaContainer');
+          if (previewBox) previewBox.style.display = 'none';
+          novaFotoSiteBase64 = null;
+          carregarFotos();
+        } else {
+          showToast(data.error || 'Erro ao publicar foto.', 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao publicar foto.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    async function trocarFotoSite(fotoId, inputElement) {
+      const file = inputElement.files && inputElement.files[0];
+      if (!file) return;
+      showToast('Enviando nova imagem para a foto...');
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const base64 = e.target.result;
+        try {
+          const res = await fetch(`/api/site/fotos/${fotoId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: base64 })
+          });
+          const d = await res.json();
+          if (d.success) {
+            showToast('✓ Imagem da foto alterada com sucesso!');
+            carregarFotos();
+          } else {
+            showToast(d.error || 'Erro ao alterar imagem da foto.', 'error');
+          }
+        } catch (err) {
+          showToast('Erro ao trocar imagem.', 'error');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function excluirFoto(id) {
+      if (!confirm('Deseja remover esta foto do site?')) return;
+
+      try {
+        const res = await fetch(`/api/site/fotos/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Foto removida do site.');
+          carregarFotos();
+        }
+      } catch (err) {
+        showToast('Erro ao excluir foto.', 'error');
+      }
+    }
+
+    // ── GESTÃO DE PACOTES DE ENSAIO DO SITE ──
+    let novoPacoteFotoBase64 = null;
+
+    function previewFotoPacote(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        novoPacoteFotoBase64 = e.target.result;
+        const container = document.getElementById('previewPacoteContainer');
+        const img = document.getElementById('imgPreviewPacote');
+        const txt = document.getElementById('txtPreviewPacoteNome');
+        if (container && img && txt) {
+          container.style.display = 'flex';
+          img.src = novoPacoteFotoBase64;
+          txt.textContent = file.name;
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function carregarPacotesAdmin() {
+      try {
+        const res = await fetch('/api/site/pacotes');
+        const pacotes = await res.json();
+        const lista = document.getElementById('listaPacotes');
+        const count = document.getElementById('countPacotes');
+
+        if (count) count.textContent = `${pacotes.length} cadastrado(s)`;
+
+        if (!lista) return;
+
+        if (pacotes.length === 0) {
+          lista.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; color: #888; padding: 2rem; background: #FFF; border-radius: 10px; border: 1px dashed #D8CAB9;">
+              Nenhum pacote cadastrado ainda. Use o formulário acima para cadastrar os pacotes com fotos do seu computador.
+            </div>
+          `;
+          return;
+        }
+
+        lista.innerHTML = pacotes.map(p => `
+          <div class="item-row-card" style="flex-direction: column; align-items: stretch; padding: 1rem; background: #FFF; border: 1px solid #E8DDD0; border-radius: 12px; gap: 0.75rem;">
+            <div style="position: relative; height: 160px; overflow: hidden; border-radius: 8px; background: #FAF5EE;">
+              <img src="${p.imagem || 'assets/logo/logo.png'}" alt="${p.titulo}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='assets/logo/logo.png'">
+              <span class="preview-pill-tag" style="position: absolute; top: 8px; right: 8px; margin: 0; background: rgba(53,35,25,0.85); color: #FFF; border: none; font-weight: 700;">
+                ${p.valor || 'Sob consulta'}
+              </span>
+            </div>
+            <div>
+              <strong style="color: #2D1D14; font-size: 1rem; display: block; margin-bottom: 4px;">${p.titulo}</strong>
+              <p style="font-size: 0.82rem; color: #6B5E55; margin: 0; line-height: 1.4;">${p.descricao || 'Sem descrição cadastrada.'}</p>
+            </div>
+            <div style="display: flex; justify-content: flex-end; margin-top: auto; padding-top: 0.5rem; border-top: 1px solid #FAF5EE;">
+              <button type="button" class="btn-delete-item" onclick="excluirPacoteAdmin(${p.id}, '${p.titulo.replace(/'/g, "\\'")}')" style="padding: 0.4rem 0.85rem; font-size: 0.75rem;">
+                Excluir Pacote 🗑️
+              </button>
+            </div>
+          </div>
+        `).join('');
+
+      } catch (err) {
+        console.error('Erro ao carregar pacotes no admin:', err);
+      }
+    }
+
+    async function adicionarPacoteAdmin() {
+      const titulo = document.getElementById('inputTituloPacote').value.trim();
+      const valor = document.getElementById('inputValorPacote').value.trim();
+      const descricao = document.getElementById('inputDescricaoPacote').value.trim();
+
+      if (!titulo || !valor) {
+        showToast('Preencha o título e o valor do pacote.', 'error');
+        return;
+      }
+
+      if (!novoPacoteFotoBase64) {
+        showToast('Selecione uma foto para o pacote do seu computador.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btnSalvarPacote');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = 'Salvando e publicando...';
+
+      try {
+        const res = await fetch('/api/site/pacotes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            titulo,
+            valor,
+            descricao,
+            image: novoPacoteFotoBase64
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`✓ Pacote "${titulo}" cadastrado e publicado com sucesso!`);
+          document.getElementById('inputTituloPacote').value = '';
+          document.getElementById('inputValorPacote').value = '';
+          document.getElementById('inputDescricaoPacote').value = '';
+          const inpFile = document.getElementById('inputFotoPacoteUpload');
+          if (inpFile) inpFile.value = '';
+          const previewBox = document.getElementById('previewPacoteContainer');
+          if (previewBox) previewBox.style.display = 'none';
+          novoPacoteFotoBase64 = null;
+          carregarPacotesAdmin();
+        } else {
+          showToast(data.error || 'Erro ao cadastrar pacote.', 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao comunicar com o servidor.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    async function excluirPacoteAdmin(id, titulo) {
+      if (!confirm(`Deseja realmente excluir o pacote "${titulo}" do site?`)) return;
+
+      try {
+        const res = await fetch(`/api/site/pacotes/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`✓ Pacote "${titulo}" removido com sucesso.`);
+          carregarPacotesAdmin();
+        } else {
+          showToast(data.error || 'Erro ao excluir pacote.', 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao excluir pacote.', 'error');
+      }
+    }
+
+    // ── GESTÃO DE MENSAGENS E CONTATOS ──
+    async function carregarContatos() {
+      try {
+        const res = await fetch('/api/contatos');
+        const contatos = await res.json();
+        const lista = document.getElementById('listaContatos');
+        const count = document.getElementById('countContatos');
+
+        count.textContent = `${contatos.length} mensagem(ns)`;
+
+        if (contatos.length === 0) {
+          lista.innerHTML = '<div style="text-align:center; color:#888; padding:1.5rem; background:#FAF5EE; border-radius:8px;">Nenhuma mensagem de contato recebida ainda.</div>';
+          return;
+        }
+
+        lista.innerHTML = contatos.map(c => {
+          const rawTel = (c.telefone || '').replace(/\D/g, '');
+          const waUrl = rawTel ? `https://wa.me/55${rawTel}?text=Ol%C3%A1%2C+${encodeURIComponent(c.nome)}!+Recebemos+sua+mensagem+na+Casa+da+Foto+Studio.` : '';
+          
+          return `
+            <div class="item-row-card" style="align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 0.85rem 1rem; margin-bottom: 0.6rem;">
+              <div style="flex: 1; min-width: 0;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                  <strong style="color: #2D1D14; font-size: 0.92rem;">${c.nome}</strong>
+                  ${c.telefone ? `<span style="color:#8C5F35; font-size:0.75rem; font-weight:600;">(${c.telefone})</span>` : ''}
+                  ${c.email ? `<span style="color:#6B5E55; font-size:0.75rem;">• ${c.email}</span>` : ''}
+                </div>
+                <p style="font-size:0.83rem; color:#4A3B32; margin-top:5px; line-height: 1.45;">${c.mensagem}</p>
+                <span style="font-size:0.7rem; color:#888; display: block; margin-top: 4px;">📅 ${c.data_envio || ''}</span>
+              </div>
+              <div style="display: flex; gap: 0.4rem; align-items: center; flex-shrink: 0;">
+                ${waUrl ? `
+                  <a href="${waUrl}" target="_blank" style="text-decoration:none; background:#25D366; color:#FFF; font-weight:700; font-size:0.72rem; padding: 0.4rem 0.75rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" title="Conversar no WhatsApp">
+                    💬 WhatsApp
+                  </a>
+                ` : ''}
+                <button type="button" class="btn-delete-item" onclick="excluirContato(${c.id})" style="padding: 0.4rem 0.75rem; font-size: 0.75rem;" title="Excluir mensagem">
+                  Excluir 🗑️
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } catch (err) {
+        console.error('Erro ao carregar contatos:', err);
+      }
+    }
+
+    async function excluirContato(id) {
+      if (!confirm('Deseja realmente excluir esta mensagem de contato?')) return;
+      try {
+        const res = await fetch(`/api/contatos/${id}`, { method: 'DELETE' });
+        const d = await res.json();
+        if (d.success) {
+          showToast('✓ Mensagem excluída.');
+          carregarContatos();
+        } else {
+          showToast('Erro ao excluir mensagem.', 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao comunicar com o servidor.', 'error');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      carregarTudo();
+      const badge = document.getElementById('badgeTotalStatus');
+      if (badge) badge.textContent = 'Banco de Dados SQLite Conectado';
+    });
+  </script>
+
+</body>
+</html>

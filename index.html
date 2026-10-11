@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Casa da Foto Studio | Estúdio Fotográfico</title>
+  <meta name="description" content="Espaço acolhedor para ensaios, registros familiares e momentos especiais.">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Full-Width Fluid Wrapper -->
+  <div class="site-wrapper" id="siteWrapper">
+
+    <!-- 1. HEADER (100% FULL-WIDTH) -->
+    <header class="site-header" id="siteHeader">
+      
+      <!-- Top Bar: Subtítulo & Ornamentos -->
+      <div class="header-top-bar">
+        <div class="ornament-line" aria-hidden="true">
+          <span class="ornament-dot"></span>
+          <span class="ornament-dash"></span>
+          <span class="ornament-dot"></span>
+        </div>
+
+        <div class="header-brand-title">
+          <span class="header-brand-name">ESTÚDIO CASA DA FOTO</span>
+          <span class="header-brand-slogan" id="headerBrandSlogan">Momentos que ficam</span>
+        </div>
+
+        <div class="ornament-line" aria-hidden="true">
+          <span class="ornament-dot"></span>
+          <span class="ornament-dash"></span>
+          <span class="ornament-dot"></span>
+        </div>
+      </div>
+
+      <!-- Main Nav: Links e Logo Card Central -->
+      <div class="content-wrap">
+        <nav class="header-nav-grid" aria-label="Navegação Principal">
+          
+          <!-- Links da Esquerda -->
+          <div class="nav-links-left">
+            <a href="index.html" class="nav-item">Início</a>
+            <a href="pacotes.html" class="nav-item">Pacotes</a>
+          </div>
+
+          <!-- Card Central da Logo Oficial -->
+          <a href="index.html" class="header-logo-card" title="Página Inicial">
+            <img src="assets/logo/logo.png" alt="Logo Casa da Foto - Estúdio Fotográfico" id="headerLogoImg">
+          </a>
+
+          <!-- Links da Direita -->
+          <div class="nav-links-right">
+            <a href="login.html" class="nav-item">Escolha de fotos</a>
+            <a href="projetos.html" class="nav-item">Projetos</a>
+          </div>
+
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- 2. HERO SECTION (100% FULL-WIDTH) -->
+      <section class="hero-section" id="inicio">
+        <div class="content-wrap hero-grid">
+          
+          <!-- Coluna Esquerda: Informações Principais -->
+          <div class="hero-left-col">
+            <span class="section-tag" id="heroTag">ESTÚDIO FOTOGRÁFICO</span>
+            <h1 class="hero-title" id="heroTitle">Casa da Foto Studio</h1>
+            <p class="hero-description" id="heroDescription">
+              Espaço acolhedor para ensaios, registros familiares e momentos especiais. Trabalhamos com iluminação natural, cenários personalizados e um atendimento que torna cada sessão tranquila e autêntica.
+            </p>
+
+            <!-- Tags / Pílulas de Categorias (Alimentadas dinamicamente via SQLite / Painel Admin) -->
+            <div class="hero-pills-row" id="heroCategoriesRow">
+              <span class="empty-site-hint" style="font-size: 0.8rem; color: #8C7B6D; font-style: italic;">
+                Novos ensaios e categorias em breve.
+              </span>
+            </div>
+          </div>
+
+          <!-- Coluna Direita: Card de Contato -->
+          <div class="hero-right-col">
+            <aside class="contact-hero-card">
+              <span class="section-tag">CONTATO</span>
+              <h2 class="contact-card-title" id="contactCardTitle">Vamos conversar sobre o seu ensaio</h2>
+              <p class="contact-card-desc" id="contactCardDesc">
+                Reservamos horários para família, gestantes, bebês, casais e retratos pessoais.
+              </p>
+              <div style="margin-top: 0.75rem; margin-bottom: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem;">
+                <a href="javascript:void(0)" id="btnHeroWhatsApp" class="btn-ctrl btn-ctrl-primary" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 700; background: #25D366; color: #FFF; border: none; padding: 0.65rem 1rem; border-radius: 9999px;">
+                  <span>💬 Falar no WhatsApp</span>
+                </a>
+              </div>
+            </aside>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 3. CARROSSEL DE FOTOS (100% FULL-WIDTH) -->
+      <section class="carousel-section" id="destaques">
+        <div class="content-wrap">
+          
+          <!-- Cabeçalho do Carrossel -->
+          <div class="carousel-header-row">
+            <div>
+              <span class="section-tag">CARROSSEL DE FOTOS</span>
+              <h2 class="carousel-title">Nossos registros em destaque</h2>
+            </div>
+
+            <!-- Filtros do Carrossel (Alimentados pelo Admin) -->
+            <div class="carousel-filter-pills" id="carouselFilterPills">
+              <!-- Filtros carregados dinamicamente via API -->
+            </div>
+          </div>
+
+          <!-- Grade de Fotos do Carrossel (Alimentadas pelo Admin / SQLite) -->
+          <div class="carousel-cards-grid" id="carouselCardsGrid">
+            <div class="empty-site-banner" style="grid-column: 1 / -1; width: 100%; text-align: center; padding: 3rem 1.5rem; background: #FAF5EE; border: 1.5px dashed #D8CAB9; border-radius: 18px;">
+              <span style="font-size: 2.2rem; display: block; margin-bottom: 0.5rem;">📷</span>
+              <strong style="display: block; font-size: 1.15rem; color: #2D1D14; margin-bottom: 0.35rem;">Novas fotos e ensaios em breve</strong>
+              <span style="color: #7A6A5E; font-size: 0.88rem; display: block;">Estamos preparando novos ensaios com muito carinho.</span>
+            </div>
+          </div>
+
+          <!-- Controles Inferiores (Anterior / Próximo e Paginação) -->
+          <div class="carousel-controls-row">
+            <div class="carousel-buttons-group">
+              <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnAnterior">Anterior</button>
+              <button type="button" class="btn-ctrl btn-ctrl-secondary" id="btnProximo">Próximo</button>
+            </div>
+
+            <div class="carousel-pagination-dots" aria-label="Indicador de página do carrossel">
+              <span class="dot active"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 4. SOBRE O ESTÚDIO (100% FULL-WIDTH) -->
+      <section class="about-section" id="sobre">
+        <div class="content-wrap">
+          <span class="section-tag" id="aboutTag">SOBRE O ESTÚDIO</span>
+          <h2 class="about-title" id="aboutTitle">Sobre a Casa da foto studio</h2>
+          
+          <p class="about-text" id="aboutText">
+            Trabalhamos com ensaios pensados para capturar momentos reais, com um ambiente acolhedor e uma equipe preparada para tornar cada sessão tranquila e autêntica. Oferecemos opções para família, gestantes, bebês, casais e retratos pessoais, sempre com foco em luz natural, cenários personalizados e um atendimento atencioso.
+          </p>
+
+          <div class="about-footer-row">
+            <a href="pacotes.html" class="about-link">
+              Mais informações sobre pacotes e reservas de horário
+            </a>
+
+            <a href="#contato" class="btn-cta-fale" id="btnFaleConosco">
+              Fale conosco
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurações da Galeria | Casa da Foto Studio</title>
+  <meta name="description" content="Painel de gerenciamento, dados, prazos, clientes e entrega da galeria.">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Full-Width Fluid Wrapper -->
+  <div class="site-wrapper" id="siteWrapper">
+
+    <!-- 1. HEADER DO PAINEL DO FOTÓGRAFO (100% FULL-WIDTH) -->
+    <header class="site-header admin-header" id="siteHeader">
+      <div class="content-wrap-wide admin-header-nav">
+        
+        <!-- Logo e Monograma -->
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+          <div class="header-logo-card" style="width: 155px; height: 74px; padding: 0.4rem 1rem;">
+            <img src="assets/logo/logo.png" alt="Logo Casa da Foto" id="headerLogoImg">
+          </div>
+          <div>
+            <span class="header-brand-name" style="font-size: 0.72rem;">ESTÚDIO CASA DA FOTO</span>
+            <span class="header-brand-slogan" style="font-size: 0.65rem;">Momentos que ficam</span>
+          </div>
+        </div>
+
+        <!-- Links Centrais -->
+        <nav class="admin-nav-center" aria-label="Navegação do Painel">
+          <a href="index.html" class="nav-item">Início</a>
+          <a href="projetos.html" class="nav-item active-nav">Projetos</a>
+          <a href="#clientes-menu" class="nav-item">Clientes</a>
+          <a href="#config-menu" class="nav-item">Configurações</a>
+        </nav>
+
+        <!-- Ações do Fotógrafo (Direita) -->
+        <div class="admin-nav-user-actions">
+          <span class="btn-painel-fotografo">PAINEL DO FOTÓGRAFO</span>
+          <span style="font-size: 1.25rem; color: #FFFFFF; cursor: pointer;">🔔</span>
+          <div class="user-avatar-circle">CF</div>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- 2. LAYOUT SPLIT: SIDEBAR DE CONFIGURAÇÕES + ÁREA DE CONTEÚDO -->
+    <div class="admin-layout-wrapper">
+      
+      <!-- SIDEBAR LATERAL ESQUERDA -->
+      <aside class="admin-sidebar" id="adminSidebar">
+        
+        <div>
+          <a href="projetos.html" class="sidebar-back-link">
+            <span>← Todos os projetos</span>
+          </a>
+
+          <div class="sidebar-project-header">
+            <span class="sidebar-project-tag">CONFIGURAÇÕES DA GALERIA</span>
+            <h2 class="sidebar-project-title">Exemplo de seleção</h2>
+            <span class="badge-status-andamento">Escolha em andamento</span>
+          </div>
+        </div>
+
+        <!-- Menu com os 10 Módulos das Telas do Figma -->
+        <ul class="sidebar-menu-list" id="sidebarMenu">
+          <li>
+            <button type="button" class="sidebar-nav-btn active" data-tab="dados">
+              <span class="sidebar-btn-content">📁 Dados da galeria</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="sidebar-nav-btn" data-tab="fotos">
+              <span class="sidebar-btn-content">🖼️ Fotos</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="sidebar-nav-btn" data-tab="selecao">
+              <span class="sidebar-btn-content">🛒 Seleção e venda</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="sidebar-nav-btn" data-tab="prazo">
+              <span class="sidebar-btn-content">📅 Prazo e lembrete</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="sidebar-nav-btn" data-tab="acesso">
+              <span class="sidebar-btn-content">🔒 Acesso e privacidade</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="sidebar-nav-btn" data-tab="clientes">
+              <span class="sidebar-btn-content">👥 Clientes</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="sidebar-nav-btn" data-tab="download">
+              <span class="sidebar-btn-content">📥 Download</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="sidebar-nav-btn" data-tab="design">
+              <span class="sidebar-btn-content">🎨 Design</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="sidebar-nav-btn" data-tab="atividades">
+              <span class="sidebar-btn-content">📊 Atividades do cliente</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="sidebar-nav-btn" data-tab="historico">
+              <span class="sidebar-btn-content">🕒 Histórico de atividades</span>
+            </button>
+          </li>
+        </ul>
+
+        <!-- Card de Ajuda no Rodapé da Sidebar -->
+        <div class="sidebar-help-card">
+          <strong>Cada detalhe, com cuidado.</strong>
+          <p>Organize a escolha e prepare uma entrega tranquila para seu cliente.</p>
+          <a href="javascript:void(0)" onclick="showToast('Central de Ajuda: suporte@casadafoto.com · WhatsApp (11) 98765-4321');">Central de ajuda ↗</a>
+        </div>
+
+      </aside>
+
+      <!-- ÁREA DE CONTEÚDO PRINCIPAL (DIREITA) -->
+      <main class="admin-main-content" id="adminMainContent">
+        
+        <!-- Barra Superior: Breadcrumbs, Badge e Botão Prévia -->
+        <div class="admin-top-meta-row">
+          <div class="admin-breadcrumb">
+            Projetos &nbsp;/&nbsp; Exemplo de seleção &nbsp;/&nbsp; <strong id="breadcrumbTabName">Configurações</strong>
+          </div>
+          <span class="admin-badge-demo">Demonstração · sem valores comerciais</span>
+        </div>
+
+        <div class="admin-header-action-row">
+          <div>
+            <h1 class="admin-page-title" id="pageTitle">Dados da galeria</h1>
+            <p class="admin-page-subtitle" id="pageSubtitle">Organize as informações e a mensagem que acolhe o cliente na galeria.</p>
+          </div>
+          <a href="escolha-fotos.html?previa=true" class="btn-previa-cliente">
+            <span>👁 Prévia do cliente</span>
+          </a>
+        </div>
+
+        <!-- ====================================================================
+             TAB 1: DADOS DA GALERIA (SCREEN 1)
+             ==================================================================== -->
+        <div class="tab-pane active" id="tab-dados">
+          <div class="admin-form-two-col">
+            
+            <!-- Coluna Esquerda: Formulários -->
+            <div>
+              <!-- Bloco 1: Informações da galeria -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Informações da galeria</h3>
+                <p class="panel-desc">Os dados abaixo aparecem na apresentação para o cliente.</p>
+
+                <div class="form-field-group">
+                  <label class="field-label">Nome da galeria</label>
+                  <input type="text" class="field-input" value="Exemplo de seleção">
+                </div>
+
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Categoria</label>
+                    <select class="field-select">
+                      <option selected>Galeria demonstrativa</option>
+                      <option>Ensaio Família</option>
+                      <option>Gestante</option>
+                      <option>Newborn</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="field-label">Data do trabalho</label>
+                    <select class="field-select">
+                      <option selected>08/10/2026</option>
+                      <option>10/10/2026</option>
+                      <option>15/10/2026</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Exibição das fotos</label>
+                    <select class="field-select">
+                      <option selected>Ultra HD - 4K (3840 pixels)</option>
+                      <option>Full HD (1920 pixels)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="field-label">Idioma</label>
+                    <select class="field-select">
+                      <option selected>Português (Brasil)</option>
+                      <option>English</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bloco 2: Mensagem de acesso -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Mensagem de acesso</h3>
+                <p class="panel-desc">Uma recepção cuidadosa antes da escolha das fotos.</p>
+
+                <div class="form-field-group">
+                  <label class="field-label">Mensagem para o cliente</label>
+                  <textarea class="field-textarea">Olá! Seus momentos estão aqui. Escolha suas favoritas para o pacote e, se desejar, marque fotos extras. Revise as duas listas antes de enviar sua seleção. Com carinho, Casa da Foto Studio.</textarea>
+                  <span class="field-hint-caption">Mensagem ilustrativa - exibida ao acessar a galeria</span>
+                </div>
+              </div>
+
+              <!-- Bloco 3: Comentários e compartilhamento -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Comentários e compartilhamento</h3>
+                
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Permitir comentários nas fotos</strong>
+                    <span>O cliente pode deixar observações para o fotógrafo.</span>
+                  </div>
+                  <label class="switch-toggle">
+                    <input type="checkbox" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Permitir compartilhamento em redes sociais</strong>
+                    <span>Mantenha a escolha restrita aos destinatários convidados.</span>
+                  </div>
+                  <label class="switch-toggle">
+                    <input type="checkbox">
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="admin-bottom-actions-row">
+                <span>Alterações apenas nesta galeria de demonstração.</span>
+                <button type="button" class="btn-salvar-admin">✓ Salvar</button>
+              </div>
+            </div>
+
+            <!-- Coluna Direita: Cards de Prévia -->
+            <div class="admin-side-cards-col">
+              <div class="admin-preview-box">
+                <h4>Como o cliente verá</h4>
+                <div class="admin-preview-img-frame">
+                  <img src="assets/images/familia.jpg" alt="Foto da família">
+                </div>
+                <div class="admin-preview-caption-title">Exemplo de seleção</div>
+                <span class="preview-pill-tag">Galeria demonstrativa</span>
+                <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
+                  12 fotos para explorar. Um convite para escolher os momentos que ficam.
+                </p>
+              </div>
+
+              <div class="admin-info-box-note">
+                <strong>Uma galeria, uma configuração</strong>
+                <p>Estas preferências valem apenas para esta galeria. A identidade do estúdio é mantida nas outras páginas.</p>
+              </div>
+
+              <div class="admin-timestamp-text">
+                Última atualização ilustrativa: 10 out. 2026, às 14:20.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ====================================================================
+             TAB 2: FOTOS (SCREEN 2)
+             ==================================================================== -->
+        <div class="tab-pane" id="tab-fotos" style="display: none;">
+          <div class="admin-form-two-col">
+            <div>
+              <!-- Upload Card -->
+              <div class="admin-card-panel" style="display: flex; flex-direction: column; gap: 1rem; background: #FAF5EE; border: 1.5px dashed #C4A482;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                  <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span style="font-size: 2.5rem;">☁️</span>
+                    <div>
+                      <strong style="display: block; font-size: 1rem; color: var(--text-dark);">Subir Fotos para a Galeria do Cliente</strong>
+                      <span style="font-size: 0.8rem; color: var(--text-muted);">Selecione fotos do ensaio diretamente do seu computador (JPG, PNG ou WEBP)</span>
+                    </div>
+                  </div>
+                  <div>
+                    <input type="file" id="inputUploadFotosGaleria" multiple accept="image/*" style="display: none;" onchange="uploadFotosParaGaleria(this)">
+                    <button type="button" class="btn-salvar-admin" onclick="document.getElementById('inputUploadFotosGaleria').click()" style="white-space: nowrap; padding: 0.75rem 1.4rem; font-size: 0.9rem;">
+                      + Selecionar Fotos do PC
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Barra de Progresso do Upload -->
+                <div id="progressUploadGaleria" style="display: none; background: #FFF; border: 1px solid #D8CAB9; border-radius: 8px; padding: 0.75rem;">
+                  <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; color: #2D1D14; margin-bottom: 6px;">
+                    <span id="txtUploadGaleriaStatus">Enviando fotos para a galeria...</span>
+                    <span id="txtUploadGaleriaPorcentagem">0%</span>
+                  </div>
+                  <div style="background: #E8DDD0; height: 10px; border-radius: 9999px; overflow: hidden;">
+                    <div id="barUploadGaleria" style="background: #9E744B; height: 100%; width: 0%; transition: width 0.2s;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Fotos da galeria Grid (Só aparece quando houver fotos na galeria) -->
+              <div class="admin-card-panel" id="cardFotosGaleria" style="display: none;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+                  <div>
+                    <h3 class="panel-title">Fotos da galeria</h3>
+                    <p class="panel-desc" style="margin-bottom: 0;">Fotos disponíveis para escolha do cliente. Você pode definir a capa ou excluir fotos a qualquer momento.</p>
+                  </div>
+                  <span class="preview-pill-tag" id="countFotosGaleria" style="margin: 0; font-weight: 700;">0 fotos</span>
+                </div>
+
+                <div class="form-row-2col" style="margin-bottom: 1.5rem;">
+                  <div>
+                    <label class="field-label">Buscar foto</label>
+                    <input type="text" id="buscaFotosGaleriaAdmin" class="field-input" placeholder="Buscar por número ou nome do arquivo...">
+                  </div>
+                  <div>
+                    <label class="field-label">Ordenação</label>
+                    <select id="ordemFotosGaleriaAdmin" class="field-select" onchange="ordenarFotosGaleriaAdmin(this.value)">
+                      <option value="ordem">Ordem original</option>
+                      <option value="nome">Nome do arquivo</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Grade Dinâmica com as Fotos -->
+                <div id="gridFotosGaleriaAdmin" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                  <div style="grid-column: 1 / -1; text-align: center; color: #888; padding: 2.5rem; background: #FAF5EE; border-radius: 10px;">
+                    Carregando fotos da galeria...
+                  </div>
+                </div>
+
+                <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;">
+                  <span>Todas as fotos contam com proteção visual por marca d'água da logo oficial na visão do cliente.</span>
+                  <button type="button" onclick="carregarFotosGaleriaConfig()" style="background: none; border: none; color: #8C5F35; font-weight: 700; cursor: pointer; font-size: 0.78rem;">
+                    🔄 Recarregar Fotos
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Coluna Direita: Envio e Preparo -->
+            <div class="admin-side-cards-col">
+              <div class="admin-preview-box">
+                <h4>Capa da Galeria</h4>
+                <div style="background: #FAF5EE; border-radius: 10px; overflow: hidden; border: 1px solid #D8CAB9; margin-bottom: 0.75rem; text-align: center;">
+                  <img id="imgPreviewCapaGaleriaLateral" src="assets/logo/logo.png" style="width: 100%; height: 130px; object-fit: cover;">
+                </div>
+                <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+                  <li>✓ Miniaturas em alta resolução</li>
+                  <li>✓ Marca d'água automática ativa</li>
+                  <li>✓ Numeração preservada para edição</li>
+                </ul>
+                <span class="preview-pill-tag">Galeria pronta para escolha</span>
+              </div>
+
+              <!-- Enviar Galeria ao Cliente via WhatsApp -->
+              <div class="admin-preview-box" style="border: 1.5px solid #25D366; background: #FFFDF9;">
+                <h4 style="color: #1E3A2F; display: flex; align-items: center; gap: 6px;">
+                  <span>💬</span> Enviar Link no WhatsApp
+                </h4>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                  Mensagem personalizada com usuário, senha e link para login do cliente.
+                </p>
+
+                <div style="margin-bottom: 0.5rem;">
+                  <label class="field-label">WhatsApp do Cliente</label>
+                  <input type="text" id="waTelLateral" class="field-input" placeholder="Ex: 11987654321" value="11987654321">
+                </div>
+
+                <div style="margin-bottom: 0.75rem;">
+                  <label class="field-label">Link de Login</label>
+                  <input type="text" id="waLinkLateral" class="field-input" readonly value="http://localhost:8082/login-cliente.html">
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                  <button type="button" onclick="enviarWhatsAppLateral()" class="btn-salvar-admin" style="background: #25D366; color: #FFF; font-weight: 700; border: none; justify-content: center; width: 100%;">
+                    🟢 Abrir no WhatsApp
+                  </button>
+                  <button type="button" onclick="copiarMensagemWhatsApp()" style="background: #FAF5EE; border: 1px solid #D8CAB9; color: #352319; font-weight: 600; padding: 0.5rem; border-radius: 8px; font-size: 0.8rem; cursor: pointer; width: 100%;">
+                    📋 Copiar Mensagem Completa
+                  </button>
+                </div>
+              </div>
+
+              <div class="admin-info-box-note">
+                <strong>Organização Profissional</strong>
+                <p>O cliente escolhe as fotos diretamente na plataforma. Quando ele finalizar, os nomes ficam prontos para você copiar e colar no Windows Explorer para edição!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====================================================================
+             TAB 3: SELEÇÃO E VENDA (SCREEN 3)
+             ==================================================================== -->
+        <div class="tab-pane" id="tab-selecao" style="display: none;">
+          <div class="admin-form-two-col">
+            <div>
+              <!-- Bloco 1: Regras de seleção -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Regras de seleção</h3>
+                <p class="panel-desc">Configure o limite do pacote e o valor de cada foto extra selecionada pelo cliente.</p>
+
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Fotos incluídas no pacote</label>
+                    <input type="number" id="inputLimitePacote" class="field-input" value="10" min="1">
+                  </div>
+                  <div>
+                    <label class="field-label">Valor por Foto Extra (R$)</label>
+                    <input type="number" step="0.50" min="0" id="inputValorFotoExtra" class="field-input" placeholder="25.00" value="25.00">
+                  </div>
+                </div>
+
+                <div class="toggle-item-row" style="margin-top: 1rem;">
+                  <div class="toggle-label-wrap">
+                    <strong>Permitir seleção de fotos extras</strong>
+                    <span>O cliente pode marcar fotos além do limite do pacote com cálculo do valor em tempo real.</span>
+                  </div>
+                  <label class="switch-toggle">
+                    <input type="checkbox" id="chkPermitirExtras" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <div style="margin-top: 1rem; text-align: right;">
+                  <button type="button" onclick="salvarRegrasSelecao()" class="btn-salvar-admin" id="btnSalvarRegras">
+                    💾 Salvar Regras de Seleção
+                  </button>
+                </div>
+              </div>
+
+              <!-- Bloco Especial: Exportação das Escolhas para Windows 10 e 11 -->
+              <div class="admin-card-panel" style="background: #FFFDF9; border: 2px solid #C4A482;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                  <h3 class="panel-title" style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    📁 Fotos Escolhidas pelo Cliente (Windows 10 e 11)
+                  </h3>
+                  <div style="display: flex; gap: 0.4rem; align-items: center;">
+                    <span class="preview-pill-tag" id="badgeTotalEscolhidas" style="background: #2D1D14; color: #FAF5EE; font-weight: 700;">0 escolhidas</span>
+                    <button type="button" onclick="carregarFotosSelecionadas()" class="preview-pill-tag" style="background: #FAF5EE; border: 1px solid #D8CAB9; cursor: pointer; font-weight: 600;">
+                      🔄 Atualizar
+                    </button>
+                  </div>
+                </div>
+                <p class="panel-desc" style="margin-bottom: 0.85rem;">
+                  Nomes das fotos escolhidas pelo cliente formatados para você copiar e colar na barra de pesquisa do <strong>Windows Explorer (Windows 10 e 11)</strong> e separar os arquivos para edição em segundos!
+                </p>
+
+                <div style="margin-bottom: 0.85rem;">
+                  <label class="field-label" style="font-weight: 700; color: #2D1D14;">
+                    Linha de Busca para Windows Explorer (Windows 10 e 11):
+                  </label>
+                  <textarea id="txtBuscaWindows" class="field-textarea" rows="3" readonly style="font-family: 'Consolas', monospace; font-size: 0.88rem; background: #FAF5EE; border: 1.5px solid #D8CAB9; color: #2D1D14; padding: 0.75rem; border-radius: 8px; resize: vertical;" placeholder="Aguardando seleção do cliente..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                  <button type="button" onclick="copiarFormatoBusca('windows')" class="btn-salvar-admin" style="padding: 0.55rem 1rem; font-size: 0.82rem; background: #352319;">
+                    📋 Copiar para Busca no Windows (10 e 11)
+                  </button>
+                  <button type="button" onclick="copiarFormatoBusca('virgula')" style="background: #FAF5EE; border: 1px solid #D8CAB9; color: #4A3A2F; padding: 0.55rem 0.9rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer;">
+                    📋 Copiar com Vírgula (, )
+                  </button>
+                  <button type="button" onclick="copiarFormatoBusca('linhas')" style="background: #FAF5EE; border: 1px solid #D8CAB9; color: #4A3A2F; padding: 0.55rem 0.9rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer;">
+                    📋 Copiar Linha por Linha
+                  </button>
+                </div>
+
+                <!-- Lista Visual com Miniaturas das Escolhidas -->
+                <div id="listaVisualEscolhidas" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.6rem; max-height: 220px; overflow-y: auto; margin-bottom: 1rem; padding: 6px; background: #FAF5EE; border-radius: 8px; border: 1px solid #E8DDD0;">
+                  <div style="grid-column: 1 / -1; text-align: center; color: #888; font-size: 0.78rem; padding: 1rem;">Nenhuma foto selecionada pelo cliente ainda.</div>
+                </div>
+
+                <div style="background: #F5EFEB; border-left: 4px solid #9E744B; padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.78rem; color: #5B483B; line-height: 1.45;">
+                  💡 <strong>Como separar as fotos no Windows 10 e 11:</strong><br>
+                  1. Abra a pasta do ensaio no <strong>Explorador de Arquivos do Windows</strong>.<br>
+                  2. Clique na barra de pesquisa no canto superior direito (ou pressione <kbd>Ctrl + F</kbd>).<br>
+                  3. Cole a linha copiada (<kbd>Ctrl + V</kbd>). O Windows filtrará instantaneamente todas as fotos escolhidas pelo cliente para você recortar ou copiar diretamente para a pasta de edição!
+                </div>
+              </div>
+
+              <div class="admin-bottom-actions-row">
+                <span>Alterações apenas nesta galeria de demonstração.</span>
+                <button type="button" class="btn-salvar-admin">✓ Salvar alterações</button>
+              </div>
+            </div>
+
+            <!-- Coluna Direita -->
+            <div class="admin-side-cards-col">
+              <div class="admin-preview-box">
+                <h4>Encaminhar a finalização</h4>
+                <span class="preview-pill-tag">Seleção em andamento</span>
+                <div style="font-size: 1.6rem; font-weight: 800; color: var(--text-dark); margin: 0.5rem 0;">6 do pacote + 2 extras</div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1rem;">
+                  Este é o rascunho de escolha do cliente, ainda não enviado como seleção final.
+                </p>
+                <div style="font-size: 0.8rem; color: var(--text-dark); margin-bottom: 1rem;">
+                  <strong>Antes de finalizar</strong>
+                  <ol style="margin-left: 1.2rem; margin-top: 0.4rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.35rem;">
+                    <li>Receber a seleção final do cliente.</li>
+                    <li>Revisar as 6 fotos do pacote.</li>
+                    <li>Confirmar as 2 extras à parte.</li>
+                    <li>Preparar os arquivos de entrega.</li>
+                  </ol>
+                </div>
+                <button type="button" class="btn-salvar-admin" style="width: 100%; justify-content: center;">📋 Preparar revisão</button>
+              </div>
+
+              <div class="admin-info-box-note">
+                <strong>Não misture as listas</strong>
+                <p>A quantidade total escolhida é 8, mas apenas 6 contam no pacote. As 4 vagas restantes continuam disponíveis.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====================================================================
+             TAB 4: PRAZO E LEMBRETE (SCREEN 4)
+             ==================================================================== -->
+        <div class="tab-pane" id="tab-prazo" style="display: none;">
+          <div class="admin-form-two-col">
+            <div>
+              <!-- Bloco 1: Prazo para a escolha -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Prazo para a escolha</h3>
+                
+                <div class="toggle-item-row" style="margin-bottom: 1.25rem;">
+                  <div class="toggle-label-wrap">
+                    <strong>Definir prazo de seleção</strong>
+                    <span>A data é apresentada ao cliente ao acessar a galeria.</span>
+                  </div>
+                  <label class="switch-toggle">
+                    <input type="checkbox" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Data limite</label>
+                    <select class="field-select">
+                      <option selected>20/10/2026</option>
+                      <option>25/10/2026</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="field-label">Horário</label>
+                    <select class="field-select">
+                      <option selected>23:59 - horário de Brasília</option>
+                      <option>18:00 - horário de Brasília</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-field-group">
+                  <label class="field-label">Ao encerrar o prazo</label>
+                  <select class="field-select">
+                    <option selected>Pausar novas escolhas e preservar a seleção</option>
+                    <option>Bloquear acesso completamente</option>
+                  </select>
+                  <span class="field-hint-caption">As 6 fotos do pacote e as 2 extras permanecem registradas após o prazo.</span>
+                </div>
+              </div>
+
+              <!-- Bloco 2: Lembretes de seleção -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Lembretes de seleção</h3>
+
+                <div class="toggle-item-row" style="margin-bottom: 1.25rem;">
+                  <div class="toggle-label-wrap">
+                    <strong>Lembretes por convite</strong>
+                    <span>Avisar apenas destinatários que ainda não finalizaram a escolha.</span>
+                  </div>
+                  <label class="switch-toggle">
+                    <input type="checkbox" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Primeiro lembrete</label>
+                    <select class="field-select">
+                      <option selected>3 dias antes - 17/10/2026</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="field-label">Último lembrete</label>
+                    <select class="field-select">
+                      <option selected>1 dia antes - 19/10/2026</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-field-group">
+                  <label class="field-label">Horário dos lembretes</label>
+                  <select class="field-select">
+                    <option selected>09:00 - horário de Brasília</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Bloco 3: Mensagem do lembrete -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Mensagem do lembrete</h3>
+                <div class="form-field-group">
+                  <label class="field-label">Texto para o cliente</label>
+                  <textarea class="field-textarea">Olá! Ainda dá tempo de escolher seus momentos favoritos. No exemplo, faltam 4 fotos para completar o pacote. Revise também suas 2 extras e envie sua seleção até 20/10. Estamos por aqui para ajudar!</textarea>
+                  <span class="field-hint-caption">O lembrete deixa de ser previsto quando a seleção final é recebida.</span>
+                </div>
+              </div>
+
+              <div class="admin-bottom-actions-row">
+                <span>Alterações apenas nesta galeria de demonstração.</span>
+                <button type="button" class="btn-salvar-admin">✓ Salvar alterações</button>
+              </div>
+            </div>
+
+            <!-- Coluna Direita: Agenda da galeria -->
+            <div class="admin-side-cards-col">
+              <div class="admin-preview-box">
+                <h4>Agenda da galeria</h4>
+                <span class="preview-pill-tag">10 dias para escolher</span>
+
+                <div style="margin-top: 1rem;">
+                  <div class="timeline-event-item">
+                    <div class="timeline-date-badge">10 OUT</div>
+                    <div class="timeline-event-desc">
+                      <strong>Escolha em andamento</strong>
+                      <span>6 do pacote · 2 extras</span>
+                    </div>
+                  </div>
+                  <div class="timeline-event-item">
+                    <div class="timeline-date-badge">17 OUT</div>
+                    <div class="timeline-event-desc">
+                      <strong>Primeiro lembrete</strong>
+                      <span>09:00 - previsto</span>
+                    </div>
+                  </div>
+                  <div class="timeline-event-item">
+                    <div class="timeline-date-badge">19 OUT</div>
+                    <div class="timeline-event-desc">
+                      <strong>Último lembrete</strong>
+                      <span>09:00 - previsto</span>
+                    </div>
+                  </div>
+                  <div class="timeline-event-item">
+                    <div class="timeline-date-badge">20 OUT</div>
+                    <div class="timeline-event-desc">
+                      <strong>Prazo de seleção</strong>
+                      <span>23:59 - encerramento</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="admin-info-box-note">
+                <strong>Sem pressa, com clareza</strong>
+                <p>Datas e lembretes são ilustrativos. Nenhuma mensagem será disparada por este painel.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====================================================================
+             TAB 5: ACESSO E PRIVACIDADE (SCREEN 5)
+             ==================================================================== -->
+        <div class="tab-pane" id="tab-acesso" style="display: none;">
+          <div class="admin-form-two-col">
+            <div>
+              <!-- Bloco 1: Forma de acesso -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Forma de acesso</h3>
+                <p class="panel-desc">A galeria é privada e não aparece em páginas públicas.</p>
+
+                <div class="access-type-card-grid">
+                  <div class="access-type-card selected">
+                    <div class="access-card-header">
+                      <strong>✉ Por convite</strong>
+                      <span class="badge-access-status">Selecionado</span>
+                    </div>
+                    <p>Somente destinatários autorizados.</p>
+                  </div>
+                  <div class="access-type-card">
+                    <div class="access-card-header">
+                      <strong>🔑 Por link e senha</strong>
+                      <span class="badge-access-status" style="background:#FAF5EE; color:#666;">Opcional</span>
+                    </div>
+                    <p>Uma senha adicional ao link da galeria.</p>
+                  </div>
+                </div>
+
+                <div class="toggle-item-row" style="margin-bottom: 1.25rem;">
+                  <div class="toggle-label-wrap">
+                    <strong>Exigir senha adicional</strong>
+                    <span>Proteção complementar para os destinatários convidados.</span>
+                  </div>
+                  <label class="switch-toggle">
+                    <input type="checkbox" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <div class="form-field-group">
+                  <label class="field-label">Senha da galeria</label>
+                  <input type="password" class="field-input" value="••••••••••••">
+                  <span class="field-hint-caption">Senha de demonstração - não utilizada em acesso real.</span>
+                </div>
+              </div>
+
+              <!-- Bloco 2: Permissões do cliente -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Permissões do cliente</h3>
+
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Selecionar fotos do pacote e extras</strong>
+                    <span>As escolhas ficam vinculadas ao destinatário principal.</span>
+                  </div>
+                  <label class="switch-toggle">
+                    <input type="checkbox" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Permitir comentários</strong>
+                    <span>Observações ajudam a preparar a entrega.</span>
+                  </div>
+                  <label class="switch-toggle">
+                    <input type="checkbox" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Convidar outras pessoas</strong>
+                    <span>Apenas o fotógrafo administra os destinatários.</span>
+                  </div>
+                  <label class="switch-toggle">
+                    <input type="checkbox">
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Disponibilizar arquivos para download</strong>
+                    <span>Bloqueado até a aprovação e a entrega final.</span>
+                  </div>
+                  <label class="switch-toggle">
+                    <input type="checkbox">
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="admin-bottom-actions-row">
+                <span>Alterações apenas nesta galeria de demonstração.</span>
+                <button type="button" class="btn-salvar-admin">✓ Salvar alterações</button>
+              </div>
+            </div>
+
+            <!-- Coluna Direita -->
+            <div class="admin-side-cards-col">
+              <div class="admin-preview-box">
+                <h4>Privacidade em resumo</h4>
+                <div style="font-size: 1.75rem; margin-bottom: 0.5rem;">🛡️</div>
+                <strong style="display: block; font-size: 1.15rem; color: var(--text-dark); margin-bottom: 0.5rem;">Acesso com cuidado.</strong>
+                <span class="preview-pill-tag">Galeria privada</span>
+                <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 0.75rem;">
+                  1 destinatário autorizado. Link de convite individual e senha adicional no exemplo.
+                </p>
+                <span style="display: block; font-size: 0.74rem; color: var(--text-muted);">Sem exibição pública e sem compartilhamento em redes sociais.</span>
+              </div>
+
+              <div class="admin-info-box-note">
+                <strong>A escolha é do cliente</strong>
+                <p>O cliente pode revisar a própria seleção até 20/10. Os arquivos finais continuam protegidos.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====================================================================
+             TAB 6: CLIENTES (SCREEN 6)
+             ==================================================================== -->
+        <div class="tab-pane" id="tab-clientes" style="display: none;">
+          <div class="admin-form-two-col">
+            <div>
+              <!-- Bloco 1: Destinatários da galeria -->
+              <div class="admin-card-panel">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+                  <div>
+                    <h3 class="panel-title">Destinatários da galeria</h3>
+                    <p class="panel-desc" id="destinatariosSubtitle" style="margin-bottom: 0;">Clientes convidados com acesso à galeria para escolha de fotos.</p>
+                  </div>
+                  <button type="button" class="btn-salvar-admin" id="btnAbrirModalDestinatario" onclick="abrirModalAdicionarCliente()" style="white-space: nowrap;">
+                    + Adicionar destinatário
+                  </button>
+                </div>
+
+                <div class="form-row-2col" style="margin-bottom: 1.5rem;">
+                  <div>
+                    <label class="field-label">Buscar destinatário</label>
+                    <input type="text" id="filtroBuscaDestinatario" class="field-input" placeholder="Buscar por nome ou e-mail..." oninput="filtrarDestinatariosTabela()">
+                  </div>
+                  <div>
+                    <label class="field-label">Status</label>
+                    <select id="filtroStatusDestinatario" class="field-select" onchange="filtrarDestinatariosTabela()">
+                      <option value="">Todos os status</option>
+                      <option value="Convite preparado">Convite preparado</option>
+                      <option value="Convite acessado">Convite acessado</option>
+                      <option value="Seleção enviada">Seleção enviada</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Tabela de Destinatários Dinâmica -->
+                <div style="border: 1px solid #E8DDD0; border-radius: 12px; overflow: hidden; font-size: 0.8rem;">
+                  <div style="display: grid; grid-template-columns: 1.4fr 1.2fr 1fr 1fr 0.5fr; background: #FAF5EE; padding: 0.75rem 1rem; font-weight: 700; color: var(--text-muted); border-bottom: 1px solid #E8DDD0;">
+                    <span>Destinatário</span>
+                    <span>Convite</span>
+                    <span>Último acesso</span>
+                    <span>Seleção</span>
+                    <span style="text-align:right;">Ações</span>
+                  </div>
+                  <div id="listaDestinatariosTabela">
+                    <div style="text-align: center; color: #888; padding: 1.5rem;">Carregando destinatários da galeria...</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bloco Especial: Convite e Acesso Personalizado no WhatsApp -->
+              <div class="admin-card-panel" style="background: #FFFDF9; border: 1.5px solid #25D366; margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                  <h3 class="panel-title" style="margin: 0; display: flex; align-items: center; gap: 0.5rem; color: #1E3A2F;">
+                    <span style="font-size: 1.3rem;">💬</span> Convite WhatsApp com Usuário, Senha e Link de Login
+                  </h3>
+                  <span class="preview-pill-tag" style="background: #E8F8F0; color: #1E8E5A; border: 1px solid #A3E9C7; font-weight: 700;">Mensagem Pronta</span>
+                </div>
+                <p class="panel-desc" style="margin-bottom: 1.25rem;">
+                  Envie uma mensagem personalizada no WhatsApp do cliente contendo o link da tela de login, usuário e senha da galeria.
+                </p>
+
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Nome do Cliente</label>
+                    <input type="text" id="waNomeCliente" class="field-input" placeholder="Ex: Maria Clara" value="Maria Clara" oninput="atualizarPreviewMensagemWhatsApp()">
+                  </div>
+                  <div>
+                    <label class="field-label">WhatsApp com DDD (apenas números)</label>
+                    <input type="text" id="waTelefoneCliente" class="field-input" placeholder="Ex: 11987654321" value="11987654321" oninput="atualizarPreviewMensagemWhatsApp()">
+                  </div>
+                </div>
+
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Usuário / E-mail de Login</label>
+                    <input type="text" id="waUsuarioCliente" class="field-input" placeholder="cliente@exemplo.com" value="cliente@exemplo.com" oninput="atualizarPreviewMensagemWhatsApp()">
+                  </div>
+                  <div>
+                    <label class="field-label">Senha de Acesso</label>
+                    <input type="text" id="waSenhaCliente" class="field-input" placeholder="123456" value="123456" oninput="atualizarPreviewMensagemWhatsApp()">
+                  </div>
+                </div>
+
+                <div class="form-field-group">
+                  <label class="field-label">Prévia da Mensagem Personalizada do WhatsApp</label>
+                  <textarea id="waMensagemTexto" class="field-textarea" rows="7" style="font-family: inherit; font-size: 0.85rem; line-height: 1.45; background: #FAF5EE; border: 1px solid #D8CAB9; padding: 0.75rem; border-radius: 8px;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.75rem;">
+                  <button type="button" onclick="enviarMensagemWhatsApp()" class="btn-salvar-admin" style="background: #25D366; color: #FFF; font-weight: 700; border: none; padding: 0.65rem 1.4rem;">
+                    🟢 Enviar pelo WhatsApp
+                  </button>
+                  <button type="button" onclick="copiarMensagemWhatsApp()" style="background: #FAF5EE; border: 1px solid #D8CAB9; color: #352319; font-weight: 600; padding: 0.65rem 1.1rem; border-radius: 8px; cursor: pointer;">
+                    📋 Copiar Mensagem Completa
+                  </button>
+                  <button type="button" onclick="copiarLinkLoginCliente()" style="background: #FAF5EE; border: 1px solid #D8CAB9; color: #352319; font-weight: 600; padding: 0.65rem 1.1rem; border-radius: 8px; cursor: pointer;">
+                    🔗 Copiar Link de Login
+                  </button>
+                </div>
+              </div>
+
+              <!-- Bloco 2: Preparar um novo convite -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Preparar um novo convite</h3>
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Nome do destinatário *</label>
+                    <input type="text" id="inputNomeNovoConvite" class="field-input" placeholder="Nome de exibição">
+                  </div>
+                  <div>
+                    <label class="field-label">E-mail *</label>
+                    <input type="email" id="inputEmailNovoConvite" class="field-input" placeholder="destinatario@exemplo.com">
+                  </div>
+                </div>
+                <div class="form-field-group">
+                  <label class="field-label">Permissão</label>
+                  <select class="field-select">
+                    <option selected>Apenas visualizar - sem alterar a escolha principal</option>
+                  </select>
+                </div>
+                <div class="form-field-group">
+                  <label class="field-label">Mensagem do convite</label>
+                  <textarea class="field-textarea">Olá! Compartilhamos esta galeria para você acompanhar os momentos do nosso ensaio. A escolha das fotos fica com o destinatário principal.</textarea>
+                </div>
+                <button type="button" class="btn-salvar-admin" id="btnPrepararNovoConvite">✉ Preparar convite</button>
+                <span class="field-hint-caption" style="margin-top: 0.5rem;">Cadastra o convite no banco de dados da galeria.</span>
+              </div>
+            </div>
+
+            <!-- Coluna Direita -->
+            <div class="admin-side-cards-col">
+              <div class="admin-preview-box">
+                <h4>Preferências de convite</h4>
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Avisar quando o convite for acessado</strong>
+                    <span>Acompanhe a primeira visita do cliente.</span>
+                  </div>
+                  <label class="switch-toggle"><input type="checkbox" checked><span class="switch-slider"></span></label>
+                </div>
+                <div class="toggle-item-row" style="margin-bottom: 1rem;">
+                  <div class="toggle-label-wrap">
+                    <strong>Vincular a seleção ao cliente principal</strong>
+                    <span>Evite escolhas conflitantes entre convidados.</span>
+                  </div>
+                  <label class="switch-toggle"><input type="checkbox" checked><span class="switch-slider"></span></label>
+                </div>
+                <button type="button" class="btn-salvar-admin" style="width: 100%; justify-content: center;">✈ Reenviar convite</button>
+              </div>
+
+              <div class="admin-info-box-note">
+                <strong>Uma escolha compartilhada</strong>
+                <p>Somente o cliente principal seleciona as fotos. Novos convidados podem visualizar sem alterar as fotos.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====================================================================
+             TAB 7: DOWNLOAD (SCREEN 7)
+             ==================================================================== -->
+        <div class="tab-pane" id="tab-download" style="display: none;">
+          <div class="admin-form-two-col">
+            <div>
+              <!-- Bloco 1: Disponibilidade dos arquivos -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Disponibilidade dos arquivos</h3>
+                <div class="toggle-item-row" style="margin-bottom: 1rem;">
+                  <div class="toggle-label-wrap">
+                    <strong>Permitir download pelo cliente</strong>
+                    <span>A liberação permanece desativada durante a escolha.</span>
+                  </div>
+                  <label class="switch-toggle"><input type="checkbox"><span class="switch-slider"></span></label>
+                </div>
+                <div class="form-field-group">
+                  <label class="field-label">Quando disponibilizar</label>
+                  <select class="field-select">
+                    <option selected>Após revisão e aprovação do fotógrafo</option>
+                  </select>
+                </div>
+                <div class="form-field-group">
+                  <label class="field-label">Fotos liberadas</label>
+                  <select class="field-select">
+                    <option selected>Somente seleção aprovada - pacote e extras confirmadas</option>
+                  </select>
+                  <span class="field-hint-caption">Nenhuma foto liberada no momento. A seleção final ainda não foi enviada.</span>
+                </div>
+              </div>
+
+              <!-- Bloco 2: Formatos da entrega -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Formatos da entrega</h3>
+                <p class="panel-desc">Preferências preparadas para quando a galeria for finalizada.</p>
+
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Formato do arquivo</label>
+                    <select class="field-select"><option selected>JPEG - qualidade máxima</option></select>
+                  </div>
+                  <div>
+                    <label class="field-label">Perfil de cor</label>
+                    <select class="field-select"><option selected>sRGB</option></select>
+                  </div>
+                </div>
+
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Resolução para impressão</label>
+                    <select class="field-select"><option selected>Alta resolução - tamanho original</option></select>
+                  </div>
+                  <div>
+                    <label class="field-label">Versão para redes sociais</label>
+                    <select class="field-select"><option selected>2048 pixels - lado maior</option></select>
+                  </div>
+                </div>
+
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Incluir versão para redes sociais</strong>
+                    <span>Uma cópia compactada além do arquivo de alta resolução.</span>
+                  </div>
+                  <label class="switch-toggle"><input type="checkbox" checked><span class="switch-slider"></span></label>
+                </div>
+
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Agrupar em arquivo ZIP</strong>
+                    <span>Mantém as pastas Pacote e Extras separadas.</span>
+                  </div>
+                  <label class="switch-toggle"><input type="checkbox" checked><span class="switch-slider"></span></label>
+                </div>
+              </div>
+
+              <!-- Bloco 3: Prazo do download -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Prazo do download</h3>
+                <div class="form-field-group">
+                  <label class="field-label">Disponibilidade após a liberação</label>
+                  <select class="field-select"><option selected>30 dias</option></select>
+                </div>
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Avisar antes de expirar</strong>
+                    <span>Lembrete previsto 3 dias antes do fim da disponibilidade.</span>
+                  </div>
+                  <label class="switch-toggle"><input type="checkbox" checked><span class="switch-slider"></span></label>
+                </div>
+              </div>
+
+              <div class="admin-bottom-actions-row">
+                <span>Alterações apenas nesta galeria de demonstração.</span>
+                <button type="button" class="btn-salvar-admin">✓ Salvar alterações</button>
+              </div>
+            </div>
+
+            <!-- Coluna Direita -->
+            <div class="admin-side-cards-col">
+              <div class="admin-preview-box">
+                <h4>Prévia da entrega</h4>
+                <div style="font-size: 2rem; margin-bottom: 0.4rem;">📁</div>
+                <span class="preview-pill-tag">Download bloqueado</span>
+                <strong style="display: block; font-size: 1.15rem; color: var(--text-dark); margin: 0.5rem 0;">Exemplo de seleção.zip</strong>
+                <div style="background: #FAF5EE; border-radius: 8px; padding: 0.75rem; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                  <div style="margin-bottom: 0.4rem;"><strong>• Fotos do pacote</strong><br>6 escolhidas - aguardando envio</div>
+                  <div><strong>• Fotos extras</strong><br>2 escolhidas - aguardando confirmação</div>
+                </div>
+                <span style="font-size: 0.74rem; color: var(--text-muted);">A estrutura acima é ilustrativa. Não há arquivos finais para baixar.</span>
+              </div>
+
+              <div class="admin-info-box-note">
+                <strong>Prévia não é entrega</strong>
+                <p>As imagens de seleção são protegidas. Os arquivos finais são liberados só depois da confirmação do fotógrafo.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====================================================================
+             TAB 8: DESIGN (SCREEN 8)
+             ==================================================================== -->
+        <div class="tab-pane" id="tab-design" style="display: none;">
+          <div class="admin-form-two-col">
+            <div>
+              <!-- Prévia de apresentação -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Prévia de apresentação</h3>
+                <p class="panel-desc">Uma amostra visual de capa e das miniaturas para o cliente.</p>
+
+                <!-- Mini Mock da Página -->
+                <div style="border: 1px solid #D8CAB9; border-radius: 12px; overflow: hidden; background: #FFFFFF; margin-bottom: 0.75rem;">
+                  <div style="background: #352319; color: #FFF; padding: 0.5rem 1rem; font-size: 0.7rem; font-weight: 700; display: flex; justify-content: space-between;">
+                    <span>ESTÚDIO CASA DA FOTO</span>
+                    <span>Escolha de fotos</span>
+                  </div>
+                  <div style="padding: 1.25rem; display: flex; gap: 1rem; align-items: center; border-bottom: 1px solid #EFE6DC;">
+                    <img src="assets/images/familia.jpg" style="width: 140px; height: 90px; object-fit: cover; border-radius: 8px;">
+                    <div>
+                      <span class="preview-pill-tag">Exemplo de seleção</span>
+                      <strong style="display: block; font-size: 1.1rem; color: var(--text-dark);">Escolha os momentos que ficam.</strong>
+                      <span style="font-size: 0.75rem; color: var(--text-muted);">Suas favoritas, com tempo e cuidado.</span>
+                    </div>
+                  </div>
+                  <div style="padding: 1rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
+                    <div><img src="assets/images/familia.jpg" style="width: 100%; height: 60px; object-fit: cover; border-radius: 6px;"><div style="font-size: 0.68rem; margin-top: 2px;">Foto 001</div></div>
+                    <div><img src="assets/images/gestante.jpg" style="width: 100%; height: 60px; object-fit: cover; border-radius: 6px;"><div style="font-size: 0.68rem; margin-top: 2px;">Foto 002</div></div>
+                    <div><img src="assets/images/bebe.jpg" style="width: 100%; height: 60px; object-fit: cover; border-radius: 6px;"><div style="font-size: 0.68rem; margin-top: 2px;">Foto 003</div></div>
+                  </div>
+                </div>
+                <span class="field-hint-caption">A capa usa a imagem original. A composição mantém o enquadramento do estúdio.</span>
+              </div>
+
+              <!-- Opções visuais -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Opções visuais</h3>
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Organização das fotos</label>
+                    <select class="field-select"><option selected>Grade regular</option></select>
+                  </div>
+                  <div>
+                    <label class="field-label">Espaçamento</label>
+                    <select class="field-select"><option selected>Confortável</option></select>
+                  </div>
+                </div>
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Exibir número das fotos</strong>
+                    <span>Facilita a identificação das fotos enviadas ao fotógrafo.</span>
+                  </div>
+                  <label class="switch-toggle"><input type="checkbox" checked><span class="switch-slider"></span></label>
+                </div>
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Mostrar mensagem de boas-vindas</strong>
+                    <span>Usa o texto definido em Dados da galeria.</span>
+                  </div>
+                  <label class="switch-toggle"><input type="checkbox" checked><span class="switch-slider"></span></label>
+                </div>
+              </div>
+
+              <div class="admin-bottom-actions-row">
+                <span>Alterações apenas nesta galeria de demonstração.</span>
+                <button type="button" class="btn-salvar-admin">✓ Salvar alterações</button>
+              </div>
+            </div>
+
+            <!-- Coluna Direita -->
+            <div class="admin-side-cards-col">
+              <div class="admin-preview-box">
+                <h4>Capa da galeria</h4>
+                <div class="admin-preview-img-frame">
+                  <img id="imgPreviewCapaDesign" src="assets/logo/logo.png" alt="Capa da Galeria" onerror="this.src='assets/logo/logo.png'">
+                </div>
+                <div style="margin-top: 10px; margin-bottom: 12px;">
+                  <label for="inputUploadCapaDesign" style="background:#FAF5EE; border:1px dashed #9E744B; color:#8C5F35; font-size:0.75rem; font-weight:700; padding:6px 12px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+                    📷 Alterar / Definir Foto de Capa
+                  </label>
+                  <input type="file" id="inputUploadCapaDesign" accept="image/*" style="display:none;" onchange="uploadNovaCapaGaleria(event)">
+                </div>
+                <div class="form-field-group">
+                  <label class="field-label">Estilo da capa</label>
+                  <select class="field-select"><option selected>Foto e título lado a lado</option></select>
+                </div>
+                <div class="form-field-group">
+                  <label class="field-label">Enquadramento</label>
+                  <select class="field-select"><option selected>Preservar imagem original</option></select>
+                </div>
+              </div>
+
+              <div class="admin-preview-box">
+                <h4>Cores e identidade</h4>
+                <label class="field-label" style="margin-bottom: 0.4rem;">Paleta do estúdio</label>
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                  <span style="width: 24px; height: 24px; border-radius: 4px; background: #352319;"></span>
+                  <span style="width: 24px; height: 24px; border-radius: 4px; background: #FAF5EE; border: 1px solid #DDD;"></span>
+                  <span style="width: 24px; height: 24px; border-radius: 4px; background: #9E744B;"></span>
+                  <span style="width: 24px; height: 24px; border-radius: 4px; background: #C59B6D;"></span>
+                </div>
+                <div class="form-field-group">
+                  <label class="field-label">Tema</label>
+                  <select class="field-select"><option selected>Casa da Foto - creme e bronze</option></select>
+                </div>
+                <div class="form-field-group">
+                  <label class="field-label">Tipografia</label>
+                  <select class="field-select"><option selected>Inter - clara e acolhedora</option></select>
+                </div>
+              </div>
+
+              <div class="admin-info-box-note">
+                <strong>Identidade preservada</strong>
+                <p>As opções visuais personalizam somente esta galeria, sem modificar as páginas existentes.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====================================================================
+             TAB 9: ATIVIDADES DO CLIENTE (SCREEN 9)
+             ==================================================================== -->
+        <div class="tab-pane" id="tab-atividades" style="display: none;">
+          <div class="admin-form-two-col">
+            <div>
+              <!-- Andamento da escolha -->
+              <div class="admin-card-panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                  <h3 class="panel-title">Andamento da escolha</h3>
+                  <span class="preview-pill-tag" style="background:#2D1D14; color:#FFF;">Em andamento</span>
+                </div>
+                <span class="preview-pill-tag">Cliente de exemplo</span>
+                <div style="font-size: 1.6rem; font-weight: 800; color: var(--text-dark); margin: 0.5rem 0;">6 de 10 fotos no pacote</div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                  4 fotos ainda podem ser escolhidas. As 2 extras ficam em uma lista separada.
+                </p>
+                <div class="summary-progress-bar-bg" style="height: 8px;">
+                  <div class="summary-progress-bar-fill" style="width: 60%;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem;">
+                  <span>60% do pacote escolhido</span>
+                  <span>Seleção final ainda não enviada</span>
+                </div>
+              </div>
+
+              <!-- Acessos à galeria -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Acessos à galeria</h3>
+                <p class="panel-desc">3 acessos do destinatário principal · informações ilustrativas.</p>
+
+                <div class="form-row-2col" style="margin-bottom: 1.25rem;">
+                  <div>
+                    <label class="field-label">Período</label>
+                    <select class="field-select"><option selected>09 a 10 de outubro de 2026</option></select>
+                  </div>
+                  <div>
+                    <label class="field-label">Destinatário</label>
+                    <select class="field-select"><option selected>Cliente de exemplo</option></select>
+                  </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.8rem;">
+                  <div style="padding: 0.75rem; background: #FAF5EE; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <strong>💻 10 out. - 14:18</strong>
+                      <div style="font-size: 0.74rem; color: var(--text-muted);">Escolha atualizada - 6 do pacote + 2 extras</div>
+                    </div>
+                    <span class="preview-pill-tag">Computador</span>
+                  </div>
+                  <div style="padding: 0.75rem; background: #FAF5EE; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <strong>📱 10 out. - 09:42</strong>
+                      <div style="font-size: 0.74rem; color: var(--text-muted);">Revisão das favoritas</div>
+                    </div>
+                    <span class="preview-pill-tag">Celular</span>
+                  </div>
+                  <div style="padding: 0.75rem; background: #FAF5EE; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <strong>💻 09 out. - 10:50</strong>
+                      <div style="font-size: 0.74rem; color: var(--text-muted);">Primeiro acesso pelo convite</div>
+                    </div>
+                    <span class="preview-pill-tag">Computador</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Etapas do cliente -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title" style="margin-bottom: 1rem;">Etapas do cliente</h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                  <div style="background: #FAF5EE; border-radius: 8px; padding: 0.85rem;">
+                    <strong style="display: block; font-size: 0.85rem; color: var(--text-dark);">Convite acessado</strong>
+                    <span style="font-size: 0.74rem; color: var(--text-muted);">09/10 - concluído</span>
+                  </div>
+                  <div style="background: #FAF5EE; border-radius: 8px; padding: 0.85rem;">
+                    <strong style="display: block; font-size: 0.85rem; color: var(--text-dark);">Escolha das fotos</strong>
+                    <span style="font-size: 0.74rem; color: var(--text-muted);">6 do pacote + 2 extras</span>
+                  </div>
+                  <div style="background: #FAF5EE; border-radius: 8px; padding: 0.85rem;">
+                    <strong style="display: block; font-size: 0.85rem; color: var(--text-dark);">Envio da seleção</strong>
+                    <span style="font-size: 0.74rem; color: var(--text-muted);">Aguardando cliente</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Coluna Direita -->
+            <div class="admin-side-cards-col">
+              <div class="admin-preview-box">
+                <h4>Resumo de acessos</h4>
+                <div style="font-size: 2.25rem; font-weight: 800; color: var(--text-dark);">3</div>
+                <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 1rem;">Acessos à galeria</span>
+                <div style="font-size: 0.8rem; border-top: 1px solid #EFE6DC; padding-top: 0.75rem; margin-bottom: 0.75rem;">
+                  <strong style="display: block; color: var(--text-dark);">Última visita:</strong>
+                  <span style="color: var(--text-muted);">10 out. 2026 - 14:18</span>
+                </div>
+                <div style="font-size: 0.8rem; border-top: 1px solid #EFE6DC; padding-top: 0.75rem; margin-bottom: 1rem;">
+                  <strong style="display: block; color: var(--text-dark);">Prazo para escolha:</strong>
+                  <span style="color: var(--text-muted);">20 out. 2026 - 23:59</span>
+                </div>
+                <button type="button" class="btn-salvar-admin" style="width: 100%; justify-content: center;">Definir lembrete</button>
+              </div>
+
+              <div class="admin-info-box-note">
+                <strong>O próximo passo é do cliente</strong>
+                <p>Aguarde a revisão e o envio da seleção final. Os lembretes estão previstos para 17 e 19 de outubro.</p>
+              </div>
+
+              <div class="admin-preview-box">
+                <h4>Comentários</h4>
+                <div style="font-size: 2.25rem; font-weight: 800; color: var(--text-dark);">0</div>
+                <span style="font-size: 0.76rem; color: var(--text-muted);">Nenhuma observação deixada nas fotos neste exemplo.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====================================================================
+             TAB 10: HISTÓRICO DE ATIVIDADES (SCREEN 10)
+             ==================================================================== -->
+        <div class="tab-pane" id="tab-historico" style="display: none;">
+          <div class="admin-form-two-col">
+            <div>
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Registro cronológico</h3>
+                <p class="panel-desc">7 eventos ilustrativos · mais recentes primeiro.</p>
+
+                <div class="form-row-2col" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 1.5rem;">
+                  <div>
+                    <label class="field-label">Período</label>
+                    <select class="field-select"><option selected>04 a 10/10/2026</option></select>
+                  </div>
+                  <div>
+                    <label class="field-label">Responsável</label>
+                    <select class="field-select"><option selected>Todos</option></select>
+                  </div>
+                  <div>
+                    <label class="field-label">Tipo de atividade</label>
+                    <select class="field-select"><option selected>Todas</option></select>
+                  </div>
+                </div>
+
+                <!-- Lista Dinâmica de Registros Cronológicos -->
+                <div id="listaHistoricoAtividades" style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.8rem;">
+                  <div style="text-align: center; color: #888; padding: 1.5rem;">Carregando histórico da galeria...</div>
+                </div>
+
+                <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 1rem;" id="countHistoricoTexto">
+                  Histórico sincronizado com o banco de dados.
+                </div>
+              </div>
+            </div>
+
+            <!-- Coluna Direita -->
+            <div class="admin-side-cards-col">
+              <div class="admin-preview-box">
+                <h4>Sobre este histórico</h4>
+                <div style="font-size: 1.5rem; margin-bottom: 0.4rem;">🕒</div>
+                <strong style="display: block; font-size: 1.15rem; color: var(--text-dark); margin-bottom: 0.4rem;">Do primeiro convite à entrega.</strong>
+                <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 0.75rem;">
+                  As ações do fotógrafo e os acessos do cliente aparecem juntos, com data e responsável.
+                </p>
+                <span class="preview-pill-tag" id="badgeTotalHistorico" style="margin-bottom: 1rem;">Registros ativos</span>
+                <button type="button" class="btn-salvar-admin" id="btnExportarHistorico" onclick="exportarHistoricoAtividades()" style="width: 100%; justify-content: center;">📄 Exportar registro de atividades</button>
+              </div>
+
+              <div class="admin-info-box-note">
+                <strong>Escolha ainda não finalizada</strong>
+                <p>O registro mais recente do cliente é parcial: 6 fotos no pacote e 2 extras. Não há envio final nem liberação de download neste histórico.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+    </div>
+
+    <!-- Rodapé -->
+    <footer class="admin-footer-strip">
+      <div class="content-wrap-wide admin-footer-flex">
+        <span>Casa da Foto Studio · Momentos que ficam</span>
+        <span>Exemplo de seleção · Dados e estados ilustrativos</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- SCRIPT DE NAVEGAÇÃO INTERATIVA ENTRE AS 10 TELAS -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const titles = {
+        'dados': { title: 'Dados da galeria', sub: 'Organize as informações e a mensagem que acolhe o cliente na galeria.', bread: 'Configurações' },
+        'fotos': { title: 'Fotos', sub: 'Adicione, organize e revise as fotos antes de convidar o cliente para escolher.', bread: 'Fotos' },
+        'selecao': { title: 'Seleção e venda', sub: 'Configure o pacote e acompanhe as favoritas, mantendo as fotos extras em uma lista separada.', bread: 'Seleção e venda' },
+        'prazo': { title: 'Prazo e lembrete', sub: 'Dê ao cliente tempo para escolher e prepare lembretes com a voz do estúdio.', bread: 'Prazo e lembrete' },
+        'acesso': { title: 'Acesso e privacidade', sub: 'Cuide da privacidade das fotos e defina quem pode acompanhar a escolha.', bread: 'Acesso e privacidade' },
+        'clientes': { title: 'Clientes', sub: 'Gerencie destinatários, acompanhe os convites e mantenha a escolha em um só lugar.', bread: 'Clientes' },
+        'download': { title: 'Download', sub: 'Defina a disponibilidade dos arquivos e os formatos da futura entrega ao cliente.', bread: 'Download' },
+        'design': { title: 'Design', sub: 'Apresente a galeria com a identidade acolhedora da Casa da Foto Studio.', bread: 'Design' },
+        'atividades': { title: 'Atividades do cliente', sub: 'Acompanhe os acessos e o andamento da escolha, sem perder de vista o próximo passo.', bread: 'Atividades' },
+        'historico': { title: 'Histórico de atividades', sub: 'Consulte a linha do tempo da galeria e os registros de cada etapa do trabalho.', bread: 'Histórico' }
+      };
+
+      const buttons = document.querySelectorAll('.sidebar-nav-btn');
+      const panes = document.querySelectorAll('.tab-pane');
+      const pageTitle = document.getElementById('pageTitle');
+      const pageSubtitle = document.getElementById('pageSubtitle');
+      const breadcrumbTabName = document.getElementById('breadcrumbTabName');
+
+      function switchTab(tabKey) {
+        if (!titles[tabKey]) tabKey = 'dados';
+
+        buttons.forEach(btn => {
+          if (btn.getAttribute('data-tab') === tabKey) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+
+        panes.forEach(pane => {
+          if (pane.id === 'tab-' + tabKey) {
+            pane.style.display = 'block';
+          } else {
+            pane.style.display = 'none';
+          }
+        });
+
+        if (pageTitle) pageTitle.textContent = titles[tabKey].title;
+        if (pageSubtitle) pageSubtitle.textContent = titles[tabKey].sub;
+        if (breadcrumbTabName) breadcrumbTabName.textContent = titles[tabKey].bread;
+        window.location.hash = tabKey;
+      }
+
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tab = btn.getAttribute('data-tab');
+          switchTab(tab);
+        });
+      });
+
+      // Check initial hash
+      const currentHash = window.location.hash.replace('#', '');
+      if (currentHash && titles[currentHash]) {
+        switchTab(currentHash);
+      }
+
+      // Listen for hash changes (browser back/forward or external links)
+      window.addEventListener('hashchange', () => {
+        const h = window.location.hash.replace('#', '');
+        if (h && titles[h]) {
+          switchTab(h);
+        }
+      });
+    });
+  </script>
+
+  <!-- MODAL: ADICIONAR CLIENTE / DESTINATÁRIO -->
+  <div id="modalAddCliente" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(30, 20, 15, 0.72); backdrop-filter: blur(5px); align-items: center; justify-content: center; padding: 1.25rem;">
+    <div style="background: #FAF5EE; border: 1.5px solid #D8CAB9; border-radius: 18px; max-width: 500px; width: 100%; padding: 2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.35); position: relative; max-height: 90vh; overflow-y: auto;">
+      <button type="button" onclick="fecharModalAdicionarCliente()" style="position: absolute; top: 16px; right: 18px; background: none; border: none; font-size: 1.4rem; color: #6B5546; cursor: pointer;">✕</button>
+      <span style="font-size: 0.76rem; font-weight: 700; color: #9E744B; letter-spacing: 0.08em; display: block; margin-bottom: 4px;">ACESSO DO CLIENTE À GALERIA</span>
+      <h3 style="font-size: 1.35rem; color: #2D1D14; font-weight: 800; margin-bottom: 0.35rem;">+ Adicionar Cliente / Destinatário</h3>
+      <p style="font-size: 0.85rem; color: #7A6A5E; margin-bottom: 1.25rem;">Cadastre o cliente para liberar a escolha de fotos desta galeria.</p>
+
+      <form onsubmit="event.preventDefault(); salvarNovoDestinatarioModal();">
+        <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 1.25rem;">
+          <div>
+            <label style="display:block; font-size:0.78rem; font-weight:700; color:#5C4A3E; margin-bottom:3px;">Nome do Cliente *</label>
+            <input type="text" id="modalNomeCliente" class="field-input" placeholder="Ex: Kaio Rodrigues" required>
+          </div>
+          <div>
+            <label style="display:block; font-size:0.78rem; font-weight:700; color:#5C4A3E; margin-bottom:3px;">E-mail de Login *</label>
+            <input type="email" id="modalEmailCliente" class="field-input" placeholder="Ex: kaio@exemplo.com" required>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div>
+              <label style="display:block; font-size:0.78rem; font-weight:700; color:#5C4A3E; margin-bottom:3px;">Senha de Acesso</label>
+              <input type="text" id="modalSenhaCliente" class="field-input" value="123456" placeholder="Padrão: 123456" required>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.78rem; font-weight:700; color:#5C4A3E; margin-bottom:3px;">WhatsApp (opcional)</label>
+              <input type="text" id="modalTelefoneCliente" class="field-input" placeholder="Ex: 11987654321">
+            </div>
+          </div>
+          <div>
+            <label style="display:block; font-size:0.78rem; font-weight:700; color:#5C4A3E; margin-bottom:3px;">Permissão de Acesso</label>
+            <select id="modalPermissaoCliente" class="field-select">
+              <option value="Selecionar fotos">Selecionar fotos do pacote e extras (Padrão)</option>
+              <option value="Apenas visualizar">Apenas visualizar (sem seleção)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.25rem;">
+          <button type="button" onclick="fecharModalAdicionarCliente()" style="background: none; border: 1px solid #D8CAB9; color: #7A6A5E; padding: 0.65rem 1.25rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-salvar-admin" id="btnSalvarModalCliente" style="padding: 0.65rem 1.5rem;">
+            ✓ Salvar e Liberar Acesso
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

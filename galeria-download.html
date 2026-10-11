@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script>window.location.replace("galeria-config.html" + window.location.search + "#download");</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Download | Configurações da Galeria | Casa da Foto Studio</title>
+  <meta name="description" content="Painel de gerenciamento, dados, prazos, clientes e entrega da galeria.">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Full-Width Fluid Wrapper -->
+  <div class="site-wrapper" id="siteWrapper">
+
+    <!-- 1. HEADER DO PAINEL DO FOTÓGRAFO (100% FULL-WIDTH) -->
+    <header class="site-header admin-header" id="siteHeader">
+      <div class="content-wrap-wide admin-header-nav">
+        
+        <!-- Logo e Monograma -->
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+          <div class="header-logo-card" style="width: 155px; height: 74px; padding: 0.4rem 1rem;">
+            <img src="assets/logo/logo.png" alt="Logo Casa da Foto" id="headerLogoImg">
+          </div>
+          <div>
+            <span class="header-brand-name" style="font-size: 0.72rem;">ESTÚDIO CASA DA FOTO</span>
+            <span class="header-brand-slogan" style="font-size: 0.65rem;">Momentos que ficam</span>
+          </div>
+        </div>
+
+        <!-- Links Centrais -->
+        <nav class="admin-nav-center" aria-label="Navegação do Painel">
+          <a href="index.html" class="nav-item">Início</a>
+          <a href="projetos.html" class="nav-item active-nav">Projetos</a>
+          <a href="#clientes-menu" class="nav-item">Clientes</a>
+          <a href="#config-menu" class="nav-item">Configurações</a>
+        </nav>
+
+        <!-- Ações do Fotógrafo (Direita) -->
+        <div class="admin-nav-user-actions">
+          <span class="btn-painel-fotografo">PAINEL DO FOTÓGRAFO</span>
+          <span style="font-size: 1.25rem; color: #FFFFFF; cursor: pointer;">🔔</span>
+          <div class="user-avatar-circle">CF</div>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- 2. LAYOUT SPLIT: SIDEBAR DE CONFIGURAÇÕES + ÁREA DE CONTEÚDO -->
+    <div class="admin-layout-wrapper">
+      
+      <!-- SIDEBAR LATERAL ESQUERDA -->
+      <aside class="admin-sidebar" id="adminSidebar">
+        
+        <div>
+          <a href="projetos.html" class="sidebar-back-link">
+            <span>← Todos os projetos</span>
+          </a>
+
+          <div class="sidebar-project-header">
+            <span class="sidebar-project-tag">CONFIGURAÇÕES DA GALERIA</span>
+            <h2 class="sidebar-project-title">Exemplo de seleção</h2>
+            <span class="badge-status-andamento">Escolha em andamento</span>
+          </div>
+        </div>
+
+        <!-- Menu com os 10 Módulos das Telas do Figma -->
+        <ul class="sidebar-menu-list" id="sidebarMenu">
+          <li>
+            <a href="galeria-dados.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📁 Dados da galeria</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-fotos.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🖼️ Fotos</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-selecao.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🛒 Seleção e venda</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-prazo.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📅 Prazo e lembrete</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-acesso.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🔒 Acesso e privacidade</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-clientes.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">👥 Clientes</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-download.html" class="sidebar-nav-btn active">
+              <span class="sidebar-btn-content">📥 Download</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-design.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🎨 Design</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-atividades.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">📊 Atividades do cliente</span>
+            </a>
+          </li>
+          <li>
+            <a href="galeria-historico.html" class="sidebar-nav-btn">
+              <span class="sidebar-btn-content">🕒 Histórico de atividades</span>
+            </a>
+          </li>
+        </ul>
+        <!-- Card de Ajuda no Rodapé da Sidebar -->
+        <div class="sidebar-help-card">
+          <strong>Cada detalhe, com cuidado.</strong>
+          <p>Organize a escolha e prepare uma entrega tranquila para seu cliente.</p>
+          <a href="#">Central de ajuda ↗</a>
+        </div>
+
+      </aside>
+      <!-- ÁREA DE CONTEÚDO PRINCIPAL (DIREITA) -->
+      <main class="admin-main-content" id="adminMainContent">
+        
+        <!-- Barra Superior: Breadcrumbs, Badge e Botão Prévia -->
+        <div class="admin-top-meta-row">
+          <div class="admin-breadcrumb">
+            Projetos &nbsp;/&nbsp; Exemplo de seleção &nbsp;/&nbsp; <strong id="breadcrumbTabName">Download</strong>
+          </div>
+          <span class="admin-badge-demo">Demonstração · sem valores comerciais</span>
+        </div>
+
+        <div class="admin-header-action-row">
+          <div>
+            <h1 class="admin-page-title" id="pageTitle">Download</h1>
+            <p class="admin-page-subtitle" id="pageSubtitle">Defina a disponibilidade dos arquivos e os formatos da futura entrega ao cliente.</p>
+          </div>
+          <a href="escolha-fotos.html" class="btn-previa-cliente">
+            <span>👁 Prévia do cliente</span>
+          </a>
+        </div>
+
+        <!-- CONTEÚDO DA TELA: DOWNLOAD -->
+        <div class="tab-pane active" id="tab-download" >
+          <div class="admin-form-two-col">
+            <div>
+              <!-- Bloco 1: Disponibilidade dos arquivos -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Disponibilidade dos arquivos</h3>
+                <div class="toggle-item-row" style="margin-bottom: 1rem;">
+                  <div class="toggle-label-wrap">
+                    <strong>Permitir download pelo cliente</strong>
+                    <span>A liberação permanece desativada durante a escolha.</span>
+                  </div>
+                  <label class="switch-toggle"><input type="checkbox"><span class="switch-slider"></span></label>
+                </div>
+                <div class="form-field-group">
+                  <label class="field-label">Quando disponibilizar</label>
+                  <select class="field-select">
+                    <option selected>Após revisão e aprovação do fotógrafo</option>
+                  </select>
+                </div>
+                <div class="form-field-group">
+                  <label class="field-label">Fotos liberadas</label>
+                  <select class="field-select">
+                    <option selected>Somente seleção aprovada - pacote e extras confirmadas</option>
+                  </select>
+                  <span class="field-hint-caption">Nenhuma foto liberada no momento. A seleção final ainda não foi enviada.</span>
+                </div>
+              </div>
+
+              <!-- Bloco 2: Formatos da entrega -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Formatos da entrega</h3>
+                <p class="panel-desc">Preferências preparadas para quando a galeria for finalizada.</p>
+
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Formato do arquivo</label>
+                    <select class="field-select"><option selected>JPEG - qualidade máxima</option></select>
+                  </div>
+                  <div>
+                    <label class="field-label">Perfil de cor</label>
+                    <select class="field-select"><option selected>sRGB</option></select>
+                  </div>
+                </div>
+
+                <div class="form-row-2col">
+                  <div>
+                    <label class="field-label">Resolução para impressão</label>
+                    <select class="field-select"><option selected>Alta resolução - tamanho original</option></select>
+                  </div>
+                  <div>
+                    <label class="field-label">Versão para redes sociais</label>
+                    <select class="field-select"><option selected>2048 pixels - lado maior</option></select>
+                  </div>
+                </div>
+
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Incluir versão para redes sociais</strong>
+                    <span>Uma cópia compactada além do arquivo de alta resolução.</span>
+                  </div>
+                  <label class="switch-toggle"><input type="checkbox" checked><span class="switch-slider"></span></label>
+                </div>
+
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Agrupar em arquivo ZIP</strong>
+                    <span>Mantém as pastas Pacote e Extras separadas.</span>
+                  </div>
+                  <label class="switch-toggle"><input type="checkbox" checked><span class="switch-slider"></span></label>
+                </div>
+              </div>
+
+              <!-- Bloco 3: Prazo do download -->
+              <div class="admin-card-panel">
+                <h3 class="panel-title">Prazo do download</h3>
+                <div class="form-field-group">
+                  <label class="field-label">Disponibilidade após a liberação</label>
+                  <select class="field-select"><option selected>30 dias</option></select>
+                </div>
+                <div class="toggle-item-row">
+                  <div class="toggle-label-wrap">
+                    <strong>Avisar antes de expirar</strong>
+                    <span>Lembrete previsto 3 dias antes do fim da disponibilidade.</span>
+                  </div>
+                  <label class="switch-toggle"><input type="checkbox" checked><span class="switch-slider"></span></label>
+                </div>
+              </div>
+
+              <div class="admin-bottom-actions-row">
+                <span>Alterações apenas nesta galeria de demonstração.</span>
+                <button type="button" class="btn-salvar-admin">✓ Salvar alterações</button>
+              </div>
+            </div>
+
+            <!-- Coluna Direita -->
+            <div class="admin-side-cards-col">
+              <div class="admin-preview-box">
+                <h4>Prévia da entrega</h4>
+                <div style="font-size: 2rem; margin-bottom: 0.4rem;">📁</div>
+                <span class="preview-pill-tag">Download bloqueado</span>
+                <strong style="display: block; font-size: 1.15rem; color: var(--text-dark); margin: 0.5rem 0;">Exemplo de seleção.zip</strong>
+                <div style="background: #FAF5EE; border-radius: 8px; padding: 0.75rem; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                  <div style="margin-bottom: 0.4rem;"><strong>• Fotos do pacote</strong><br>6 escolhidas - aguardando envio</div>
+                  <div><strong>• Fotos extras</strong><br>2 escolhidas - aguardando confirmação</div>
+                </div>
+                <span style="font-size: 0.74rem; color: var(--text-muted);">A estrutura acima é ilustrativa. Não há arquivos finais para baixar.</span>
+              </div>
+
+              <div class="admin-info-box-note">
+                <strong>Prévia não é entrega</strong>
+                <p>As imagens de seleção são protegidas. Os arquivos finais são liberados só depois da confirmação do fotógrafo.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+    </div>
+
+    <!-- Rodapé -->
+    <footer class="admin-footer-strip">
+      <div class="content-wrap-wide admin-footer-flex">
+        <span>Casa da Foto Studio · Momentos que ficam</span>
+        <span>Exemplo de seleção · Dados e estados ilustrativos</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- SCRIPT DE NAVEGAÇÃO INTERATIVA ENTRE AS 10 TELAS -->
+    <script src="app.js"></script>
+</body>
+</html>

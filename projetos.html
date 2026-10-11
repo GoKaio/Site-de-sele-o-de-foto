@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projetos & Gestão de Ensaios | Casa da Foto Studio</title>
+  <meta name="description" content="Painel Kanban de gestão de ensaios e sessões fotográficas da Casa da Foto Studio.">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Full-Width Fluid Wrapper -->
+  <div class="site-wrapper" id="siteWrapper">
+
+    <!-- 1. HEADER (100% FULL-WIDTH) -->
+    <header class="site-header" id="siteHeader">
+      
+      <!-- Top Bar: Subtítulo & Ornamentos -->
+      <div class="header-top-bar">
+        <div class="ornament-line" aria-hidden="true">
+          <span class="ornament-dot"></span>
+          <span class="ornament-dash"></span>
+          <span class="ornament-dot"></span>
+        </div>
+
+        <div class="header-brand-title">
+          <span class="header-brand-name">ESTÚDIO CASA DA FOTO</span>
+          <span class="header-brand-slogan">Momentos que ficam</span>
+        </div>
+
+        <div class="ornament-line" aria-hidden="true">
+          <span class="ornament-dot"></span>
+          <span class="ornament-dash"></span>
+          <span class="ornament-dot"></span>
+        </div>
+      </div>
+
+      <!-- Main Nav: Links e Logo Card Central -->
+      <div class="content-wrap">
+        <nav class="header-nav-grid" aria-label="Navegação Principal">
+          
+          <!-- Links da Esquerda -->
+          <div class="nav-links-left">
+            <a href="index.html" class="nav-item">Início</a>
+            <a href="projetos.html" class="nav-item active-nav">Projetos</a>
+          </div>
+
+          <!-- Card Central da Logo Oficial -->
+          <a href="index.html" class="header-logo-card" title="Ir para a Página Inicial (index.html)">
+            <img src="assets/logo/logo.png" alt="Logo Casa da Foto - Estúdio Fotográfico" id="headerLogoImg">
+          </a>
+
+          <!-- Links da Direita -->
+          <div class="nav-links-right">
+            <a href="galeria-config.html#clientes" class="nav-item">Clientes</a>
+            <a href="galeria-config.html#dados" class="nav-item">Configurações</a>
+          </div>
+
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- 2. SUB-BARRA DE ABAS E FILTROS -->
+      <section class="kanban-subbar-section" id="kanbanSubBar">
+        <div class="content-wrap-wide">
+          
+          <!-- Abas de Status -->
+          <nav class="kanban-nav-tabs" aria-label="Abas de Projetos">
+            <a href="#todos" class="kanban-tab-item active" data-tab="todos">Todos</a>
+            <a href="#novos" class="kanban-tab-item" data-tab="novos">Novos</a>
+            <a href="#andamento" class="kanban-tab-item" data-tab="andamento">Em andamento</a>
+            <a href="#prova" class="kanban-tab-item" data-tab="entrega">Prova de Álbum</a>
+            <a href="#finalizados" class="kanban-tab-item" data-tab="finalizados">Finalizados</a>
+          </nav>
+
+          <!-- Linha de Controles e Filtros -->
+          <div class="kanban-filter-controls-row">
+            
+            <div class="filter-controls-left">
+              <div class="search-box-pill">
+                <span>🔍</span>
+                <input type="text" id="kanbanSearchInput" placeholder="Buscar projeto..." aria-label="Buscar projeto">
+              </div>
+
+              <select id="filtroPeriodo" class="select-filter-pill" aria-label="Filtrar por período">
+                <option value="todos">📅 Todo o período</option>
+                <option value="hoje">📅 Hoje</option>
+                <option value="semana">📅 Esta semana</option>
+                <option value="mes">📅 Este mês</option>
+              </select>
+
+              <select id="filtroCliente" class="select-filter-pill" aria-label="Filtrar por cliente">
+                <option value="todos">Cliente: Todos</option>
+              </select>
+
+              <select id="filtroEtapa" class="select-filter-pill" aria-label="Filtrar por etapa">
+                <option value="todas">Etapa: Todas</option>
+                <option value="novos">Novos</option>
+                <option value="andamento">Em andamento</option>
+                <option value="revisao">Em revisão</option>
+                <option value="entrega">Entrega / Prova</option>
+                <option value="finalizados">Finalizados</option>
+              </select>
+
+              <select id="filtroCategoria" class="select-filter-pill" aria-label="Filtrar por categoria">
+                <option value="todas">Categoria: Todas</option>
+                <option value="Família">Família</option>
+                <option value="Gestante">Gestante</option>
+                <option value="Bebê">Bebê</option>
+                <option value="Casal">Casal</option>
+                <option value="Retrato">Retrato</option>
+              </select>
+            </div>
+
+            <div class="filter-controls-right">
+              <div style="display:flex; align-items:center; gap:0.4rem;">
+                <span class="order-by-label" style="font-size:0.82rem; color:#7A6A5E; font-weight:600;">Ordenar por:</span>
+                <select id="filtroOrdenacao" class="select-filter-pill" aria-label="Ordenar por" style="font-weight:600;">
+                  <option value="recente">Data de criação</option>
+                  <option value="antigo">Mais antigo primeiro</option>
+                  <option value="nome_asc">Nome do cliente (A-Z)</option>
+                  <option value="nome_desc">Nome do cliente (Z-A)</option>
+                </select>
+              </div>
+              <a href="galeria-config.html" class="btn-config-galeria-top" style="background:#5C4638; color:#FFFFFF; border:none; border-radius:9999px; padding:0.55rem 1.15rem; font-size:0.83rem; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseover="this.style.background='#443327'" onmouseout="this.style.background='#5C4638'" title="Abrir configurações completas da galeria">
+                <span>⚙️ Configuração da Galeria</span>
+              </a>
+              <button type="button" class="btn-novo-projeto" id="btnNovoProjeto">
+                <span>+ Novo projeto</span>
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 3. ÁREA PRINCIPAL DO QUADRO KANBAN -->
+      <section class="kanban-board-section" id="kanbanBoard">
+        <div class="content-wrap-wide">
+          
+          <div class="kanban-columns-grid">
+
+            <!-- COLUNA 1: NOVOS -->
+            <div class="kanban-col" id="colNovos">
+              <div class="kanban-col-header">
+                <div class="col-header-title">
+                  <span class="col-square sq-novos"></span>
+                  <span>Novos</span>
+                </div>
+                <span class="col-badge-count">0</span>
+              </div>
+            </div>
+
+            <!-- COLUNA 2: EM ANDAMENTO -->
+            <div class="kanban-col" id="colAndamento">
+              <div class="kanban-col-header">
+                <div class="col-header-title">
+                  <span class="col-square sq-andamento"></span>
+                  <span>Em andamento</span>
+                </div>
+                <span class="col-badge-count">0</span>
+              </div>
+            </div>
+
+            <!-- COLUNA 3: EM REVISÃO -->
+            <div class="kanban-col" id="colRevisao">
+              <div class="kanban-col-header">
+                <div class="col-header-title">
+                  <span class="col-square sq-revisao"></span>
+                  <span>Em revisão</span>
+                </div>
+                <span class="col-badge-count">0</span>
+              </div>
+            </div>
+
+            <!-- COLUNA 4: ENTREGA -->
+            <div class="kanban-col" id="colEntrega">
+              <div class="kanban-col-header">
+                <div class="col-header-title">
+                  <span class="col-square sq-entrega"></span>
+                  <span>Entrega</span>
+                </div>
+                <span class="col-badge-count">0</span>
+              </div>
+            </div>
+
+            <!-- COLUNA 5: FINALIZADOS -->
+            <div class="kanban-col" id="colFinalizados">
+              <div class="kanban-col-header">
+                <div class="col-header-title">
+                  <span class="col-square sq-finalizados"></span>
+                  <span>Finalizados</span>
+                </div>
+                <span class="col-badge-count">0</span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+    </main>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

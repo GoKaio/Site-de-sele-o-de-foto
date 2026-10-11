@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pacotes de Ensaio | Casa da Foto Studio</title>
+  <meta name="description" content="Escolha o pacote de ensaio ideal para o seu momento na Casa da Foto Studio.">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Full-Width Fluid Wrapper -->
+  <div class="site-wrapper" id="siteWrapper">
+
+    <!-- 1. HEADER (100% FULL-WIDTH) -->
+    <header class="site-header" id="siteHeader">
+      
+      <!-- Top Bar: Subtítulo & Ornamentos -->
+      <div class="header-top-bar">
+        <div class="ornament-line" aria-hidden="true">
+          <span class="ornament-dot"></span>
+          <span class="ornament-dash"></span>
+          <span class="ornament-dot"></span>
+        </div>
+
+        <div class="header-brand-title">
+          <span class="header-brand-name">ESTÚDIO CASA DA FOTO</span>
+          <span class="header-brand-slogan">Momentos que ficam</span>
+        </div>
+
+        <div class="ornament-line" aria-hidden="true">
+          <span class="ornament-dot"></span>
+          <span class="ornament-dash"></span>
+          <span class="ornament-dot"></span>
+        </div>
+      </div>
+
+      <!-- Main Nav: Links e Logo Card Central -->
+      <div class="content-wrap">
+        <nav class="header-nav-grid" aria-label="Navegação Principal">
+          
+          <!-- Links da Esquerda -->
+          <div class="nav-links-left">
+            <a href="index.html" class="nav-item">Início</a>
+            <a href="pacotes.html" class="nav-item active-nav">Pacotes</a>
+          </div>
+
+          <!-- Card Central da Logo Oficial -->
+          <a href="index.html" class="header-logo-card" title="Página Inicial (index.html)">
+            <img src="assets/logo/logo.png" alt="Logo Casa da Foto - Estúdio Fotográfico" id="headerLogoImg">
+          </a>
+
+          <!-- Links da Direita -->
+          <div class="nav-links-right">
+            <a href="login.html" class="nav-item">Escolha de fotos</a>
+            <a href="projetos.html" class="nav-item">Projetos</a>
+          </div>
+
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- 2. HERO SECTION (PACOTES DE ENSAIO) -->
+      <section class="hero-section" id="pacotesHero">
+        <div class="content-wrap hero-grid">
+          
+          <!-- Coluna Esquerda: Informações Principais -->
+          <div class="hero-left-col">
+            <span class="section-tag">PACOTES DE ENSAIO</span>
+            <h1 class="hero-title">Escolha o pacote de ensaio ideal para o seu momento</h1>
+            <p class="hero-description">
+              Nossos pacotes de ensaio são pensados para cada tipo de momento, com atendimento personalizado, cenários preparados e orientação para que você se sinta confortável desde o início até a entrega final.
+            </p>
+
+            <!-- Tags / Pílulas de Categorias -->
+            <div class="hero-pills-row">
+              <button type="button" class="pill-btn active-pill">Ensaio familiar</button>
+              <button type="button" class="pill-btn">Gestante</button>
+              <button type="button" class="pill-btn">Bebê</button>
+              <button type="button" class="pill-btn">Casal</button>
+              <button type="button" class="pill-btn">Retrato</button>
+            </div>
+          </div>
+
+          <!-- Coluna Direita: Card de Orçamento -->
+          <div class="hero-right-col">
+            <aside class="contact-hero-card">
+              <span class="section-tag">ORÇAMENTO</span>
+              <h2 class="contact-card-title">Consultar valores e condições dos pacotes</h2>
+              <p class="contact-card-desc">
+                Envie sua ideia e receba uma proposta personalizada para o pacote de ensaio ideal para você.
+              </p>
+            </aside>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 3. SEÇÃO DOS CARDS DE PACOTES (FUNDO AREIA) -->
+      <section class="packages-section" id="nossosPacotes">
+        <div class="content-wrap">
+          
+          <!-- Cabeçalho da Seção de Pacotes -->
+          <div class="packages-header-row">
+            <div>
+              <span class="section-tag">PACOTES DE ENSAIO</span>
+              <h2 class="packages-title">Conheça nossos pacotes de ensaio</h2>
+            </div>
+
+            <!-- Filtros de Pacotes -->
+            <div class="packages-filter-pills">
+              <button type="button" class="filter-pill" style="background: #352319; color: #FFF;">Todos</button>
+              <button type="button" class="filter-pill">Família</button>
+              <button type="button" class="filter-pill">Gestante</button>
+              <button type="button" class="filter-pill">Bebê</button>
+              <button type="button" class="filter-pill">Casal</button>
+              <button type="button" class="filter-pill">Retrato</button>
+            </div>
+          </div>
+
+          <!-- Grade Dinâmica de Cards de Pacotes -->
+          <div class="packages-cards-grid" id="gridPacotesSite">
+            <div style="grid-column: 1 / -1; text-align: center; color: #888; padding: 3rem 1.5rem; background: #FAF5EE; border-radius: 12px; border: 1px dashed #D8CAB9;">
+              Carregando pacotes cadastrados...
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 4. COMO FUNCIONA (COMO ESCOLHER O PACOTE DE ENSAIO IDEAL) -->
+      <section class="about-section" id="comoFunciona">
+        <div class="content-wrap">
+          <span class="section-tag">COMO FUNCIONA</span>
+          <h2 class="about-title">Como escolher o pacote de ensaio ideal</h2>
+          
+          <p class="about-text">
+            Nossos pacotes de ensaio são pensados para cada tipo de momento, com atendimento personalizado, cenários preparados e orientação para que você se sinta confortável desde o início até a entrega final.
+          </p>
+
+          <div class="about-footer-row">
+            <a href="#nossosPacotes" class="about-link">
+              Mais informações sobre os pacotes de ensaio e reservas de horário
+            </a>
+
+            <a href="#contato" class="btn-cta-fale" id="btnFaleConoscoPacotes">
+              Fale conosco
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Administrativo | Casa da Foto Studio</title>
+  <meta name="description" content="Acesso exclusivo para administradores gerenciarem fotos e categorias do site.">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Full-Width Split Layout -->
+  <div class="auth-split-wrapper">
+
+    <!-- 1. PAINEL ESQUERDO INSTITUCIONAL -->
+    <aside class="auth-left-panel">
+      <div>
+        <div class="auth-logo-row">
+          <div class="auth-logo-box">
+            <img src="assets/logo/logo.png" alt="Logo Oficial Casa da Foto" id="authLogoImg">
+          </div>
+          <div>
+            <div style="font-size: 0.76rem; font-weight: 700; color: #FAF5EE; letter-spacing: 0.08em;">ESTÚDIO CASA DA FOTO</div>
+            <div style="font-size: 0.7rem; color: #C5B5A5;">Gestão do Site</div>
+          </div>
+        </div>
+
+        <div class="auth-hero-photo-wrap">
+          <img src="uploads/login_hero.jpg" id="authHeroImg" alt="Ensaio fotográfico no estúdio" onerror="this.src='assets/logo/logo.png'">
+        </div>
+
+        <div class="auth-tag-line">
+          <span>——</span>
+          <span>ADMINISTRAÇÃO DO SITE</span>
+        </div>
+        <h2 class="auth-left-title">Gerencie seu portfólio com total autonomia.</h2>
+        <p class="auth-left-desc">Cadastre categorias, publique novas fotos do carrossel e organize os pacotes exibidos no site.</p>
+      </div>
+
+      <div class="auth-left-footer">
+        <span>Casa da Foto Studio · Painel do Administrador</span>
+        <div style="color: #C59B6D; font-size: 0.9rem; letter-spacing: 0.25em;">· —— ·</div>
+      </div>
+    </aside>
+
+    <!-- 2. PAINEL DIREITO DE LOGIN ADMIN -->
+    <main class="auth-right-panel">
+      
+      <div class="auth-top-bar">
+        <a href="login.html" class="auth-back-link">
+          <span>←</span>
+          <span>Voltar à escolha de perfil</span>
+        </a>
+        <a href="index.html" style="font-size: 0.8rem; color: #8C5F35; text-decoration: none; font-weight: 600;">Ver site público ↗</a>
+      </div>
+
+      <div class="auth-content-container">
+        
+        <span class="auth-overline">CONTROLE GERAL</span>
+        <h1 class="auth-title">Painel Administrativo</h1>
+        <p class="auth-subtitle">Entre para cadastrar categorias, adicionar fotos ao carrossel e personalizar o site.</p>
+
+        <!-- Formulário de Login Administrativo -->
+        <form id="formLoginAdmin" onsubmit="event.preventDefault(); fazerLoginAdmin();">
+          
+          <div class="auth-form-group">
+            <label for="adminLogin" class="field-label">Login ou E-mail do Administrador</label>
+            <div class="auth-input-wrapper">
+              <span class="auth-input-icon-left">👤</span>
+              <input
+                type="text"
+                id="adminLogin"
+                class="auth-input-field"
+                placeholder="Digite seu login"
+                autocomplete="username"
+                required
+              >
+            </div>
+          </div>
+
+          <div class="auth-form-group">
+            <label for="adminSenha" class="field-label">Senha Administrativa</label>
+            <div class="auth-input-wrapper">
+              <span class="auth-input-icon-left">🔒</span>
+              <input
+                type="password"
+                id="adminSenha"
+                class="auth-input-field"
+                placeholder="Digite sua senha"
+                autocomplete="current-password"
+                required
+              >
+              <span class="auth-input-icon-right" id="togglePassEyeAdmin" title="Mostrar/ocultar senha">👁</span>
+            </div>
+          </div>
+
+          <div class="auth-row-options">
+            <label style="display: flex; align-items: center; gap: 0.45rem; cursor: pointer;">
+              <input type="checkbox" id="chkShowPassAdmin">
+              <span>Mostrar senha</span>
+            </label>
+          </div>
+
+          <button type="submit" class="btn-auth-action" id="btnEntrarAdmin">
+            <span>Acessar Painel Administrativo</span>
+            <span>→</span>
+          </button>
+
+
+
+        </form>
+
+        <div class="auth-info-banner">
+          <span style="font-size: 1.2rem; color: #9E744B; flex-shrink: 0;">ℹ️</span>
+          <div>
+            <strong>Área restrita à gestão do estúdio.</strong>
+            <span>Aqui você adiciona categorias e fotos que ficam disponíveis publicamente para os visitantes do site.</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="auth-footer-strip">
+        <span>Casa da Foto Studio · Momentos que ficam</span>
+        <span>Português (Brasil)</span>
+      </div>
+
+    </main>
+
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    async function fazerLoginAdmin() {
+      const login = document.getElementById('adminLogin').value.trim();
+      const senha = document.getElementById('adminSenha').value.trim();
+      const btn = document.getElementById('btnEntrarAdmin');
+
+      btn.disabled = true;
+      btn.innerHTML = '<span>Verificando credenciais...</span>';
+
+      try {
+        const res = await fetch('/api/auth/login-admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ login, senha })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          sessionStorage.setItem('admin_autenticado', 'true');
+          sessionStorage.setItem('admin_nome', data.user.nome);
+          sessionStorage.setItem('fotografo_autenticado', 'true');
+          sessionStorage.setItem('usuario_nome', data.user.nome);
+          showToast('Acesso concedido! Carregando painel...');
+          setTimeout(() => {
+            window.location.href = 'admin.html';
+          }, 600);
+        } else {
+          showToast(data.error || 'Credenciais inválidas.', 'error');
+          btn.disabled = false;
+          btn.innerHTML = '<span>Acessar Painel Administrativo</span> <span>→</span>';
+        }
+      } catch (err) {
+        showToast('Erro ao conectar ao servidor.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<span>Acessar Painel Administrativo</span> <span>→</span>';
+      }
+    }
+
+    const passField = document.getElementById('adminSenha');
+    const chkShow = document.getElementById('chkShowPassAdmin');
+    const eyeBtn = document.getElementById('togglePassEyeAdmin');
+
+    chkShow.addEventListener('change', () => {
+      passField.type = chkShow.checked ? 'text' : 'password';
+    });
+    eyeBtn.addEventListener('click', () => {
+      passField.type = passField.type === 'password' ? 'text' : 'password';
+      chkShow.checked = passField.type === 'text';
+    });
+  </script>
+</body>
+</html>

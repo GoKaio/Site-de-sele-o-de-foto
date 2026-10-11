@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acesso à Seleção de Fotos | Casa da Foto Studio</title>
+  <meta name="description" content="Escolha de perfil para acesso à seleção de fotos da Casa da Foto Studio: Fotógrafo ou Cliente.">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Full-Width Split Layout -->
+  <div class="auth-split-wrapper">
+
+    <!-- 1. PAINEL ESQUERDO INSTITUCIONAL (DARK BROWN #352319) -->
+    <aside class="auth-left-panel">
+      
+      <!-- Topo: Logo Oficial e Assinatura -->
+      <div>
+        <div class="auth-logo-row">
+          <div class="auth-logo-box">
+            <img src="assets/logo/logo.png" alt="Logo Oficial Casa da Foto" id="authLogoImg">
+          </div>
+          <div>
+            <div style="font-size: 0.76rem; font-weight: 700; color: #FAF5EE; letter-spacing: 0.08em;">ESTÚDIO CASA DA FOTO</div>
+            <div style="font-size: 0.7rem; color: #C5B5A5;">Momentos que ficam</div>
+          </div>
+        </div>
+
+        <!-- Moldura da Foto de Destaque -->
+        <div class="auth-hero-photo-wrap">
+          <img src="uploads/login_hero.jpg" id="authHeroImg" alt="Ensaio Infantil no estúdio" onerror="this.src='assets/logo/logo.png'">
+        </div>
+
+        <!-- Textos Inspiradores -->
+        <div class="auth-tag-line">
+          <span>——</span>
+          <span>SELEÇÃO DE FOTOS</span>
+        </div>
+        <h2 class="auth-left-title">Cada foto, uma história para guardar.</h2>
+        <p class="auth-left-desc">Um espaço para olhar com calma e escolher os momentos que ficam.</p>
+      </div>
+
+      <!-- Rodapé do Painel Esquerdo -->
+      <div class="auth-left-footer">
+        <span>Casa da Foto Studio</span>
+        <div style="color: #C59B6D; font-size: 0.9rem; letter-spacing: 0.25em;">· —— ·</div>
+      </div>
+
+    </aside>
+
+    <!-- 2. PAINEL DIREITO DE ESCOLHA DE PERFIL (LIGHT SAND #FAF6F0) -->
+    <main class="auth-right-panel">
+      
+      <!-- Barra Superior -->
+      <div class="auth-top-bar">
+        <span>Acesso / Escolha de perfil</span>
+        <span style="font-weight: 600;">Seleção de fotos</span>
+      </div>
+
+      <!-- Container Central de Conteúdo -->
+      <div class="auth-content-container">
+        
+        <span class="auth-overline">BEM-VINDO À CASA DA FOTO</span>
+        <h1 class="auth-title">Seu próximo olhar começa aqui.</h1>
+        <p class="auth-subtitle">Para acessar a seleção de fotos, escolha como deseja entrar.</p>
+
+        <!-- Card Perfil: Fotógrafo -->
+        <div class="auth-profile-card">
+          <div class="auth-profile-header">
+            <div class="auth-profile-icon">📷</div>
+            <div>
+              <h3 class="auth-profile-title">Fotógrafo</h3>
+              <p class="auth-profile-desc">Organize suas galerias e acompanhe as escolhas dos seus clientes.</p>
+            </div>
+          </div>
+          <a href="login-fotografo.html" class="btn-auth-action">
+            <span>Sou fotógrafo</span>
+            <span>→</span>
+          </a>
+        </div>
+
+        <!-- Card Perfil: Cliente -->
+        <div class="auth-profile-card">
+          <div class="auth-profile-header">
+            <div class="auth-profile-icon">🖼️</div>
+            <div>
+              <h3 class="auth-profile-title">Cliente</h3>
+              <p class="auth-profile-desc">Veja suas fotos e escolha suas favoritas com os dados enviados pelo fotógrafo.</p>
+            </div>
+          </div>
+          <a href="login-cliente.html" class="btn-auth-action">
+            <span>Sou cliente</span>
+            <span>→</span>
+          </a>
+        </div>
+
+        <div class="auth-bottom-hint">
+          Acesso exclusivo para clientes e fotógrafos do estúdio.
+        </div>
+
+      </div>
+
+      <!-- Rodapé do Painel Direito -->
+      <div class="auth-footer-strip">
+        <span>Casa da Foto Studio · Momentos que ficam</span>
+        <span>Português (Brasil)</span>
+      </div>
+
+    </main>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
