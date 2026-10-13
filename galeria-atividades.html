@@ -264,6 +264,26 @@
                 <div style="font-size: 2.25rem; font-weight: 800; color: var(--text-dark);">0</div>
                 <span style="font-size: 0.76rem; color: var(--text-muted);">Nenhuma observação deixada nas fotos neste exemplo.</span>
               </div>
+
+              <!-- CARD ALBOOM PRO: EXPORTAÇÃO LIGHTROOM & REATIVAÇÃO -->
+              <div class="admin-preview-box" style="border: 2px solid #C59B6D; background: #FAF5EE;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                  <span style="font-size: 1.4rem;">🎨</span>
+                  <h4 style="margin: 0; color: #2D1D14; font-size: 1rem;">Exportar Seleção</h4>
+                </div>
+                <p style="font-size: 0.78rem; color: #7A6A5E; line-height: 1.4; margin-bottom: 1rem;">
+                  Exporte os nomes dos arquivos aprovados para filtrar direto no Lightroom ou no Windows Explorer.
+                </p>
+                <button type="button" class="btn-salvar-admin" onclick="window.exportarParaLightroom()" style="width: 100%; justify-content: center; margin-bottom: 0.6rem; background: #2D1D14;">
+                  🎨 Exportar para Lightroom
+                </button>
+                <button type="button" class="btn-salvar-admin" onclick="window.exportarParaLightroom()" style="width: 100%; justify-content: center; margin-bottom: 0.6rem; background: #8C5F35;">
+                  💻 Windows / Finder / Notas
+                </button>
+                <button type="button" class="btn-salvar-admin" onclick="window.reativarSelecao()" style="width: 100%; justify-content: center; background: #EFE6DC; color: #2D1D14; border: 1px solid #D8CAB9;">
+                  🔄 Reativar Seleção
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -182,8 +182,8 @@
               <span class="hint-text">Use o ícone de ampliar para ver os detalhes.</span>
             </div>
 
-            <!-- Grade Dinâmica de Fotos -->
-            <div class="proofing-cards-grid" id="photosGrid">
+            <!-- Grade Dinâmica de Fotos com Proteção Anti-Cópia Alboom -->
+            <div class="proofing-cards-grid anticopy-shield" id="photosGrid">
               <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: #8C5F35; font-weight: 600;">
                 Carregando fotos da galeria...
               </div>
@@ -260,7 +260,7 @@
                     Revise suas escolhas antes de enviar. O fotógrafo receberá as fotos do pacote e as extras separadamente.
                   </p>
                   
-                  <button type="button" class="btn-enviar-selecao" id="btnEnviarSelecao">
+                  <button type="button" class="btn-enviar-selecao" id="btnEnviarSelecao" onclick="window.iniciarModalEnviarSelecao()">
                     <span>✈ Enviar seleção ao fotógrafo</span>
                   </button>
 

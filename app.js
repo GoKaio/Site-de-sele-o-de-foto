@@ -2254,4 +2254,331 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
     }
   };
 
+  // =========================================================================
+  // ALBOOM PROOF SUITE EXTENSIONS: LIGHTROOM, WHATSAPP, QR CODE & ANTI-CÓPIA
+  // =========================================================================
+
+  // 1. Exportação para Adobe Lightroom, Windows Explorer e macOS Finder
+  window.exportarParaLightroom = async function(galeriaId) {
+    const galId = galeriaId || new URLSearchParams(window.location.search).get('id') || new URLSearchParams(window.location.search).get('galeria_id') || '1';
+    try {
+      showToast('Preparando lista de fotos para exportação...');
+      const res = await fetch(`/api/galeria/${galId}/fotos`);
+      const data = await res.json();
+      const fotos = (data.fotos || []).filter(f => f.status === 'pacote' || f.status === 'extra');
+
+      if (fotos.length === 0) {
+        showToast('Nenhuma foto selecionada ainda para exportar.', 'error');
+        return;
+      }
+
+      // Formatações dos arquivos
+      const nomesPuros = fotos.map(f => f.numero || `Foto_${f.id}`);
+      const nomesJpg = fotos.map(f => {
+        const num = f.numero || `Foto_${f.id}`;
+        return num.toLowerCase().endsWith('.jpg') ? num : `${num}.jpg`;
+      });
+
+      const strLightroom = nomesJpg.join(', ');
+      const strWindows = nomesJpg.map(n => `nome:"${n}"`).join(' OU ');
+      const strFinder = nomesPuros.join(' ');
+      const strComentarios = fotos.filter(f => f.comentario).map(f => `• ${f.numero || 'Foto ' + f.id}: "${f.comentario}"`).join('\n') || 'Nenhum comentário registrado.';
+
+      // Remove modal antigo se existir
+      const oldModal = document.getElementById('alboomExportModal');
+      if (oldModal) oldModal.remove();
+
+      // Cria Modal
+      const modal = document.createElement('div');
+      modal.id = 'alboomExportModal';
+      modal.className = 'alboom-modal-overlay';
+      modal.innerHTML = `
+        <div class="alboom-modal-card">
+          <div class="alboom-modal-header">
+            <h3>🎨 Exportar Seleção do Cliente (${fotos.length} fotos)</h3>
+            <button class="alboom-modal-close-btn" onclick="document.getElementById('alboomExportModal').remove()">&times;</button>
+          </div>
+          <div class="alboom-modal-body">
+            <p style="font-size: 0.85rem; color: #7A6A5E; margin-bottom: 1rem;">
+              Exporte os nomes das fotos aprovadas diretamente para o seu software de edição ou explorador de arquivos.
+            </p>
+
+            <div class="alboom-tab-nav">
+              <button class="alboom-tab-btn active" id="tabBtnLr" onclick="alternarTabExport('lr')">Adobe Lightroom</button>
+              <button class="alboom-tab-btn" id="tabBtnWin" onclick="alternarTabExport('win')">Windows Explorer</button>
+              <button class="alboom-tab-btn" id="tabBtnMac" onclick="alternarTabExport('mac')">macOS Finder</button>
+              <button class="alboom-tab-btn" id="tabBtnNotes" onclick="alternarTabExport('notes')">Comentários</button>
+            </div>
+
+            <!-- Painel Lightroom -->
+            <div id="paneLr" class="export-pane">
+              <p style="font-size: 0.82rem; margin-bottom: 0.5rem; color: #5C4638;">
+                <strong>Instruções:</strong> No Lightroom Library, aperte <kbd style="background:#EFE6DC; padding:2px 6px; border-radius:4px;">Ctrl+F</kbd> (ou <kbd style="background:#EFE6DC; padding:2px 6px; border-radius:4px;">Cmd+F</kbd>), selecione <em>Qualquer Campo Pesquisável</em> e cole o texto abaixo:
+              </p>
+              <div class="alboom-code-box" id="boxLr">${strLightroom}</div>
+              <button class="alboom-copy-btn" onclick="copiarTextoExport('${strLightroom.replace(/'/g, "\\'")}', 'Copiado para o Adobe Lightroom!')">📋 Copiar Lista para Lightroom</button>
+            </div>
+
+            <!-- Painel Windows Explorer -->
+            <div id="paneWin" class="export-pane" style="display: none;">
+              <p style="font-size: 0.82rem; margin-bottom: 0.5rem; color: #5C4638;">
+                <strong>Instruções:</strong> Abra a pasta das fotos no Windows Explorer, clique na barra de busca e cole a expressão abaixo:
+              </p>
+              <div class="alboom-code-box" id="boxWin">${strWindows}</div>
+              <button class="alboom-copy-btn" onclick="copiarTextoExport('${strWindows.replace(/'/g, "\\'")}', 'Copiado para o Windows Explorer!')">📋 Copiar Busca para Windows</button>
+            </div>
+
+            <!-- Painel macOS Finder -->
+            <div id="paneMac" class="export-pane" style="display: none;">
+              <p style="font-size: 0.82rem; margin-bottom: 0.5rem; color: #5C4638;">
+                <strong>Instruções:</strong> No Finder, pressione <kbd style="background:#EFE6DC; padding:2px 6px; border-radius:4px;">Cmd+F</kbd> na pasta do ensaio e cole o texto abaixo:
+              </p>
+              <div class="alboom-code-box" id="boxMac">${strFinder}</div>
+              <button class="alboom-copy-btn" onclick="copiarTextoExport('${strFinder.replace(/'/g, "\\'")}', 'Copiado para o macOS Finder!')">📋 Copiar Busca para Finder</button>
+            </div>
+
+            <!-- Painel Comentários -->
+            <div id="paneNotes" class="export-pane" style="display: none;">
+              <p style="font-size: 0.82rem; margin-bottom: 0.5rem; color: #5C4638;">
+                <strong>Observações e instruções de retoque deixadas pelo cliente:</strong>
+              </p>
+              <div class="alboom-code-box" style="white-space: pre-wrap;" id="boxNotes">${strComentarios}</div>
+              <button class="alboom-copy-btn" onclick="copiarTextoExport('${strComentarios.replace(/'/g, "\\'").replace(/\n/g, '\\n')}', 'Comentários copiados!')">📋 Copiar Comentários</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      // Funções internas do modal
+      window.alternarTabExport = function(tab) {
+        document.querySelectorAll('.alboom-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.export-pane').forEach(p => p.style.display = 'none');
+        if (tab === 'lr') {
+          document.getElementById('tabBtnLr').classList.add('active');
+          document.getElementById('paneLr').style.display = 'block';
+        } else if (tab === 'win') {
+          document.getElementById('tabBtnWin').classList.add('active');
+          document.getElementById('paneWin').style.display = 'block';
+        } else if (tab === 'mac') {
+          document.getElementById('tabBtnMac').classList.add('active');
+          document.getElementById('paneMac').style.display = 'block';
+        } else if (tab === 'notes') {
+          document.getElementById('tabBtnNotes').classList.add('active');
+          document.getElementById('paneNotes').style.display = 'block';
+        }
+      };
+
+      window.copiarTextoExport = function(texto, msg) {
+        navigator.clipboard.writeText(texto).then(() => {
+          showToast(`✓ ${msg}`);
+        }).catch(() => {
+          showToast('Falha ao copiar automaticamente. Selecione e copie manualmente.', 'error');
+        });
+      };
+
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao carregar dados da galeria para exportação.', 'error');
+    }
+  };
+
+  // 2. Reativar Seleção da Galeria
+  window.reativarSelecao = async function(galeriaId) {
+    const galId = galeriaId || new URLSearchParams(window.location.search).get('id') || new URLSearchParams(window.location.search).get('galeria_id') || '1';
+    if (!confirm('Deseja reabrir a seleção para o cliente poder alterar suas escolhas?')) return;
+    try {
+      const res = await fetch(`/api/projetos/${galId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'andamento' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('✓ Galeria reativada! O cliente agora pode alterar as fotos novamente.');
+        setTimeout(() => window.location.reload(), 1200);
+      } else {
+        showToast('Não foi possível alterar o status.', 'error');
+      }
+    } catch (e) {
+      showToast('Erro ao reativar seleção.', 'error');
+    }
+  };
+
+  // 3. Compartilhamento via WhatsApp e QR Code
+  window.abrirModalCompartilharWhatsApp = function(galeriaId) {
+    const galId = galeriaId || new URLSearchParams(window.location.search).get('id') || new URLSearchParams(window.location.search).get('galeria_id') || '1';
+    const linkGaleria = `${window.location.origin}/escolha-fotos.html?id=${galId}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(linkGaleria)}`;
+    const mensagemWhats = `Olá! Suas fotos do ensaio estão prontas para você escolher na Casa da Foto Studio! 📷✨\n\nAcesse sua galeria exclusiva pelo link abaixo:\n${linkGaleria}\n\nEscolha suas favoritas com carinho!`;
+    const whatsLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagemWhats)}`;
+
+    const oldModal = document.getElementById('alboomShareModal');
+    if (oldModal) oldModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'alboomShareModal';
+    modal.className = 'alboom-modal-overlay';
+    modal.innerHTML = `
+      <div class="alboom-modal-card">
+        <div class="alboom-modal-header">
+          <h3>💬 Compartilhar Galeria com o Cliente</h3>
+          <button class="alboom-modal-close-btn" onclick="document.getElementById('alboomShareModal').remove()">&times;</button>
+        </div>
+        <div class="alboom-modal-body" style="text-align: center;">
+          <p style="font-size: 0.88rem; color: #5C4638; margin-bottom: 1.25rem;">
+            Envie o link direto para o WhatsApp do cliente ou exiba o QR Code para escaneamento instantâneo.
+          </p>
+
+          <div style="background: #FAF5EE; padding: 1.25rem; border-radius: 12px; margin-bottom: 1.25rem; display: inline-block;">
+            <img src="${qrUrl}" alt="QR Code da Galeria" style="width: 180px; height: 180px; display: block; border-radius: 8px;">
+            <span style="font-size: 0.72rem; color: #7A6A5E; display: block; margin-top: 0.5rem;">Aponte a câmera do celular para abrir</span>
+          </div>
+
+          <div class="alboom-share-options-grid">
+            <a href="${whatsLink}" target="_blank" rel="noopener" class="alboom-share-card-btn" style="background:#25D366; color:#FFF; border:none;">
+              <span class="share-icon">💬</span>
+              <strong style="color:#FFF;">Enviar por WhatsApp</strong>
+              <span style="color:#E8F8EE;">Abre com mensagem pronta</span>
+            </a>
+
+            <button type="button" class="alboom-share-card-btn" onclick="navigator.clipboard.writeText('${linkGaleria}').then(() => showToast('✓ Link copiado para a área de transferência!'))">
+              <span class="share-icon">🔗</span>
+              <strong>Copiar Link Direto</strong>
+              <span>Compartilhar por e-mail ou chat</span>
+            </button>
+
+            <a href="${qrUrl}" download="qrcode-galeria.png" class="alboom-share-card-btn">
+              <span class="share-icon">📥</span>
+              <strong>Baixar QR Code</strong>
+              <span>Salvar imagem para impressão</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  // 4. Modal de Confirmação de Envio da Seleção pelo Cliente
+  window.iniciarModalEnviarSelecao = function() {
+    const galId = new URLSearchParams(window.location.search).get('galeria_id') || new URLSearchParams(window.location.search).get('id') || sessionStorage.getItem('cliente_galeria_id') || '1';
+    const fotos = window.fotosGlobaisCliente || [];
+    const pacotes = fotos.filter(f => f.status === 'pacote');
+    const extras = fotos.filter(f => f.status === 'extra');
+    const totalSelecionadas = pacotes.length + extras.length;
+
+    if (totalSelecionadas === 0) {
+      showToast('Selecione pelo menos uma foto antes de enviar sua escolha.', 'error');
+      return;
+    }
+
+    const valorExtraUnit = (window.galeriaDataCliente && window.galeriaDataCliente.valor_foto_extra != null) ? parseFloat(window.galeriaDataCliente.valor_foto_extra) : 25.0;
+    const valorExtrasTotal = extras.length * valorExtraUnit;
+
+    const oldModal = document.getElementById('alboomConfirmSendModal');
+    if (oldModal) oldModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'alboomConfirmSendModal';
+    modal.className = 'alboom-modal-overlay';
+    modal.innerHTML = `
+      <div class="alboom-modal-card">
+        <div class="alboom-modal-header">
+          <h3>✈ Confirmar Envio da Seleção</h3>
+          <button class="alboom-modal-close-btn" onclick="document.getElementById('alboomConfirmSendModal').remove()">&times;</button>
+        </div>
+        <div class="alboom-modal-body">
+          <p style="font-size: 0.9rem; color: #5C4638; margin-bottom: 1.25rem;">
+            Você está prestes a enviar suas fotos escolhidas para o fotógrafo iniciar o trabalho de edição e tratamento.
+          </p>
+
+          <div style="background: #FAF5EE; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem;">
+              <span>Fotos no pacote:</span>
+              <strong>${pacotes.length} fotos</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem;">
+              <span>Fotos extras selecionadas:</span>
+              <strong style="color: #8C5F35;">${extras.length} fotos (+ R$ ${valorExtrasTotal.toFixed(2).replace('.', ',')})</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-top: 1px solid #D8CAB9; padding-top: 0.75rem; font-size: 1.05rem;">
+              <strong>Total de fotos selecionadas:</strong>
+              <strong style="color: #2D1D14;">${totalSelecionadas} fotos</strong>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 1.25rem;">
+            <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #4A3A2F; margin-bottom: 0.4rem;">Mensagem ou observações para o fotógrafo (opcional):</label>
+            <textarea id="obsClienteEnvio" style="width: 100%; height: 80px; border-radius: 8px; border: 1px solid #D8CAB9; padding: 0.75rem; font-size: 0.85rem; font-family: inherit; resize: none; box-sizing: border-box;" placeholder="Ex: Adorei a foto 04! Por favor, clarear um pouco o fundo na foto 12..."></textarea>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+            <button type="button" onclick="document.getElementById('alboomConfirmSendModal').remove()" style="background:#EFE6DC; border:none; border-radius:8px; padding:0.75rem 1.25rem; font-size:0.88rem; font-weight:600; cursor:pointer;">Continuar Escolhendo</button>
+            <button type="button" id="btnConfirmarEnvioFinal" style="background:#2D1D14; color:#FFF; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-size:0.88rem; font-weight:700; cursor:pointer;">✓ Confirmar e Enviar Escolha</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    document.getElementById('btnConfirmarEnvioFinal').onclick = async function() {
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Enviando seleção...';
+      const obs = document.getElementById('obsClienteEnvio').value;
+      try {
+        const res = await fetch(`/api/galeria/${galId}/enviar-selecao`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ observacoes: obs })
+        });
+        const d = await res.json();
+        if (d.success) {
+          document.getElementById('alboomConfirmSendModal').remove();
+          showToast('🎉 Parabéns! Sua seleção foi enviada com sucesso ao fotógrafo!');
+          setTimeout(() => window.location.reload(), 1500);
+        } else {
+          showToast(d.message || 'Erro ao enviar seleção.', 'error');
+          btn.disabled = false;
+          btn.textContent = '✓ Confirmar e Enviar Escolha';
+        }
+      } catch (err) {
+        showToast('Erro de conexão ao enviar seleção.', 'error');
+        btn.disabled = false;
+        btn.textContent = '✓ Confirmar e Enviar Escolha';
+      }
+    };
+  };
+
+  // 5. Proteção Anti-Cópia Ativa (desativa clique direito e arrastar imagens)
+  window.ativarProtecaoAntiCopia = function() {
+    document.addEventListener('contextmenu', (e) => {
+      if (e.target.tagName === 'IMG' || e.target.closest('.proofing-cards-grid') || e.target.closest('.card-foto-item')) {
+        e.preventDefault();
+        showToast('🛡️ Imagens protegidas por direitos autorais da Casa da Foto Studio.');
+      }
+    });
+
+    document.addEventListener('dragstart', (e) => {
+      if (e.target.tagName === 'IMG') {
+        e.preventDefault();
+      }
+    });
+  };
+
+  // Ativa automaticamente em escolha-fotos.html
+  if (window.location.pathname.includes('escolha-fotos.html')) {
+    window.ativarProtecaoAntiCopia();
+
+    // Conecta o botão Enviar Seleção
+    const btnSend = document.getElementById('btnEnviarSelecao');
+    if (btnSend) {
+      btnSend.addEventListener('click', () => {
+        window.iniciarModalEnviarSelecao();
+      });
+    }
+  }
+
 });
+
