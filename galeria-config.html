@@ -168,17 +168,23 @@
 
                 <div class="form-field-group">
                   <label class="field-label">Nome da galeria</label>
-                  <input type="text" class="field-input" value="Exemplo de seleção">
+                  <input type="text" id="inputNomeGaleria" class="field-input" value="Exemplo de seleção">
                 </div>
 
                 <div class="form-row-2col">
                   <div>
-                    <label class="field-label">Categoria</label>
-                    <select class="field-select">
-                      <option selected>Galeria demonstrativa</option>
-                      <option>Ensaio Família</option>
-                      <option>Gestante</option>
-                      <option>Newborn</option>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                      <label class="field-label" style="margin-bottom: 0;">Categoria</label>
+                      <button type="button" onclick="abrirModalNovaCategoria()" style="background: none; border: none; color: #8C5F35; font-size: 0.76rem; font-weight: 700; cursor: pointer; text-decoration: underline; padding: 0;">
+                        + Adicionar categoria
+                      </button>
+                    </div>
+                    <select id="selectCategoriaGaleria" class="field-select" onchange="tratarMudancaCategoria(this)">
+                      <option value="Galeria demonstrativa" selected>Galeria demonstrativa</option>
+                      <option value="Ensaio Família">Ensaio Família</option>
+                      <option value="Gestante">Gestante</option>
+                      <option value="Newborn">Newborn</option>
+                      <option value="__nova__" style="font-weight: 700; color: #8C5F35;">+ Adicionar nova categoria...</option>
                     </select>
                   </div>
                   <div>
@@ -1494,6 +1500,32 @@
       });
     });
   </script>
+
+  <!-- MODAL: ADICIONAR NOVA CATEGORIA -->
+  <div id="modalAddCategoria" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(30, 20, 15, 0.72); backdrop-filter: blur(5px); align-items: center; justify-content: center; padding: 1.25rem;">
+    <div style="background: #FAF5EE; border: 1.5px solid #D8CAB9; border-radius: 18px; max-width: 440px; width: 100%; padding: 2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.35); position: relative;">
+      <button type="button" onclick="fecharModalNovaCategoria()" style="position: absolute; top: 16px; right: 18px; background: none; border: none; font-size: 1.4rem; color: #6B5546; cursor: pointer;">✕</button>
+      <span style="font-size: 0.76rem; font-weight: 700; color: #9E744B; letter-spacing: 0.08em; display: block; margin-bottom: 4px;">ORGANIZAÇÃO DO ESTÚDIO</span>
+      <h3 style="font-size: 1.3rem; color: #2D1D14; font-weight: 800; margin-bottom: 0.35rem;">+ Adicionar Nova Categoria</h3>
+      <p style="font-size: 0.82rem; color: #7A6A5E; margin-bottom: 1.25rem;">Cadastre uma nova categoria para seus ensaios (ex: Casamento, Formatura, Ensaio Casal, Smash the Cake).</p>
+
+      <form onsubmit="event.preventDefault(); salvarNovaCategoriaModal();">
+        <div style="margin-bottom: 1.25rem;">
+          <label style="display:block; font-size:0.78rem; font-weight:700; color:#5C4A3E; margin-bottom:4px;">Nome da Categoria *</label>
+          <input type="text" id="inputNomeNovaCategoria" class="field-input" placeholder="Ex: Casamento ou Formatura" required>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+          <button type="button" onclick="fecharModalNovaCategoria()" style="background: none; border: 1px solid #D8CAB9; color: #7A6A5E; padding: 0.65rem 1.25rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+            Cancelar
+          </button>
+          <button type="submit" id="btnSalvarModalCategoria" style="padding: 0.65rem 1.4rem; background: #8C5F35; color: #FFF; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+            ✓ Adicionar e Selecionar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- MODAL: ADICIONAR CLIENTE / DESTINATÁRIO -->
   <div id="modalAddCliente" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(30, 20, 15, 0.72); backdrop-filter: blur(5px); align-items: center; justify-content: center; padding: 1.25rem;">

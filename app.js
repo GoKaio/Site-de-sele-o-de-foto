@@ -894,6 +894,125 @@ document.addEventListener('DOMContentLoaded', () => {
     reader.readAsDataURL(file);
   };
 
+  // ── GESTÃO DE CATEGORIAS DA GALERIA ──
+  window.carregarCategoriasConfig = async function(catSelecionada) {
+    const selects = document.querySelectorAll('#selectCategoriaGaleria, select[name="categoria"]');
+    if (!selects.length) return;
+
+    try {
+      const res = await fetch('/api/categorias');
+      const categorias = await res.json();
+
+      let lista = Array.isArray(categorias) ? categorias : [];
+      if (lista.length === 0) {
+        lista = [
+          { id: 1, nome: 'Galeria demonstrativa' },
+          { id: 2, nome: 'Ensaio Família' },
+          { id: 3, nome: 'Gestante' },
+          { id: 4, nome: 'Newborn' }
+        ];
+      }
+
+      selects.forEach(select => {
+        const valorAtual = catSelecionada || select.value || (window.galeriaConfigAtual && window.galeriaConfigAtual.categoria) || 'Galeria demonstrativa';
+
+        let listaFinal = [...lista];
+        if (valorAtual && valorAtual !== '__nova__' && !listaFinal.some(c => c.nome.toLowerCase() === valorAtual.toLowerCase())) {
+          listaFinal.unshift({ id: 'custom', nome: valorAtual });
+        }
+
+        let optionsHtml = listaFinal.map(cat => {
+          const isSel = (cat.nome.toLowerCase() === valorAtual.toLowerCase()) ? 'selected' : '';
+          return `<option value="${cat.nome}" ${isSel}>${cat.nome}</option>`;
+        }).join('');
+
+        optionsHtml += `<option value="__nova__" style="font-weight: 700; color: #8C5F35;">+ Adicionar nova categoria...</option>`;
+        select.innerHTML = optionsHtml;
+
+        if (valorAtual && valorAtual !== '__nova__') {
+          select.value = valorAtual;
+        }
+      });
+
+      const valorFinal = catSelecionada || (selects[0] && selects[0].value);
+      if (valorFinal && valorFinal !== '__nova__') {
+        const pillTag = document.querySelector('.preview-pill-tag');
+        if (pillTag) pillTag.textContent = valorFinal;
+      }
+    } catch (err) {
+      console.warn('Erro ao carregar categorias dinâmicas:', err);
+    }
+  };
+
+  window.tratarMudancaCategoria = function(selectEl) {
+    if (!selectEl) return;
+    if (selectEl.value === '__nova__') {
+      window.abrirModalNovaCategoria();
+    } else {
+      const pillTag = document.querySelector('.preview-pill-tag');
+      if (pillTag) pillTag.textContent = selectEl.value;
+    }
+  };
+
+  window.abrirModalNovaCategoria = function() {
+    const modal = document.getElementById('modalAddCategoria');
+    if (modal) {
+      modal.style.display = 'flex';
+      const input = document.getElementById('inputNomeNovaCategoria');
+      if (input) {
+        input.value = '';
+        setTimeout(() => input.focus(), 60);
+      }
+    }
+  };
+
+  window.fecharModalNovaCategoria = function() {
+    const modal = document.getElementById('modalAddCategoria');
+    if (modal) modal.style.display = 'none';
+    const select = document.getElementById('selectCategoriaGaleria');
+    if (select && select.value === '__nova__') {
+      select.value = (window.galeriaConfigAtual && window.galeriaConfigAtual.categoria) || (select.options[0] ? select.options[0].value : 'Galeria demonstrativa');
+    }
+  };
+
+  window.salvarNovaCategoriaModal = async function() {
+    const input = document.getElementById('inputNomeNovaCategoria');
+    const nome = input ? input.value.trim() : '';
+    if (!nome) {
+      showToast('Informe o nome da categoria.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btnSalvarModalCategoria');
+    const origText = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.innerHTML = 'Adicionando...'; }
+
+    try {
+      const res = await fetch('/api/categorias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const novaCatNome = (data.categoria && data.categoria.nome) ? data.categoria.nome : nome;
+        showToast(`✓ Categoria "${novaCatNome}" adicionada com sucesso!`);
+        window.fecharModalNovaCategoria();
+        await window.carregarCategoriasConfig(novaCatNome);
+        const select = document.getElementById('selectCategoriaGaleria');
+        if (select) select.value = novaCatNome;
+        const pillTag = document.querySelector('.preview-pill-tag');
+        if (pillTag) pillTag.textContent = novaCatNome;
+      } else {
+        showToast(data.error || 'Erro ao criar categoria.', 'error');
+      }
+    } catch (err) {
+      showToast('Erro de conexão ao salvar categoria.', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+    }
+  };
+
   const adminMain = document.getElementById('adminMainContent');
   if (adminMain) {
     // Carrega dados da galeria
@@ -908,6 +1027,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (imgPreview) imgPreview.src = data.foto_capa;
             const imgLateral = document.getElementById('imgPreviewCapaGaleriaLateral');
             if (imgLateral) imgLateral.src = data.foto_capa;
+          }
+          if (data.nome) {
+            const inpNome = document.getElementById('inputNomeGaleria');
+            if (inpNome) inpNome.value = data.nome;
+          }
+          if (data.categoria) {
+            window.carregarCategoriasConfig(data.categoria);
+          } else {
+            window.carregarCategoriasConfig();
           }
           const inpValor = document.getElementById('inputValorFotoExtra');
           if (inpValor && data.valor_foto_extra != null) {
@@ -1858,6 +1986,7 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
     };
 
     // Inicializa carregamentos da galeria
+    window.carregarCategoriasConfig();
     window.carregarFotosGaleriaConfig();
     window.carregarDestinatariosConfig();
     window.carregarHistoricoAtividades();
@@ -1872,8 +2001,10 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
           btn.id === 'btnPrepararNovoConvite' || 
           btn.id === 'btnExportarHistorico' || 
           btn.id === 'btnSalvarModalCliente' ||
+          btn.id === 'btnSalvarModalCategoria' ||
           btn.id === 'btnAbrirModalDestinatario' ||
           btn.closest('#modalAddCliente') ||
+          btn.closest('#modalAddCategoria') ||
           btn.textContent.includes('Adicionar') || 
           btn.textContent.includes('Exportar') || 
           btn.textContent.includes('Reenviar') || 
@@ -1889,11 +2020,13 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
         btn.innerHTML = '<span>Salvando no banco...</span>';
 
         const payload = {};
-        const inputNome = document.querySelector('#tab-dados input[type="text"]');
+        const inputNome = document.getElementById('inputNomeGaleria') || document.querySelector('#tab-dados input[type="text"]');
         if (inputNome && inputNome.value) payload.nome = inputNome.value;
 
-        const selectCat = document.querySelector('#tab-dados select');
-        if (selectCat) payload.categoria = selectCat.value;
+        const selectCat = document.getElementById('selectCategoriaGaleria') || document.querySelector('#tab-dados select');
+        if (selectCat && selectCat.value && selectCat.value !== '__nova__') {
+          payload.categoria = selectCat.value;
+        }
 
         try {
           const res = await fetch(`/api/galeria/${galConfigId}`, {
@@ -1904,6 +2037,11 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
           const data = await res.json();
           if (data.success) {
             showToast('✓ Configurações salvas no banco de dados!');
+            if (payload.categoria) {
+              if (window.galeriaConfigAtual) window.galeriaConfigAtual.categoria = payload.categoria;
+              const pillTag = document.querySelector('.preview-pill-tag');
+              if (pillTag) pillTag.textContent = payload.categoria;
+            }
             window.carregarHistoricoAtividades();
             window.carregarAtividadesClienteConfig();
           } else {

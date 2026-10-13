@@ -158,7 +158,13 @@ def json_response(data, status: int = 200):
 
 def get_body() -> dict:
     try:
-        return request.json or {}
+        if request.json:
+            return request.json
+        if hasattr(request, 'body') and request.body:
+            raw = request.body.read()
+            if raw:
+                return json.loads(raw.decode('utf-8'))
+        return {}
     except Exception:
         return {}
 
@@ -643,6 +649,96 @@ def api_update_galeria(galeria_id):
         conn.close()
 
     return json_response({'success': True, 'updated': len(set_clauses)})
+
+# ── ROTAS DE CATEGORIAS (Personalização de tipos de ensaio) ───────────────────
+
+@app.get('/api/categorias')
+@rate_limit()
+def api_get_categorias():
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT * FROM categorias ORDER BY nome ASC")
+            rows = [dict(r) for r in cur.fetchall()]
+        except Exception:
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS categorias (
+                id SERIAL PRIMARY KEY,
+                nome VARCHAR(100) UNIQUE NOT NULL,
+                criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
+            """)
+            conn.commit()
+            rows = []
+
+        if not rows:
+            padroes = [
+                'Galeria demonstrativa', 'Ensaio Família', 'Gestante', 'Newborn',
+                'Casamento', 'Aniversário / 15 Anos', 'Formatura', 'Ensaio Casal',
+                'Retrato Profissional', 'Smash the Cake', 'Batizado', 'Eventos / Festas'
+            ]
+            for p in padroes:
+                try:
+                    cur.execute("INSERT INTO categorias (nome) VALUES (?)", (p,))
+                except Exception:
+                    pass
+            conn.commit()
+            cur.execute("SELECT * FROM categorias ORDER BY nome ASC")
+            rows = [dict(r) for r in cur.fetchall()]
+
+        return json_response(rows)
+    finally:
+        conn.close()
+
+@app.post('/api/categorias')
+@rate_limit(30)
+def api_add_categoria():
+    data = get_body()
+    nome = sanitize_str(data.get('nome', ''), 100).strip()
+    if not nome:
+        return json_response({'error': 'Nome da categoria é obrigatório.'}, 400)
+
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT id, nome FROM categorias WHERE LOWER(nome) = ?", (nome.lower(),))
+            existente = cur.fetchone()
+        except Exception:
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS categorias (
+                id SERIAL PRIMARY KEY,
+                nome VARCHAR(100) UNIQUE NOT NULL,
+                criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
+            """)
+            conn.commit()
+            existente = None
+
+        if existente:
+            return json_response({'success': True, 'categoria': {'id': existente['id'], 'nome': existente['nome']}, 'id': existente['id'], 'nome': existente['nome'], 'mensagem': 'Categoria já existente.'})
+
+        cur.execute("INSERT INTO categorias (nome) VALUES (?)", (nome,))
+        novo_id = cur.lastrowid
+        conn.commit()
+        return json_response({'success': True, 'categoria': {'id': novo_id, 'nome': nome}, 'id': novo_id, 'nome': nome, 'mensagem': f'Categoria "{nome}" cadastrada com sucesso!'})
+    except Exception as e:
+        return json_response({'error': f'Erro ao salvar categoria: {str(e)}'}, 500)
+    finally:
+        conn.close()
+
+@app.delete('/api/categorias/<cat_id:int>')
+@rate_limit(30)
+def api_delete_categoria(cat_id):
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM categorias WHERE id = ?", (cat_id,))
+        conn.commit()
+        return json_response({'success': True, 'deleted': cat_id})
+    finally:
+        conn.close()
 
 @app.get('/api/galeria/<galeria_id:int>/fotos')
 @rate_limit()

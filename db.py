@@ -216,6 +216,25 @@ def init_db(conn=None):
         try:
             c = conn or get_connection(skip_init=True)
             cur = c.cursor()
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS categorias (
+                id SERIAL PRIMARY KEY,
+                nome VARCHAR(100) UNIQUE NOT NULL,
+                criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+            """)
+            cur.execute("SELECT COUNT(*) FROM categorias")
+            cnt = cur.fetchone()[0]
+            if cnt == 0:
+                default_cats = [
+                    'Galeria demonstrativa', 'Ensaio Família', 'Gestante', 'Newborn',
+                    'Casamento', 'Aniversário / 15 Anos', 'Formatura', 'Ensaio Casal',
+                    'Retrato Profissional', 'Smash the Cake', 'Batizado', 'Eventos / Festas'
+                ]
+                for c_nome in default_cats:
+                    cur.execute("INSERT INTO categorias (nome) VALUES (%s) ON CONFLICT (nome) DO NOTHING", (c_nome,))
+            c.commit()
+
             cur.execute("SELECT 1 FROM information_schema.tables WHERE table_name = 'usuarios'")
             row = cur.fetchone()
             if conn is None:
@@ -437,6 +456,28 @@ def init_db(conn=None):
         descricao  TEXT
     )
     """)
+
+    # ── 12.1 Categorias de Ensaios e Galerias ──────────────────────────────
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS categorias (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome       TEXT UNIQUE NOT NULL,
+        criado_em  DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    try:
+        cur.execute("SELECT COUNT(*) FROM categorias")
+        cnt_cat = cur.fetchone()[0]
+        if cnt_cat == 0:
+            default_cats = [
+                'Galeria demonstrativa', 'Ensaio Família', 'Gestante', 'Newborn',
+                'Casamento', 'Aniversário / 15 Anos', 'Formatura', 'Ensaio Casal',
+                'Retrato Profissional', 'Smash the Cake', 'Batizado', 'Eventos / Festas'
+            ]
+            for c_nome in default_cats:
+                cur.execute("INSERT OR IGNORE INTO categorias (nome) VALUES (?)", (c_nome,))
+    except Exception:
+        pass
 
     # ── 13. Índices para Performance ──────────────────────────────────────
     cur.execute("CREATE INDEX IF NOT EXISTS idx_usuarios_login ON usuarios(login)")

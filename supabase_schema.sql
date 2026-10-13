@@ -188,6 +188,13 @@ CREATE TABLE IF NOT EXISTS site_textos (
     descricao TEXT
 );
 
+-- 2.13 Categorias de Ensaios / Galerias
+CREATE TABLE IF NOT EXISTS categorias (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) UNIQUE NOT NULL,
+    criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ── 3. ÍNDICES DE PERFORMANCE ─────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_usuarios_login ON usuarios(login);
 CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email);
@@ -244,9 +251,12 @@ ALTER TABLE site_fotos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE site_pacotes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE site_textos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categorias ENABLE ROW LEVEL SECURITY;
 
 -- 5.1 Políticas Públicas de Leitura (Site Visitante)
-CREATE POLICY "Leitura pública de categorias" ON site_categorias FOR SELECT USING (true);
+CREATE POLICY "Leitura pública de categorias site" ON site_categorias FOR SELECT USING (true);
+CREATE POLICY "Leitura pública de categorias" ON categorias FOR SELECT USING (true);
+CREATE POLICY "Gerenciamento total de categorias" ON categorias FOR ALL USING (true);
 CREATE POLICY "Leitura pública de fotos do site" ON site_fotos FOR SELECT USING (true);
 CREATE POLICY "Leitura pública de pacotes" ON site_pacotes FOR SELECT USING (true);
 CREATE POLICY "Leitura pública de textos da home" ON site_textos FOR SELECT USING (true);
@@ -336,6 +346,22 @@ INSERT INTO atividades (galeria_id, data_hora, autor_tipo, titulo, descricao, di
 (1, '10 OUT 2026 09:42', 'Cliente', 'Galeria acessada para revisão', 'Cliente retornou e continuou pelo celular.', 'Computador', 'Cliente'),
 (1, '09 OUT 2026 10:50', 'Cliente', 'Primeiro acesso à galeria', 'Convite acessado pelo destinatário principal.', 'Computador', 'Cliente'),
 (1, '08 OUT 2026 15:00', 'Fotógrafo', 'Convite registrado', 'Convite no sistema para cliente@exemplo.com.', 'Computador', 'Fotógrafo');
+
+-- 6.7 Categorias Padrão para Galerias e Ensaios
+INSERT INTO categorias (nome) VALUES
+('Galeria demonstrativa'),
+('Ensaio Família'),
+('Gestante'),
+('Newborn'),
+('Casamento'),
+('Aniversário / 15 Anos'),
+('Formatura'),
+('Ensaio Casal'),
+('Retrato Profissional'),
+('Smash the Cake'),
+('Batizado'),
+('Eventos / Festas')
+ON CONFLICT (nome) DO NOTHING;
 
 -- ==============================================================================
 -- FIM DO SCRIPT DE MIGRAÇÃO DO SUPABASE
