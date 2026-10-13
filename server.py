@@ -1028,25 +1028,63 @@ def api_set_foto_status(galeria_id, foto_id):
 
 
 @app.post('/api/galeria/<galeria_id:int>/enviar-selecao')
-@rate_limit(10)
+@rate_limit(20)
 def api_enviar_selecao(galeria_id):
     conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='pacote'", (galeria_id,))
-    pct = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='extra'", (galeria_id,))
-    ext = cur.fetchone()[0]
-    agora = datetime.now().strftime("%d OUT %Y %H:%M")
-    cur.execute("""
-    INSERT INTO atividades (galeria_id, data_hora, autor_tipo, titulo, descricao, dispositivo, tipo_badge)
-    VALUES (?, ?, 'Cliente', 'Seleção enviada ao fotógrafo', ?, 'Computador', 'Cliente')
-    """, (galeria_id, agora, f"Seleção de {pct} fotos do pacote e {ext} extras enviada."))
-    cur.execute("UPDATE destinatarios SET status_convite='Seleção enviada' WHERE galeria_id=?", (galeria_id,))
-    conn.commit()
-    conn.close()
-    return json_response({'success': True,
-                          'mensagem': f'Seleção enviada! {pct} do pacote + {ext} extras.',
-                          'pacote': pct, 'extra': ext})
+    try:
+        data = get_body() or {}
+        obs = sanitize_str(data.get('observacoes', ''), 500).strip()
+        pacote_ids = data.get('pacote_ids', [])
+        extra_ids = data.get('extra_ids', [])
+
+        cur = conn.cursor()
+
+        # Se o cliente enviou IDs explícitos de pacote/extra, sincroniza no banco
+        if pacote_ids:
+            for pid in pacote_ids:
+                try:
+                    cur.execute("UPDATE fotos SET status='pacote' WHERE id=? AND galeria_id=?", (int(pid), galeria_id))
+                except Exception:
+                    pass
+        if extra_ids:
+            for eid in extra_ids:
+                try:
+                    cur.execute("UPDATE fotos SET status='extra' WHERE id=? AND galeria_id=?", (int(eid), galeria_id))
+                except Exception:
+                    pass
+
+        cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='pacote'", (galeria_id,))
+        pct = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='extra'", (galeria_id,))
+        ext = cur.fetchone()[0]
+        agora = datetime.now().strftime("%d OUT %Y %H:%M")
+
+        descricao_ativ = f"Seleção enviada com {pct} fotos do pacote e {ext} extras."
+        if obs:
+            descricao_ativ += f" Observações do cliente: {obs}"
+
+        try:
+            cur.execute("""
+            INSERT INTO atividades (galeria_id, data_hora, autor_tipo, titulo, descricao, dispositivo, tipo_badge)
+            VALUES (?, ?, 'Cliente', 'Seleção enviada ao fotógrafo', ?, 'Computador', 'Cliente')
+            """, (galeria_id, agora, descricao_ativ))
+        except Exception as e_ativ:
+            print(f"[Atividades] Erro ao registrar atividade: {e_ativ}")
+
+        try:
+            cur.execute("UPDATE destinatarios SET status_convite='Seleção enviada' WHERE galeria_id=?", (galeria_id,))
+        except Exception:
+            pass
+
+        conn.commit()
+        return json_response({
+            'success': True,
+            'mensagem': f'Seleção enviada com sucesso! {pct} do pacote + {ext} extras.',
+            'pacote': pct,
+            'extra': ext
+        })
+    finally:
+        conn.close()
 
 # ==============================================================================
 # 4. DESTINATÁRIOS

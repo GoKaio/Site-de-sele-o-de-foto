@@ -280,6 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const galData = await resGal.json();
         window.galeriaDataCliente = galData;
         fotosGlobais = data.fotos || [];
+        window.fotosGlobaisCliente = fotosGlobais;
         atualizarMetricas(data.totais, galData);
         aplicarOrdenacaoERenderizar();
       } catch (err) {
@@ -461,6 +462,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.mudarStatusFoto = async function(id, novoStatus) {
       try {
+        const itemLocal = fotosGlobais.find(f => f.id == id);
+        if (itemLocal) {
+          itemLocal.status = novoStatus;
+          window.fotosGlobaisCliente = fotosGlobais;
+        }
         const res = await fetch(`/api/galeria/${galId}/fotos/${id}/status`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -509,27 +515,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Botão Enviar Seleção ao Fotógrafo
+    // Botão Enviar Seleção ao Fotógrafo (Abre modal oficial de confirmação)
     const btnEnviar = document.getElementById('btnEnviarSelecao');
     if (btnEnviar) {
-      btnEnviar.addEventListener('click', async () => {
-        if (!confirm('Deseja confirmar o envio das fotos selecionadas para o estúdio?')) return;
-        btnEnviar.disabled = true;
-        btnEnviar.innerHTML = '<span>Enviando ao estúdio...</span>';
-        try {
-          const res = await fetch(`/api/galeria/${galId}/enviar-selecao`, { method: 'POST' });
-          const d = await res.json();
-          if (d.success) {
-            showToast('🎉 Sua seleção foi enviada com sucesso ao fotógrafo!');
-            btnEnviar.innerHTML = '<span>✓ Seleção Enviada!</span>';
-            btnEnviar.style.background = '#2E7D32';
-          }
-        } catch (err) {
-          showToast('Erro ao enviar seleção.', 'error');
-          btnEnviar.disabled = false;
-          btnEnviar.innerHTML = '<span>✈ Enviar seleção ao fotógrafo</span>';
-        }
-      });
+      btnEnviar.onclick = (e) => {
+        if (e) e.preventDefault();
+        window.iniciarModalEnviarSelecao();
+      };
     }
 
     carregarFotos();
@@ -2829,13 +2821,24 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
   // 4. Modal de Confirmação de Envio da Seleção pelo Cliente
   window.iniciarModalEnviarSelecao = function() {
     const galId = new URLSearchParams(window.location.search).get('galeria_id') || new URLSearchParams(window.location.search).get('id') || sessionStorage.getItem('cliente_galeria_id') || '1';
-    const fotos = window.fotosGlobaisCliente || [];
+    
+    // Busca fotos do estado global ou diretamente dos cards renderizados no DOM
+    let fotos = window.fotosGlobaisCliente || [];
+    if (!fotos || fotos.length === 0) {
+      const cards = document.querySelectorAll('.proofing-card');
+      fotos = Array.from(cards).map(c => ({
+        id: c.getAttribute('data-id'),
+        status: c.getAttribute('data-status') || 'nao_selecionada',
+        numero: c.getAttribute('data-numero') || ''
+      }));
+    }
+
     const pacotes = fotos.filter(f => f.status === 'pacote');
     const extras = fotos.filter(f => f.status === 'extra');
     const totalSelecionadas = pacotes.length + extras.length;
 
     if (totalSelecionadas === 0) {
-      showToast('Selecione pelo menos uma foto antes de enviar sua escolha.', 'error');
+      showToast('Selecione pelo menos uma foto para o pacote ou como extra antes de enviar.', 'error');
       return;
     }
 
@@ -2893,19 +2896,31 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
       btn.disabled = true;
       btn.textContent = 'Enviando seleção...';
       const obs = document.getElementById('obsClienteEnvio').value;
+      const pacoteIds = pacotes.map(f => f.id);
+      const extraIds = extras.map(f => f.id);
+
       try {
         const res = await fetch(`/api/galeria/${galId}/enviar-selecao`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ observacoes: obs })
+          body: JSON.stringify({ 
+            observacoes: obs,
+            pacote_ids: pacoteIds,
+            extra_ids: extraIds
+          })
         });
         const d = await res.json();
         if (d.success) {
           document.getElementById('alboomConfirmSendModal').remove();
           showToast('🎉 Parabéns! Sua seleção foi enviada com sucesso ao fotógrafo!');
+          const btnSendMain = document.getElementById('btnEnviarSelecao');
+          if (btnSendMain) {
+            btnSendMain.innerHTML = '<span>✓ Seleção Enviada com Sucesso!</span>';
+            btnSendMain.style.background = '#2E7D32';
+          }
           setTimeout(() => window.location.reload(), 1500);
         } else {
-          showToast(d.message || 'Erro ao enviar seleção.', 'error');
+          showToast(d.mensagem || d.message || 'Erro ao enviar seleção.', 'error');
           btn.disabled = false;
           btn.textContent = '✓ Confirmar e Enviar Escolha';
         }
@@ -2936,14 +2951,6 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
   // Ativa automaticamente em escolha-fotos.html
   if (window.location.pathname.includes('escolha-fotos.html')) {
     window.ativarProtecaoAntiCopia();
-
-    // Conecta o botão Enviar Seleção
-    const btnSend = document.getElementById('btnEnviarSelecao');
-    if (btnSend) {
-      btnSend.addEventListener('click', () => {
-        window.iniciarModalEnviarSelecao();
-      });
-    }
   }
 
 });
