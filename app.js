@@ -373,43 +373,55 @@ document.addEventListener('DOMContentLoaded', () => {
       const meta = document.getElementById('txtMetaExibidas');
       if (meta) meta.textContent = `${fotos.length} de ${fotosGlobais.length} fotos exibidas`;
 
-      gridFotos.innerHTML = fotos.map(f => {
-        let badgeHtml = '';
-        let btnHtml = '';
-        let sublinkHtml = '';
+      gridFotos.innerHTML = fotos.map((f, idx) => {
+        const isPacote = f.status === 'pacote';
+        const isExtra = f.status === 'extra';
+        const tagStatus = isPacote ? 'No pacote' : isExtra ? 'Extra' : 'Disponível';
+        const statusClass = isPacote ? 'tag-pacote' : isExtra ? 'tag-extra' : 'tag-disponivel';
 
-        if (f.status === 'pacote') {
-          badgeHtml = '<span class="thumb-checkbox-badge checked-pacote">✓</span>';
-          btnHtml = `<button type="button" class="btn-proof-action action-included" onclick="mudarStatusFoto(${f.id}, 'extra')">✓ Incluída no pacote</button>`;
-          sublinkHtml = `<a href="javascript:void(0)" class="sublink-action" onclick="mudarStatusFoto(${f.id}, 'nao_selecionada')">Remover da seleção</a>`;
-        } else if (f.status === 'extra') {
-          badgeHtml = '<span class="thumb-checkbox-badge checked-extra">+</span>';
-          btnHtml = `<button type="button" class="btn-proof-action action-extra" onclick="mudarStatusFoto(${f.id}, 'nao_selecionada')">+ Escolhida como extra</button>`;
-          sublinkHtml = `<a href="javascript:void(0)" class="sublink-action" onclick="mudarStatusFoto(${f.id}, 'pacote')">Mover para o pacote</a>`;
-        } else {
-          badgeHtml = '<span class="thumb-checkbox-badge empty"></span>';
-          btnHtml = `<button type="button" class="btn-proof-action action-unselected" onclick="mudarStatusFoto(${f.id}, 'pacote')">+ Adicionar ao pacote</button>`;
-          sublinkHtml = `<a href="javascript:void(0)" class="sublink-action" onclick="mudarStatusFoto(${f.id}, 'extra')">Escolher como extra</a>`;
-        }
-
-        const tagStatus = f.status === 'pacote' ? 'No pacote' : f.status === 'extra' ? 'Extra' : 'Não selecionada';
+        const floatingPillHtml = isPacote 
+          ? `<div class="photo-floating-pill pill-pacote"><span class="pill-icon">✓</span> <span>No Pacote</span></div>`
+          : isExtra 
+          ? `<div class="photo-floating-pill pill-extra"><span class="pill-icon">★</span> <span>Foto Extra</span></div>`
+          : '';
 
         return `
-          <div class="proofing-card" data-id="${f.id}" data-status="${f.status}" data-numero="${(f.numero || '').toLowerCase()}">
-            <div class="proofing-thumb-wrapper" style="position: relative; overflow: hidden;">
-              <img src="${f.arquivo}" alt="${f.numero}" onclick="abrirLightbox('${f.arquivo}', '${f.numero}')" onerror="this.onerror=null; this.src='assets/logo/logo.png';" style="cursor: pointer;">
+          <div class="proofing-card ${isPacote ? 'card-selected-pacote' : isExtra ? 'card-selected-extra' : ''}" data-id="${f.id}" data-status="${f.status}" data-numero="${(f.numero || '').toLowerCase()}">
+            <div class="proofing-thumb-wrapper">
+              <img src="${f.arquivo}" alt="${f.numero}" onclick="abrirLightbox('${f.arquivo}', '${f.numero}', ${f.id})" onerror="this.onerror=null; this.src='assets/logo/logo.png';" style="cursor: pointer;" loading="lazy">
               <!-- Marca d'água oficial protetora -->
               <div class="watermark-overlay" title="Casa da Foto Studio - Marca d'água"></div>
-              ${badgeHtml}
-              <span class="thumb-zoom-icon" onclick="abrirLightbox('${f.arquivo}', '${f.numero}')" title="Ampliar foto">⛶</span>
+              ${floatingPillHtml}
+              <button type="button" class="thumb-zoom-icon" onclick="abrirLightbox('${f.arquivo}', '${f.numero}', ${f.id})" title="Ampliar foto em alta resolução">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  <line x1="11" y1="8" x2="11" y2="14"></line>
+                  <line x1="8" y1="11" x2="14" y2="11"></line>
+                </svg>
+              </button>
             </div>
             <div class="proofing-card-content">
               <div class="proofing-card-top-info">
                 <span class="photo-number-label">${f.numero}</span>
-                <span class="photo-status-tag">${tagStatus}</span>
+                <span class="photo-status-tag ${statusClass}">${tagStatus}</span>
               </div>
-              ${btnHtml}
-              ${sublinkHtml}
+              <div class="proof-actions-dual">
+                <button type="button" 
+                  class="btn-proof-toggle ${isPacote ? 'active-pacote' : ''}" 
+                  onclick="mudarStatusFoto(${f.id}, '${isPacote ? 'nao_selecionada' : 'pacote'}')"
+                  title="${isPacote ? 'Remover do pacote' : 'Incluir foto no pacote'}">
+                  <span class="toggle-icon">${isPacote ? '✓' : '+'}</span>
+                  <span>Pacote</span>
+                </button>
+                <button type="button" 
+                  class="btn-proof-toggle ${isExtra ? 'active-extra' : ''}" 
+                  onclick="mudarStatusFoto(${f.id}, '${isExtra ? 'nao_selecionada' : 'extra'}')"
+                  title="${isExtra ? 'Remover dos extras' : 'Escolher como foto extra'}">
+                  <span class="toggle-icon">${isExtra ? '★' : '+'}</span>
+                  <span>Extra</span>
+                </button>
+              </div>
             </div>
           </div>
         `;
@@ -2370,33 +2382,263 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
   // 9. MODAIS E LIGHTBOX INTERATIVOS
   // ============================================================================
 
-  // Lightbox de Fotos em Tela Cheia
-  window.abrirLightbox = function(imgSrc, titulo) {
+  // Lightbox de Fotos Interativo com Navegação e Seleção em Tela Cheia
+  window.lightboxFotosLista = [];
+  window.lightboxCurrentIndex = 0;
+  window.lightboxTecladoAtivo = false;
+
+  window.abrirLightbox = function(imgSrc, titulo, fotoId) {
+    let fotos = [];
+    const cards = document.querySelectorAll('.proofing-card');
+    const cardsVisiveis = Array.from(cards).filter(c => c.style.display !== 'none');
+
+    // Se o cliente filtrou fotos na tela, navega entre as fotos filtradas
+    if (cardsVisiveis.length > 0 && cardsVisiveis.length < (window.fotosGlobaisCliente?.length || 0)) {
+      fotos = cardsVisiveis.map(c => {
+        const id = c.getAttribute('data-id');
+        const fotoReal = window.fotosGlobaisCliente?.find(f => f.id == id);
+        return fotoReal || {
+          id: id,
+          status: c.getAttribute('data-status') || 'nao_selecionada',
+          numero: c.querySelector('.photo-number-label')?.textContent?.trim() || c.getAttribute('data-numero') || '',
+          arquivo: c.querySelector('img')?.src || ''
+        };
+      });
+    } else if (window.fotosGlobaisCliente && window.fotosGlobaisCliente.length > 0) {
+      fotos = [...window.fotosGlobaisCliente];
+    } else if (cards.length > 0) {
+      fotos = Array.from(cards).map(c => ({
+        id: c.getAttribute('data-id'),
+        status: c.getAttribute('data-status') || 'nao_selecionada',
+        numero: c.querySelector('.photo-number-label')?.textContent?.trim() || c.getAttribute('data-numero') || '',
+        arquivo: c.querySelector('img')?.src || ''
+      }));
+    }
+
+    if (!fotos || fotos.length === 0) {
+      fotos = [{ id: fotoId ?? null, arquivo: imgSrc, numero: titulo || 'Foto', status: 'nao_selecionada' }];
+    }
+
+    window.lightboxFotosLista = fotos;
+
+    let idx = -1;
+    if (fotoId != null) {
+      idx = fotos.findIndex(f => f.id == fotoId);
+    }
+    if (idx === -1 && imgSrc) {
+      idx = fotos.findIndex(f => f.arquivo === imgSrc || (f.arquivo && f.arquivo.includes(imgSrc)) || (imgSrc && imgSrc.includes(f.arquivo)));
+    }
+    if (idx === -1 && titulo) {
+      idx = fotos.findIndex(f => f.numero === titulo || f.titulo === titulo);
+    }
+    if (idx === -1) idx = 0;
+
+    window.lightboxCurrentIndex = idx;
+    window.renderizarConteudoLightbox();
+  };
+
+  window.renderizarConteudoLightbox = function() {
     let lb = document.getElementById('appLightbox');
     if (!lb) {
       lb = document.createElement('div');
       lb.id = 'appLightbox';
-      lb.style.cssText = `
-        position: fixed; inset: 0; z-index: 100000;
-        background: rgba(15, 10, 6, 0.92);
-        backdrop-filter: blur(8px);
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        padding: 24px; animation: fadeIn 0.25s ease;
-      `;
+      lb.className = 'lightbox-backdrop';
       document.body.appendChild(lb);
     }
+
+    if (!window.lightboxTecladoAtivo) {
+      window.lightboxTecladoAtivo = true;
+
+      // Navegação por teclado: Setas ← e →, Esc para fechar, P para Pacote, E para Extra
+      window.addEventListener('keydown', (e) => {
+        const lbEl = document.getElementById('appLightbox');
+        if (!lbEl || lbEl.style.display !== 'flex') return;
+
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          window.navegarLightbox(-1);
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          window.navegarLightbox(1);
+        } else if (e.key === 'Escape') {
+          lbEl.style.display = 'none';
+        } else if (e.key === 'p' || e.key === 'P' || e.key === '1') {
+          const fotos = window.lightboxFotosLista || [];
+          const cur = fotos[window.lightboxCurrentIndex];
+          if (cur && cur.id != null) {
+            e.preventDefault();
+            const novoSt = cur.status === 'pacote' ? 'nao_selecionada' : 'pacote';
+            window.selecionarFotoNoLightbox(cur.id, novoSt);
+          }
+        } else if (e.key === 'e' || e.key === 'E' || e.key === '2') {
+          const fotos = window.lightboxFotosLista || [];
+          const cur = fotos[window.lightboxCurrentIndex];
+          if (cur && cur.id != null) {
+            e.preventDefault();
+            const novoSt = cur.status === 'extra' ? 'nao_selecionada' : 'extra';
+            window.selecionarFotoNoLightbox(cur.id, novoSt);
+          }
+        }
+      });
+
+      // Suporte a gestos touch swipe (deslizar dedo para mudar de foto no celular)
+      let touchStartX = 0;
+      let touchStartY = 0;
+      lb.addEventListener('touchstart', (e) => {
+        if (e.touches && e.touches.length > 0) {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+
+      lb.addEventListener('touchend', (e) => {
+        if (e.changedTouches && e.changedTouches.length > 0) {
+          const diffX = e.changedTouches[0].clientX - touchStartX;
+          const diffY = e.changedTouches[0].clientY - touchStartY;
+          if (Math.abs(diffX) > 45 && Math.abs(diffX) > Math.abs(diffY)) {
+            if (diffX < 0) {
+              window.navegarLightbox(1); // Deslizou para esquerda -> próxima foto
+            } else {
+              window.navegarLightbox(-1); // Deslizou para direita -> foto anterior
+            }
+          }
+        }
+      }, { passive: true });
+    }
+
+    const fotos = window.lightboxFotosLista || [];
+    const idx = window.lightboxCurrentIndex;
+    const foto = fotos[idx] || { arquivo: '', numero: 'Foto', status: 'nao_selecionada', id: null };
+
+    const total = fotos.length;
+    const isPacote = foto.status === 'pacote';
+    const isExtra = foto.status === 'extra';
+    const tagStatus = isPacote ? '✓ Inclusa no Pacote' : isExtra ? '★ Foto Extra' : '○ Não Selecionada';
+    const tagClass = isPacote ? 'lb-status-pacote' : isExtra ? 'lb-status-extra' : 'lb-status-none';
+
     lb.innerHTML = `
-      <div style="position: relative; max-width: 90vw; max-height: 85vh; text-align: center; display: inline-block;">
-        <button type="button" onclick="document.getElementById('appLightbox').style.display='none'" style="position: absolute; top: -45px; right: 0; background: none; border: none; color: #FFF; font-size: 2rem; cursor: pointer;">✕</button>
-        <div style="position: relative; display: inline-block; overflow: hidden; border-radius: 12px;">
-          <img src="${imgSrc}" alt="${titulo}" style="max-width: 100%; max-height: 80vh; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); object-fit: contain; display: block;">
-          <div class="watermark-overlay-large" style="position: absolute; inset: 0; background: url('assets/logo/logo.png') center center / 45% no-repeat; opacity: 0.35; pointer-events: none; border-radius: 12px;" title="Casa da Foto - Marca d'água"></div>
+      <div class="lightbox-container" onclick="event.stopPropagation()">
+        <!-- Botão Fechar -->
+        <button type="button" class="lightbox-close-btn" onclick="document.getElementById('appLightbox').style.display='none'" title="Fechar (Esc)">✕</button>
+
+        <!-- Barra Superior: Contador e Status da Foto Atual -->
+        <div class="lightbox-top-bar">
+          <div class="lightbox-meta-info">
+            <span class="lightbox-counter">${total > 1 ? `Foto ${idx + 1} de ${total}` : ''}</span>
+            <span class="lightbox-photo-title">${foto.numero || foto.titulo || 'Foto'}</span>
+          </div>
+          <span class="lightbox-status-pill ${tagClass}">${tagStatus}</span>
         </div>
-        <div style="color: #FAF5EE; font-size: 1.1rem; font-weight: 600; margin-top: 12px;">${titulo || ''}</div>
+
+        <!-- Área Central da Imagem com Setas de Navegação -->
+        <div class="lightbox-image-stage">
+          ${total > 1 ? `
+            <button type="button" class="lightbox-nav-btn prev-btn" onclick="window.navegarLightbox(-1)" title="Foto anterior (Seta esquerda / Deslizar)">❮</button>
+          ` : ''}
+
+          <div class="lightbox-img-wrapper">
+            <img src="${foto.arquivo}" alt="${foto.numero || ''}" id="lightboxMainImg" onerror="this.onerror=null; this.src='assets/logo/logo.png';">
+            <div class="watermark-overlay-large" title="Casa da Foto Studio - Marca d'água"></div>
+          </div>
+
+          ${total > 1 ? `
+            <button type="button" class="lightbox-nav-btn next-btn" onclick="window.navegarLightbox(1)" title="Próxima foto (Seta direita / Deslizar)">❯</button>
+          ` : ''}
+        </div>
+
+        <!-- Barra Inferior de Ação: SELEÇÃO RÁPIDA DENTRO DA FOTO ABERTA -->
+        ${(foto.id !== null && foto.id !== undefined) ? `
+          <div class="lightbox-bottom-actions">
+            <div class="lightbox-buttons-group">
+              <button type="button" 
+                class="btn-lb-action ${isPacote ? 'is-active-pacote' : ''}" 
+                onclick="window.selecionarFotoNoLightbox('${foto.id}', '${isPacote ? 'nao_selecionada' : 'pacote'}')"
+                title="${isPacote ? 'Remover do pacote' : 'Incluir foto no pacote'}">
+                <span class="btn-icon">${isPacote ? '✓' : '+'}</span>
+                <span>${isPacote ? '✓ No Pacote' : '+ Pacote'}</span>
+              </button>
+
+              <button type="button" 
+                class="btn-lb-action ${isExtra ? 'is-active-extra' : ''}" 
+                onclick="window.selecionarFotoNoLightbox('${foto.id}', '${isExtra ? 'nao_selecionada' : 'extra'}')"
+                title="${isExtra ? 'Remover dos extras' : 'Escolher como foto extra'}">
+                <span class="btn-icon">${isExtra ? '★' : '+'}</span>
+                <span>${isExtra ? '★ Foto Extra' : '+ Extra'}</span>
+              </button>
+            </div>
+
+            <div class="lightbox-keyboard-hint">
+              <span>Use as setas <strong>←</strong> e <strong>→</strong> (ou deslize no celular) para mudar de foto. Clique nos botões para selecionar.</span>
+            </div>
+          </div>
+        ` : ''}
       </div>
     `;
+
     lb.style.display = 'flex';
     lb.onclick = (e) => { if (e.target === lb) lb.style.display = 'none'; };
+  };
+
+  window.navegarLightbox = function(direcao) {
+    const fotos = window.lightboxFotosLista || [];
+    if (!fotos || fotos.length <= 1) return;
+    let novoIdx = window.lightboxCurrentIndex + direcao;
+    if (novoIdx < 0) novoIdx = fotos.length - 1;
+    if (novoIdx >= fotos.length) novoIdx = 0;
+    window.lightboxCurrentIndex = novoIdx;
+    window.renderizarConteudoLightbox();
+  };
+
+  window.selecionarFotoNoLightbox = async function(fotoId, novoStatus) {
+    const fotos = window.lightboxFotosLista || [];
+    const foto = fotos.find(f => f.id == fotoId);
+    if (foto) {
+      foto.status = novoStatus;
+    }
+    if (window.fotosGlobaisCliente) {
+      const fg = window.fotosGlobaisCliente.find(f => f.id == fotoId);
+      if (fg) fg.status = novoStatus;
+    }
+
+    // Feedback visual instantâneo dentro do Lightbox aberto
+    window.renderizarConteudoLightbox();
+
+    // Atualiza imediatamente o card no grid de fundo se existir
+    const cardEl = document.querySelector(`.proofing-card[data-id="${fotoId}"]`);
+    if (cardEl) {
+      cardEl.setAttribute('data-status', novoStatus);
+      cardEl.classList.remove('card-selected-pacote', 'card-selected-extra');
+      if (novoStatus === 'pacote') cardEl.classList.add('card-selected-pacote');
+      if (novoStatus === 'extra') cardEl.classList.add('card-selected-extra');
+      
+      const tagEl = cardEl.querySelector('.photo-status-tag');
+      if (tagEl) {
+        tagEl.className = 'photo-status-tag ' + (novoStatus === 'pacote' ? 'tag-pacote' : novoStatus === 'extra' ? 'tag-extra' : 'tag-disponivel');
+        tagEl.textContent = novoStatus === 'pacote' ? 'No pacote' : novoStatus === 'extra' ? 'Extra' : 'Disponível';
+      }
+      
+      const btnPacote = cardEl.querySelector('.btn-proof-toggle:first-of-type');
+      if (btnPacote) {
+        if (novoStatus === 'pacote') btnPacote.classList.add('active-pacote');
+        else btnPacote.classList.remove('active-pacote');
+      }
+      const btnExtra = cardEl.querySelector('.btn-proof-toggle:last-of-type');
+      if (btnExtra) {
+        if (novoStatus === 'extra') btnExtra.classList.add('active-extra');
+        else btnExtra.classList.remove('active-extra');
+      }
+    }
+
+    // Envia ao servidor e re-sincroniza métricas e contadores
+    if (typeof window.mudarStatusFoto === 'function') {
+      await window.mudarStatusFoto(fotoId, novoStatus);
+      if (window.fotosGlobaisCliente && window.lightboxFotosLista) {
+        window.lightboxFotosLista.forEach(lf => {
+          const matched = window.fotosGlobaisCliente.find(fg => fg.id == lf.id);
+          if (matched) lf.status = matched.status;
+        });
+      }
+    }
   };
 
   // Modal de Consulta de Orçamento / Pacotes
