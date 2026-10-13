@@ -473,7 +473,14 @@ def api_upload():
 
 @app.route('/uploads/<filepath:path>')
 def server_uploads(filepath):
-    return static_file(filepath, root=UPLOAD_DIR)
+    if os.path.exists(os.path.join(UPLOAD_DIR, filepath)):
+        return static_file(filepath, root=UPLOAD_DIR)
+    if os.path.exists(os.path.join(BASE_DIR, 'uploads', filepath)):
+        return static_file(filepath, root=os.path.join(BASE_DIR, 'uploads'))
+    logo_path = os.path.join(BASE_DIR, 'assets', 'logo', 'logo.png')
+    if os.path.exists(logo_path):
+        return static_file('logo.png', root=os.path.join(BASE_DIR, 'assets', 'logo'))
+    abort(404, 'Arquivo não encontrado')
 
 @app.post('/api/projetos')
 @rate_limit()
