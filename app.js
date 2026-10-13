@@ -396,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
           <div class="proofing-card" data-id="${f.id}" data-status="${f.status}" data-numero="${(f.numero || '').toLowerCase()}">
             <div class="proofing-thumb-wrapper" style="position: relative; overflow: hidden;">
-              <img src="${f.arquivo}" alt="${f.numero}" onclick="abrirLightbox('${f.arquivo}', '${f.numero}')" style="cursor: pointer;">
+              <img src="${f.arquivo}" alt="${f.numero}" onclick="abrirLightbox('${f.arquivo}', '${f.numero}')" onerror="this.onerror=null; this.src='assets/logo/logo.png';" style="cursor: pointer;">
               <!-- Marca d'água oficial protetora -->
               <div class="watermark-overlay" title="Casa da Foto Studio - Marca d'água"></div>
               ${badgeHtml}
@@ -932,10 +932,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     window.carregarDadosGaleria();
 
-    // Função auxiliar para redimensionar fotos pesadas antes do envio (evita limite de 4.5MB da Vercel)
-    async function otimizarFotoParaUpload(file, maxDimension = 2048) {
+    // Função de alta eficiência para compactar fotos antes do envio (permanece muito abaixo do limite de 4.5MB da Vercel)
+    async function otimizarFotoParaUpload(file, maxDimension = 1600, quality = 0.78) {
       if (!file.type || !file.type.startsWith('image/')) return file;
-      if (file.size < 2.5 * 1024 * 1024) return file;
+      if (file.type === 'image/svg+xml' || (file.type === 'image/gif' && file.size < 500 * 1024)) return file;
 
       return new Promise((resolve) => {
         const reader = new FileReader();
@@ -957,14 +957,17 @@ document.addEventListener('DOMContentLoaded', () => {
             canvas.width = width;
             canvas.height = height;
             const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(img, 0, 0, width, height);
             canvas.toBlob((blob) => {
               if (blob) {
-                resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+                const cleanName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+                resolve(new File([blob], cleanName, { type: 'image/jpeg' }));
               } else {
                 resolve(file);
               }
-            }, 'image/jpeg', 0.90);
+            }, 'image/jpeg', quality);
           };
           img.onerror = () => resolve(file);
           img.src = e.target.result;
@@ -974,7 +977,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // ── SUBIR FOTOS PARA A GALERIA DO CLIENTE ──
+    // ── SUBIR FOTOS PARA A GALERIA DO CLIENTE COM MÁXIMA LEVEZA (ANTI-LIMIT VERCEL) ──
     window.uploadFotosParaGaleria = async function(input) {
       const files = input.files;
       if (!files || files.length === 0) return;
@@ -987,7 +990,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (progressBox) progressBox.style.display = 'block';
       if (bar) bar.style.width = '5%';
       if (pctTxt) pctTxt.textContent = '5%';
-      if (statusTxt) statusTxt.textContent = `Preparando envio de ${files.length} foto(s)...`;
+      if (statusTxt) statusTxt.textContent = `Otimizando e preparando ${files.length} foto(s)...`;
 
       let totalSucesso = 0;
       let totalErros = 0;
@@ -995,14 +998,17 @@ document.addEventListener('DOMContentLoaded', () => {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const pct = Math.round(((i) / files.length) * 100);
-        if (bar) bar.style.width = `${Math.max(10, pct)}%`;
-        if (pctTxt) pctTxt.textContent = `${Math.max(10, pct)}%`;
-        if (statusTxt) statusTxt.textContent = `Enviando foto ${i + 1} de ${files.length} (${file.name})...`;
+        if (bar) bar.style.width = `${Math.max(8, pct)}%`;
+        if (pctTxt) pctTxt.textContent = `${Math.max(8, pct)}%`;
+        if (statusTxt) statusTxt.textContent = `Otimizando foto ${i + 1} de ${files.length} (${file.name})...`;
 
         try {
-          const filePronto = await otimizarFotoParaUpload(file, 2048);
+          // Otimiza para max 1600px / qualidade 0.78 (~180KB - 300KB por foto)
+          const filePronto = await otimizarFotoParaUpload(file, 1600, 0.78);
           const formData = new FormData();
-          formData.append('fotos', filePronto, file.name);
+          formData.append('fotos', filePronto, filePronto.name);
+
+          if (statusTxt) statusTxt.textContent = `Enviando foto ${i + 1} de ${files.length} (${(filePronto.size / 1024).toFixed(0)} KB)...`;
 
           const res = await fetch(`/api/galeria/${galConfigId}/upload-fotos`, {
             method: 'POST',
@@ -1025,8 +1031,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (pctTxt) pctTxt.textContent = '100%';
 
       if (totalSucesso > 0) {
-        showToast(`✓ ${totalSucesso} foto(s) adicionada(s) com sucesso!`);
-        if (statusTxt) statusTxt.textContent = `✓ Upload concluído! ${totalSucesso} fotos prontas.`;
+        showToast(`✓ ${totalSucesso} foto(s) enviada(s) com sucesso! Totalmente otimizadas.`);
+        if (statusTxt) statusTxt.textContent = `✓ Upload concluído com sucesso! ${totalSucesso} foto(s) importada(s).`;
       } else {
         showToast('Erro ao realizar upload das fotos.', 'error');
         if (statusTxt) statusTxt.textContent = 'Falha no envio das fotos.';
@@ -1100,7 +1106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
           <div class="admin-photo-card" style="position: relative;">
             <div style="position: relative; height: 120px; overflow: hidden; background: #EFE6DC;">
-              <img src="${f.arquivo}" alt="${f.numero}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="abrirLightbox('${f.arquivo}', '${f.numero}')">
+              <img src="${f.arquivo}" alt="${f.numero}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="abrirLightbox('${f.arquivo}', '${f.numero}')" onerror="this.onerror=null; this.src='assets/logo/logo.png';">
               <div class="watermark-overlay" style="opacity: 0.25;"></div>
               ${tagCapa}
             </div>
@@ -1198,7 +1204,7 @@ document.addEventListener('DOMContentLoaded', () => {
           } else {
             listaVisual.innerHTML = d.fotos.map(f => `
               <div style="background: #FFF; border: 1px solid #D8CAB9; border-radius: 6px; overflow: hidden; text-align: center; padding: 4px;">
-                <img src="${f.arquivo}" alt="${f.numero}" style="width: 100%; height: 65px; object-fit: cover; border-radius: 4px; cursor: pointer;" onclick="abrirLightbox('${f.arquivo}', '${f.numero}')">
+                <img src="${f.arquivo}" alt="${f.numero}" style="width: 100%; height: 65px; object-fit: cover; border-radius: 4px; cursor: pointer;" onclick="abrirLightbox('${f.arquivo}', '${f.numero}')" onerror="this.onerror=null; this.src='assets/logo/logo.png';">
                 <span style="display: block; font-size: 0.7rem; font-weight: 700; color: #2D1D14; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${f.numero}</span>
                 <span style="display: block; font-size: 0.65rem; color: ${f.status === 'extra' ? '#9E744B' : '#2D1D14'}; font-weight: 600;">${f.status === 'extra' ? 'Extra' : 'Pacote'}</span>
               </div>
@@ -1268,9 +1274,36 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
       return { msg, loginUrl };
     };
 
-    window.enviarMensagemWhatsApp = function() {
+    window.enviarMensagemWhatsApp = async function() {
       const telInput = document.getElementById('waTelefoneCliente');
+      const nomeInput = document.getElementById('waNomeCliente');
+      const emailInput = document.getElementById('waUsuarioCliente');
+      const senhaInput = document.getElementById('waSenhaCliente');
+
+      const nome = nomeInput ? nomeInput.value.trim() : '';
+      const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+      const senha = senhaInput ? senhaInput.value.trim() : '123456';
       let tel = telInput ? telInput.value.replace(/\D/g, '') : '';
+
+      // Se preencheu nome e email, sincroniza imediatamente no banco para garantir login imediato
+      if (nome && email) {
+        try {
+          await fetch(`/api/galeria/${galConfigId}/destinatarios`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, email, senha, permissao: 'Selecionar fotos' })
+          });
+          if (typeof window.carregarDestinatariosConfig === 'function') {
+            window.carregarDestinatariosConfig();
+          }
+          if (typeof window.carregarAtividadesClienteConfig === 'function') {
+            window.carregarAtividadesClienteConfig();
+          }
+        } catch (e) {
+          console.warn('Erro ao sincronizar cliente antes do WhatsApp:', e);
+        }
+      }
+
       if (!tel) {
         showToast('Informe o número de WhatsApp do cliente com DDD.', 'error');
         return;
@@ -1281,9 +1314,10 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
       const { msg } = window.atualizarPreviewMensagemWhatsApp();
       const url = `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;
       window.open(url, '_blank');
+      showToast(`✓ Convite preparado e acesso liberado para ${nome || 'o cliente'}!`);
     };
 
-    window.enviarWhatsAppLateral = function() {
+    window.enviarWhatsAppLateral = async function() {
       const telInput = document.getElementById('waTelLateral');
       let tel = telInput ? telInput.value.replace(/\D/g, '') : '';
       if (!tel) {
@@ -1298,10 +1332,34 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
       window.open(url, '_blank');
     };
 
-    window.copiarMensagemWhatsApp = function() {
+    window.copiarMensagemWhatsApp = async function() {
+      const nomeInput = document.getElementById('waNomeCliente');
+      const emailInput = document.getElementById('waUsuarioCliente');
+      const senhaInput = document.getElementById('waSenhaCliente');
+
+      const nome = nomeInput ? nomeInput.value.trim() : '';
+      const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+      const senha = senhaInput ? senhaInput.value.trim() : '123456';
+
+      if (nome && email) {
+        try {
+          await fetch(`/api/galeria/${galConfigId}/destinatarios`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, email, senha, permissao: 'Selecionar fotos' })
+          });
+          if (typeof window.carregarDestinatariosConfig === 'function') {
+            window.carregarDestinatariosConfig();
+          }
+          if (typeof window.carregarAtividadesClienteConfig === 'function') {
+            window.carregarAtividadesClienteConfig();
+          }
+        } catch (e) {}
+      }
+
       const { msg } = window.atualizarPreviewMensagemWhatsApp();
       navigator.clipboard.writeText(msg).then(() => {
-        showToast('✓ Mensagem completa do WhatsApp copiada!');
+        showToast(`✓ Mensagem copiada e acesso liberado para ${nome || email}!`);
       }).catch(() => {
         const ta = document.getElementById('waMensagemTexto');
         if (ta) { ta.select(); document.execCommand('copy'); showToast('✓ Mensagem copiada!'); }
@@ -1643,17 +1701,186 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
       }
     };
 
+    // ── ATIVIDADES DO CLIENTE (TAB 9 & galeria-atividades.html) ──
+    window.carregarAtividadesClienteConfig = async function() {
+      try {
+        const [resGal, resFotos, resDest, resAtiv] = await Promise.all([
+          fetch(`/api/galeria/${galConfigId}`),
+          fetch(`/api/galeria/${galConfigId}/fotos`),
+          fetch(`/api/galeria/${galConfigId}/destinatarios`),
+          fetch(`/api/galeria/${galConfigId}/atividades`)
+        ]);
+
+        const gal = await resGal.json();
+        const dFotos = await resFotos.json();
+        const destinatarios = await resDest.json();
+        const atividades = await resAtiv.json();
+
+        const fotos = (dFotos && dFotos.fotos) ? dFotos.fotos : [];
+        const listaDest = Array.isArray(destinatarios) ? destinatarios : [];
+        const listaAtiv = Array.isArray(atividades) ? atividades : [];
+
+        // 1. Popula select de destinatários na aba de atividades
+        const selectDest = document.getElementById('selectDestinatarioAtividades');
+        if (selectDest) {
+          const valAtual = selectDest.value;
+          selectDest.innerHTML = '<option value="">Todos os destinatários</option>' + 
+            listaDest.map(d => `<option value="${d.id}" ${String(valAtual) === String(d.id) ? 'selected' : ''}>${d.nome} (${d.email})</option>`).join('');
+        }
+
+        const destIdFiltro = selectDest ? selectDest.value : '';
+        const destFiltro = destIdFiltro ? listaDest.find(d => String(d.id) === String(destIdFiltro)) : (listaDest[0] || null);
+
+        // 2. Calcula métricas da galeria
+        const limitePacote = parseInt(gal.limite_pacote) || 10;
+        let fotosPacote = 0;
+        let fotosExtras = 0;
+        let totalAcessos = 0;
+        let ultimaVisita = 'Nenhum acesso registrado ainda';
+
+        if (destFiltro) {
+          fotosPacote = destFiltro.fotos_pacote_count || 0;
+          fotosExtras = destFiltro.fotos_extras_count || 0;
+          totalAcessos = destFiltro.total_acessos || 0;
+          if (destFiltro.ultimo_acesso && destFiltro.ultimo_acesso !== 'Aguardando acesso') {
+            ultimaVisita = destFiltro.ultimo_acesso;
+          }
+        } else {
+          fotosPacote = fotos.filter(f => f.status === 'pacote').length;
+          fotosExtras = fotos.filter(f => f.status === 'extra').length;
+          totalAcessos = listaDest.reduce((acc, d) => acc + (d.total_acessos || 0), 0);
+          const comVisita = listaDest.filter(d => d.ultimo_acesso && d.ultimo_acesso !== 'Aguardando acesso');
+          if (comVisita.length > 0) {
+            ultimaVisita = comVisita[0].ultimo_acesso;
+          }
+        }
+
+        const pct = limitePacote > 0 ? Math.min(100, Math.round((fotosPacote / limitePacote) * 100)) : 0;
+        const restantes = Math.max(0, limitePacote - fotosPacote);
+
+        // 3. Atualiza elementos visuais
+        const txtPacote = document.getElementById('txtAndamentoPacote');
+        if (txtPacote) txtPacote.textContent = `${fotosPacote} de ${limitePacote} fotos no pacote`;
+
+        const txtDesc = document.getElementById('txtAndamentoDescricao');
+        if (txtDesc) {
+          if (fotosPacote === 0 && fotosExtras === 0) {
+            txtDesc.textContent = `Nenhuma foto escolhida ainda. O cliente tem direito a ${limitePacote} fotos no pacote.`;
+          } else {
+            txtDesc.textContent = `${restantes} foto(s) ainda podem ser escolhidas. As ${fotosExtras} foto(s) extra(s) ficam em uma lista separada.`;
+          }
+        }
+
+        const barFill = document.getElementById('barAndamentoFill');
+        if (barFill) barFill.style.width = `${pct}%`;
+
+        const txtPct = document.getElementById('txtAndamentoPct');
+        if (txtPct) txtPct.textContent = `${pct}% do pacote escolhido`;
+
+        const txtStatusEnvio = document.getElementById('txtAndamentoStatusEnvio');
+        if (txtStatusEnvio) {
+          if (destFiltro && destFiltro.status_convite === 'Seleção enviada') {
+            txtStatusEnvio.textContent = '✓ Seleção final concluída e enviada';
+          } else if (fotosPacote > 0 || fotosExtras > 0) {
+            txtStatusEnvio.textContent = 'Seleção em andamento pelo cliente';
+          } else {
+            txtStatusEnvio.textContent = 'Seleção final ainda não enviada';
+          }
+        }
+
+        const badgeAndamento = document.getElementById('badgeStatusAndamento');
+        if (badgeAndamento) {
+          if (destFiltro && destFiltro.status_convite === 'Seleção enviada') {
+            badgeAndamento.textContent = 'Concluído';
+            badgeAndamento.style.background = '#2E7D32';
+            badgeAndamento.style.color = '#FFF';
+          } else if (fotosPacote > 0 || fotosExtras > 0) {
+            badgeAndamento.textContent = 'Em andamento';
+            badgeAndamento.style.background = '#2D1D14';
+            badgeAndamento.style.color = '#FFF';
+          } else {
+            badgeAndamento.textContent = 'Aguardando início';
+            badgeAndamento.style.background = '#FAF5EE';
+            badgeAndamento.style.color = '#6B5546';
+          }
+        }
+
+        const tagCliente = document.getElementById('tagClienteAndamento');
+        if (tagCliente) {
+          tagCliente.textContent = destFiltro ? destFiltro.nome : (listaDest.length > 0 ? `${listaDest.length} cliente(s)` : 'Nenhum cliente convidado');
+        }
+
+        const txtAcessosTotal = document.getElementById('txtResumoTotalAcessos');
+        if (txtAcessosTotal) txtAcessosTotal.textContent = totalAcessos;
+
+        const txtAcessosSub = document.getElementById('txtAcessosSubtitle');
+        if (txtAcessosSub) txtAcessosSub.textContent = `${totalAcessos} acesso(s) registrado(s) · dados atualizados em tempo real.`;
+
+        const txtUltima = document.getElementById('txtResumoUltimaVisita');
+        if (txtUltima) txtUltima.textContent = ultimaVisita;
+
+        const txtPrazo = document.getElementById('txtResumoPrazoEscolha');
+        if (txtPrazo) txtPrazo.textContent = `${gal.prazo_selecao || 'Sem prazo'} - ${gal.horario_prazo || '23:59'}`;
+
+        const e1 = document.getElementById('etapa1Status');
+        const e2 = document.getElementById('etapa2Status');
+        const e3 = document.getElementById('etapa3Status');
+        if (e1) {
+          e1.textContent = (destFiltro && destFiltro.status_convite !== 'Convite preparado') ? (destFiltro.data_convite || 'Concluído') : (listaDest.length > 0 ? 'Convite enviado' : 'Aguardando cliente');
+        }
+        if (e2) {
+          e2.textContent = `${fotosPacote} do pacote + ${fotosExtras} extras`;
+        }
+        if (e3) {
+          e3.textContent = (destFiltro && destFiltro.status_convite === 'Seleção enviada') ? 'Recebida pelo estúdio' : 'Aguardando cliente';
+        }
+
+        const feedContainer = document.getElementById('containerAcessosFeed');
+        if (feedContainer) {
+          const ativCliente = listaAtiv.filter(a => a.autor_tipo === 'Cliente' || (a.titulo || '').toLowerCase().includes('acess') || (a.titulo || '').toLowerCase().includes('escolha'));
+          if (ativCliente.length === 0) {
+            feedContainer.innerHTML = '<div style="padding: 1.25rem; background: #FAF5EE; border-radius: 8px; text-align: center; color: #888;">Nenhum acesso registrado até o momento.</div>';
+          } else {
+            feedContainer.innerHTML = ativCliente.slice(0, 10).map(a => `
+              <div style="padding: 0.75rem; background: #FAF5EE; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <strong>💻 ${a.data_hora}</strong>
+                  <div style="font-size: 0.74rem; color: var(--text-muted);">${a.titulo} - ${a.descricao || ''}</div>
+                </div>
+                <span class="preview-pill-tag">${a.dispositivo || 'Navegador'}</span>
+              </div>
+            `).join('');
+          }
+        }
+      } catch (err) {
+        console.warn('Erro ao carregar atividades do cliente:', err);
+      }
+    };
+
     // Inicializa carregamentos da galeria
     window.carregarFotosGaleriaConfig();
     window.carregarDestinatariosConfig();
     window.carregarHistoricoAtividades();
+    window.carregarAtividadesClienteConfig();
     window.atualizarPreviewMensagemWhatsApp();
 
     // Salvar preferências gerais de todas as abas
     const salvarBtns = document.querySelectorAll('.btn-salvar-admin');
     salvarBtns.forEach(btn => {
       btn.addEventListener('click', async (e) => {
-        if (btn.id === 'btnPrepararNovoConvite' || btn.id === 'btnExportarHistorico' || btn.textContent.includes('Adicionar') || btn.textContent.includes('Exportar') || btn.textContent.includes('Reenviar') || btn.textContent.includes('Enviar') || btn.textContent.includes('Regras')) {
+        if (
+          btn.id === 'btnPrepararNovoConvite' || 
+          btn.id === 'btnExportarHistorico' || 
+          btn.id === 'btnSalvarModalCliente' ||
+          btn.id === 'btnAbrirModalDestinatario' ||
+          btn.closest('#modalAddCliente') ||
+          btn.textContent.includes('Adicionar') || 
+          btn.textContent.includes('Exportar') || 
+          btn.textContent.includes('Reenviar') || 
+          btn.textContent.includes('Enviar') || 
+          btn.textContent.includes('Regras') ||
+          btn.textContent.includes('Liberar')
+        ) {
           return;
         }
 
@@ -1676,8 +1903,9 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
           });
           const data = await res.json();
           if (data.success) {
-            showToast('✓ Configurações salvas no banco de dados SQLite!');
+            showToast('✓ Configurações salvas no banco de dados!');
             window.carregarHistoricoAtividades();
+            window.carregarAtividadesClienteConfig();
           } else {
             showToast('Erro ao salvar.', 'error');
           }

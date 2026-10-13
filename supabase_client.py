@@ -60,12 +60,22 @@ def upload_para_supabase_storage(file_bytes: bytes, filename: str, content_type:
     try:
         res = requests.post(url_upload, headers=headers, data=file_bytes, timeout=10)
         if res.status_code in (200, 201):
-            # Retorna URL pública da CDN do Supabase
             url_publica = f"{SUPABASE_URL.rstrip('/')}/storage/v1/object/public/{STORAGE_BUCKET}/{filename}"
             return url_publica
-        else:
-            print(f"[Supabase Storage] Erro {res.status_code}: {res.text}")
-            return None
+        
+        # Se bucket não existir, tenta criar automaticamente com permissão pública
+        if res.status_code == 404 or (res.status_code == 400 and 'Bucket not found' in res.text):
+            try:
+                url_create_bucket = f"{SUPABASE_URL.rstrip('/')}/storage/v1/bucket"
+                requests.post(url_create_bucket, headers=headers, json={"id": STORAGE_BUCKET, "name": STORAGE_BUCKET, "public": True}, timeout=6)
+                res2 = requests.post(url_upload, headers=headers, data=file_bytes, timeout=10)
+                if res2.status_code in (200, 201):
+                    return f"{SUPABASE_URL.rstrip('/')}/storage/v1/object/public/{STORAGE_BUCKET}/{filename}"
+            except Exception:
+                pass
+
+        print(f"[Supabase Storage] Erro {res.status_code}: {res.text}")
+        return None
     except Exception as e:
         print(f"[Supabase Storage] Exceção ao enviar arquivo: {e}")
         return None
