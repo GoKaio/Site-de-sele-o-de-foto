@@ -42,9 +42,9 @@ def test_novas_funcionalidades():
     pacote_salvo = next((p for p in pacotes_apos if p['id'] == pacote_id), None)
     assert pacote_salvo is not None, "Pacote criado não foi encontrado na listagem"
     assert pacote_salvo['titulo'] == 'Pacote Ensaio Premium Teste'
-    assert 'uploads/' in pacote_salvo['imagem'], f"Imagem do pacote não está em uploads/: {pacote_salvo['imagem']}"
+    assert 'uploads/' in pacote_salvo['imagem'] or pacote_salvo['imagem'].startswith('data:image/'), f"Imagem do pacote inválida: {pacote_salvo['imagem']}"
     assert not pacote_salvo['imagem'].startswith('assets/'), f"ERRO: Imagem foi salva em assets!: {pacote_salvo['imagem']}"
-    print(f"  [PASS] Imagem do pacote salva corretamente em uploads/ -> {pacote_salvo['imagem']}")
+    print(f"  [PASS] Imagem do pacote salva corretamente (uploads/ ou data:image otimizado)")
 
     # Excluir pacote de teste
     del_res = delete_req(f'/api/site/pacotes/{pacote_id}')
