@@ -2165,6 +2165,11 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
   border-top: 1px solid #EAE0D5;
 }
 
+/* Logo Mobile no Topo dos Formulários de Autenticação */
+.auth-mobile-logo-header {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .auth-split-wrapper {
     grid-template-columns: 1fr;
@@ -2173,7 +2178,77 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
     display: none;
   }
   .auth-right-panel {
-    padding: 2rem 1.5rem;
+    padding: 1.5rem 1.15rem;
+    background-color: #FAF6F0;
+  }
+  .auth-content-container {
+    margin: 0.75rem auto 1.5rem !important;
+    max-width: 100% !important;
+  }
+  .auth-mobile-logo-header {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(216, 202, 185, 0.6);
+  }
+  .auth-mobile-logo-box {
+    background: #FFFFFF;
+    border: 1px solid rgba(197, 155, 109, 0.4);
+    border-radius: 12px;
+    padding: 0.35rem 0.65rem;
+    width: 85px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+  }
+  .auth-mobile-logo-box img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .auth-mobile-brand-title {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #352319;
+    letter-spacing: 0.06em;
+  }
+  .auth-mobile-brand-sub {
+    font-size: 0.72rem;
+    color: #8C7B6D;
+  }
+  .auth-title {
+    font-size: 1.75rem !important;
+    line-height: 1.22 !important;
+    margin-bottom: 0.5rem !important;
+  }
+  .auth-subtitle {
+    font-size: 0.88rem !important;
+    margin-bottom: 1.35rem !important;
+    line-height: 1.5 !important;
+  }
+  .auth-input-field {
+    font-size: 16px !important; /* Previne auto-zoom indesejado no iOS */
+    padding: 0.82rem 2.6rem !important;
+    min-height: 48px !important;
+    box-sizing: border-box !important;
+  }
+  .btn-auth-action {
+    padding: 0.95rem 1.4rem !important;
+    font-size: 0.95rem !important;
+    min-height: 48px !important;
+  }
+  .auth-remember-row {
+    padding: 0.75rem 0.85rem !important;
+  }
+  .auth-top-bar {
+    margin-bottom: 1rem !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
   }
 }
 
@@ -2524,6 +2599,155 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
   display: flex;
   align-items: center;
   gap: 0.3rem;
+}
+
+/* Ações Modernas dos Cards do Kanban (Elimina o aperto visual) */
+.kanban-card-actions-wrapper {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px dashed #EAE0D5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card-btn-grid-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.card-action-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 6px;
+  border-radius: 7px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+}
+
+.btn-pill-config {
+  background: #FAF5EE;
+  border: 1px solid #D8CAB9;
+  color: #6B5546;
+}
+.btn-pill-config:hover {
+  background: #F3ECE3;
+  border-color: #9E744B;
+}
+
+.btn-pill-entrega {
+  background: #352319;
+  border: 1px solid #352319;
+  color: #FAF5EE;
+}
+.btn-pill-entrega:hover {
+  background: #8C5F35;
+  border-color: #8C5F35;
+}
+
+.btn-pill-liberar {
+  background: #2E7D32;
+  border: 1px solid #2E7D32;
+  color: #FAF5EE;
+}
+.btn-pill-liberar:hover {
+  background: #1B5E20;
+}
+
+.btn-pill-bloquear {
+  background: #FAF5EE;
+  border: 1px solid #D8CAB9;
+  color: #5C4A3E;
+}
+.btn-pill-bloquear:hover {
+  background: #F0E5D8;
+}
+
+.btn-pill-status {
+  background: #FAF5EE;
+  border: 1px solid #C59B6D;
+  color: #8C5F35;
+}
+.btn-pill-status:hover {
+  background: #FDF7F0;
+}
+
+.card-mover-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.mover-prefix {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #8C7B6D;
+  white-space: nowrap;
+}
+
+.card-mover-bottom-row .select-mover-status {
+  flex: 1;
+  padding: 4px 6px;
+  border-radius: 7px;
+  border: 1px solid #D8CAB9;
+  background: #FFFFFF;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #352319;
+  cursor: pointer;
+  height: 29px;
+  box-sizing: border-box;
+}
+
+.btn-remover-card-icon {
+  background: #FAF5EE;
+  border: 1px solid #EAD8C8;
+  border-radius: 7px;
+  width: 29px;
+  height: 29px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.82rem;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.btn-remover-card-icon:hover {
+  background: #FCE8E6;
+  border-color: #E57373;
+}
+
+/* Grids Responsivos para Painel Administrativo */
+.admin-grid-2col {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1rem;
+}
+
+.admin-grid-2col-wide {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.admin-grid-fotografo {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 1fr auto;
+  gap: 1rem;
+  align-items: flex-end;
 }
 
 /* ADMIN HEADER STYLING */
@@ -4192,43 +4416,88 @@ html, body {
     gap: 0.5rem !important;
   }
 
-  /* Quadro Kanban Mobile (Scroll Horizontal Fluido) */
+  /* Quadro Kanban Mobile (Scroll Horizontal Fluido com Snap e Espaçamento Confortável) */
   .kanban-subbar-section {
-    padding: 0.85rem 0 0.5rem !important;
+    padding: 0.85rem 0.5rem 0.5rem !important;
   }
 
   .kanban-nav-tabs {
     overflow-x: auto !important;
     white-space: nowrap !important;
     -webkit-overflow-scrolling: touch !important;
-    gap: 1.15rem !important;
-    padding-bottom: 0.5rem !important;
+    gap: 0.85rem !important;
+    padding: 0.25rem 0.25rem 0.65rem !important;
     scrollbar-width: thin;
+  }
+
+  .kanban-tab-item {
+    padding: 0.5rem 0.95rem !important;
+    font-size: 0.84rem !important;
+    border-radius: 9999px !important;
+    background: #FAF5EE !important;
+    border: 1px solid #EADBCC !important;
+    flex-shrink: 0 !important;
+  }
+
+  .kanban-tab-item.active {
+    background: #352319 !important;
+    color: #FAF5EE !important;
+    border-color: #352319 !important;
+  }
+  .kanban-tab-item.active::after {
+    display: none !important;
   }
 
   .kanban-filter-controls-row {
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 0.75rem !important;
+    gap: 0.85rem !important;
   }
 
   .filter-controls-left {
-    flex-direction: column !important;
-    align-items: stretch !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.6rem !important;
     width: 100% !important;
   }
 
   .search-box-pill {
+    grid-column: 1 / -1 !important;
     width: 100% !important;
     box-sizing: border-box !important;
+    padding: 0.6rem 1rem !important;
   }
 
   .search-box-pill input {
     width: 100% !important;
+    font-size: 0.9rem !important;
+  }
+
+  .select-filter-pill {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0.55rem 0.85rem !important;
+    font-size: 0.8rem !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .filter-controls-right {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.65rem !important;
+    width: 100% !important;
+  }
+
+  .btn-config-galeria-top, .btn-novo-projeto {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.88rem !important;
+    box-sizing: border-box !important;
   }
 
   .kanban-board-section {
-    padding: 1.25rem 0.5rem 3rem !important;
+    padding: 1.25rem 0.5rem 3.5rem !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
   }
@@ -4236,27 +4505,36 @@ html, body {
   .kanban-columns-grid {
     display: flex !important;
     overflow-x: auto !important;
-    gap: 1rem !important;
-    padding-bottom: 1.25rem !important;
+    gap: 1.15rem !important;
+    padding: 0.5rem 0.5rem 2rem !important;
     -webkit-overflow-scrolling: touch !important;
+    scroll-snap-type: x mandatory !important;
+    scrollbar-width: thin;
   }
 
   .kanban-col {
-    min-width: 275px !important;
-    max-width: 295px !important;
+    min-width: min(340px, 86vw) !important;
+    max-width: min(360px, 88vw) !important;
     flex-shrink: 0 !important;
-    min-height: 480px !important;
-    padding: 0.85rem 0.75rem !important;
+    scroll-snap-align: center !important;
+    border-radius: 16px !important;
+    padding: 1rem 0.9rem !important;
+    min-height: auto !important;
+  }
+
+  .kanban-item-card {
+    padding: 1rem !important;
+    border-radius: 14px !important;
   }
 }
 
 /* Telas de Celulares (<= 640px) */
 @media (max-width: 640px) {
   .content-wrap, .content-wrap-wide {
-    padding: 0 1rem !important;
+    padding: 0 0.85rem !important;
   }
 
-  /* Formulários e Inputs */
+  /* Formulários e Inputs Gerais */
   .form-row-2col, .form-row-3col {
     grid-template-columns: 1fr !important;
     gap: 0.85rem !important;
@@ -4280,13 +4558,15 @@ html, body {
   #appModalNovoProjeto > div, #modalAddCliente > div, .alboom-modal-box {
     width: 95vw !important;
     max-width: 95vw !important;
-    padding: 1.25rem 1rem !important;
-    border-radius: 14px !important;
+    padding: 1.35rem 1.1rem !important;
+    border-radius: 16px !important;
+    box-sizing: border-box !important;
   }
 
   /* Tela de Escolha de Fotos pelo Cliente (escolha-fotos.html) */
   .selection-header-banner {
-    padding: 1.25rem 0.85rem !important;
+    padding: 1.25rem 1rem !important;
+    border-radius: 14px !important;
   }
 
   .selection-main-title {
@@ -4295,90 +4575,110 @@ html, body {
   }
 
   .selection-subtitle {
-    font-size: 0.82rem !important;
+    font-size: 0.84rem !important;
+    line-height: 1.45 !important;
   }
 
   .selection-metrics-grid {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 0.65rem !important;
+    gap: 0.75rem !important;
   }
 
   .metric-card {
-    padding: 0.85rem 0.65rem !important;
+    padding: 1rem 0.75rem !important;
     text-align: center !important;
+    border-radius: 12px !important;
   }
 
   .metric-card .metric-number {
-    font-size: 1.45rem !important;
+    font-size: 1.55rem !important;
   }
 
   .metric-card .metric-label {
-    font-size: 0.75rem !important;
+    font-size: 0.78rem !important;
   }
 
   .metric-card .metric-sublabel {
-    font-size: 0.65rem !important;
+    font-size: 0.68rem !important;
   }
 
   .proofing-tabs-row {
     overflow-x: auto !important;
     white-space: nowrap !important;
     -webkit-overflow-scrolling: touch !important;
-    gap: 0.4rem !important;
-    padding-bottom: 0.4rem !important;
+    gap: 0.5rem !important;
+    padding: 0.25rem 0.25rem 0.65rem !important;
   }
 
   .tab-filter-btn {
     flex-shrink: 0 !important;
-    padding: 6px 13px !important;
-    font-size: 0.76rem !important;
+    padding: 7px 14px !important;
+    font-size: 0.78rem !important;
   }
 
   .proofing-cards-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 0.65rem !important;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+    gap: 0.85rem !important;
   }
 
   .proofing-card {
-    border-radius: 12px !important;
-  }
-
-  .proofing-card-thumb-wrap {
-    height: 150px !important;
-  }
-
-  .proofing-card-content {
-    padding: 0.65rem !important;
-    gap: 0.45rem !important;
-  }
-
-  .photo-number-label {
-    font-size: 0.8rem !important;
-  }
-
-  .photo-status-tag {
-    font-size: 0.65rem !important;
-    padding: 2px 7px !important;
-  }
-
-  .btn-proof-action {
-    padding: 8px 8px !important;
-    font-size: 0.74rem !important;
-    min-height: 38px !important;
-  }
-
-  .selection-summary-panel {
     border-radius: 14px !important;
   }
 
+  .proofing-thumb-wrapper {
+    height: 165px !important;
+    border-radius: 13px 13px 0 0 !important;
+  }
+
+  .proofing-card-content {
+    padding: 0.75rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .photo-number-label {
+    font-size: 0.82rem !important;
+  }
+
+  .photo-status-tag {
+    font-size: 0.68rem !important;
+    padding: 3px 8px !important;
+  }
+
+  .proof-actions-dual {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 5px !important;
+  }
+
+  .btn-proof-toggle {
+    padding: 7px 4px !important;
+    font-size: 0.75rem !important;
+    min-height: 40px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    white-space: nowrap !important;
+  }
+
+  .selection-summary-panel {
+    border-radius: 16px !important;
+  }
+
   .summary-card-body {
-    padding: 1.15rem !important;
+    padding: 1.25rem 1rem !important;
     gap: 1rem !important;
   }
 
   .btn-enviar-selecao {
-    padding: 12px 16px !important;
-    font-size: 0.88rem !important;
+    padding: 14px 18px !important;
+    font-size: 0.95rem !important;
+    border-radius: 10px !important;
+  }
+
+  /* Respiro na base da página para a barra flutuante mobile não cobrir fotos */
+  .site-wrapper, .proofing-page-wrapper {
+    padding-bottom: 110px !important;
   }
 
   /* Botão Flutuante Inferior para Mobile em escolha-fotos.html */
@@ -4389,25 +4689,25 @@ html, body {
     left: 0 !important;
     right: 0 !important;
     z-index: 9999 !important;
-    background: rgba(28, 17, 10, 0.95) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    padding: 0.75rem 1rem !important;
+    background: rgba(28, 17, 10, 0.96) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    padding: 0.85rem 1.1rem !important;
     align-items: center !important;
     justify-content: space-between !important;
-    border-top: 1px solid rgba(197, 155, 109, 0.4) !important;
-    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.35) !important;
+    border-top: 1px solid rgba(197, 155, 109, 0.45) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4) !important;
   }
 
   .mobile-sticky-action-bar .bar-info {
     color: #FAF5EE !important;
-    font-size: 0.82rem !important;
+    font-size: 0.84rem !important;
     font-weight: 700 !important;
     line-height: 1.25 !important;
   }
 
   .mobile-sticky-action-bar .bar-sub {
-    font-size: 0.7rem !important;
+    font-size: 0.72rem !important;
     color: #C59B6D !important;
     font-weight: 500 !important;
   }
@@ -4416,12 +4716,40 @@ html, body {
     background: linear-gradient(135deg, #C59B6D 0%, #A37746 100%) !important;
     color: #FFFFFF !important;
     border: none !important;
-    padding: 8px 16px !important;
+    padding: 9px 18px !important;
     border-radius: 9999px !important;
-    font-size: 0.8rem !important;
+    font-size: 0.82rem !important;
     font-weight: 800 !important;
     cursor: pointer !important;
     white-space: nowrap !important;
+  }
+}
+
+/* Telas Compactas (<= 390px - iPhone SE, Galaxy A, etc.) */
+@media (max-width: 390px) {
+  .proofing-cards-grid {
+    grid-template-columns: 1fr !important; /* 1 coluna espaçosa para fotos e botões não ficarem comprimidos */
+    gap: 1.25rem !important;
+  }
+
+  .proofing-thumb-wrapper {
+    height: 230px !important;
+  }
+
+  .proof-actions-dual {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+
+  .btn-proof-toggle {
+    padding: 9px 8px !important;
+    font-size: 0.82rem !important;
+    min-height: 42px !important;
+  }
+
+  .kanban-col {
+    min-width: 90vw !important;
+    max-width: 92vw !important;
   }
 }
 

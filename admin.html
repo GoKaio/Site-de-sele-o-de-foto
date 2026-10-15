@@ -289,7 +289,7 @@
 
       <!-- Formulário para Criar Pacote -->
       <form id="formAddPacote" onsubmit="event.preventDefault(); adicionarPacoteAdmin();" style="margin-bottom: 1.75rem; background: #FFF; padding: 1.25rem; border-radius: 12px; border: 1px solid #E8DDD0;">
-        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+        <div class="admin-grid-2col" style="margin-bottom: 1rem;">
           <div>
             <label class="field-label">Título do Pacote *</label>
             <input type="text" id="inputTituloPacote" class="field-input" placeholder="Ex: Ensaio Família Completo" required>
@@ -343,7 +343,7 @@
       </div>
 
       <form id="formTextosSite" onsubmit="event.preventDefault(); salvarTextosSite();">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div class="admin-grid-2col-wide" style="margin-bottom: 1.5rem;">
           
           <!-- Coluna 1: Topo e Hero -->
           <div style="background: #FAF5EE; padding: 1.25rem; border-radius: 12px; border: 1px solid #E8DDD0;">
@@ -452,7 +452,7 @@
 
       <!-- Formulário para Criar Login de Fotógrafo -->
       <form id="formAddFotografo" onsubmit="event.preventDefault(); adicionarFotografoAdmin();" style="margin-bottom: 1.75rem; background: #FFF; padding: 1.25rem; border-radius: 12px; border: 1px solid #E8DDD0;">
-        <div style="display: grid; grid-template-columns: 1.2fr 1.2fr 1fr auto; gap: 1rem; align-items: flex-end;">
+        <div class="admin-grid-fotografo" style="margin-bottom: 1rem;">
           <div>
             <label class="field-label">Nome Completo *</label>
             <input type="text" id="inputNomeFotografo" class="field-input" placeholder="Ex: Carlos Albuquerque" required>

@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 1. Carrega Logotipo oficial do estúdio em todas as telas (Login, Header institucional, Favicon, etc.)
-  const siteLogoImgs = document.querySelectorAll('#authLogoImg, .auth-logo-box img, #headerLogoImg, .header-logo-card img');
+  const siteLogoImgs = document.querySelectorAll('#authLogoImg, .auth-logo-box img, #headerLogoImg, .header-logo-card img, .auth-mobile-logo-img');
   fetch('/api/site/logo-info')
     .then(r => r.json())
     .then(data => {
@@ -948,37 +948,42 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="card-meta-item">📋 ${proj.sessoes || 1} sessão(ões)</span>
             <span class="card-meta-item">⏱ ${proj.prazo || 'sem prazo'}</span>
           </div>
-          <div class="card-actions-row" style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #EAE0D5; display:flex; justify-content: space-between; align-items:center; gap: 6px; flex-wrap: wrap;">
-            <div style="display: flex; gap: 5px; align-items: center; flex-wrap: wrap;">
-              <a href="galeria-config.html?id=${proj.galeria_id || proj.id}&projeto_id=${proj.id}" class="btn-config-galeria" style="background: #FAF5EE; border: 1px solid #D8CAB9; color: #6B5546; font-size: 0.72rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='#F3ECE3';this.style.borderColor='#9E744B'" onmouseout="this.style.background='#FAF5EE';this.style.borderColor='#D8CAB9'" title="Configurar a galeria deste projeto">
+          <div class="kanban-card-actions-wrapper">
+            <div class="card-btn-grid-row">
+              <a href="galeria-config.html?id=${proj.galeria_id || proj.id}&projeto_id=${proj.id}" class="card-action-pill btn-pill-config" title="Configurar a galeria deste projeto">
                 ⚙️ Config
               </a>
-              <a href="entrega.html?id=${proj.galeria_id || proj.id}" target="_blank" class="btn-entrega-card" style="background: #352319; color: #FAF5EE; font-size: 0.72rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='#8C5F35'" onmouseout="this.style.background='#352319'" title="Abrir página de entrega de fotos com botão Google Drive">
+              <a href="entrega.html?id=${proj.galeria_id || proj.id}" target="_blank" class="card-action-pill btn-pill-entrega" title="Abrir página de entrega de fotos com botão Google Drive">
                 🎁 Entrega
               </a>
+            </div>
+            <div class="card-btn-grid-row">
               ${(proj.selecao_bloqueada == 1 || proj.status_galeria === 'Seleção enviada') ? `
-                <button type="button" class="btn-liberar-ajustes-card" onclick="window.alternarBloqueioGaleria(${proj.galeria_id || proj.id}, 0)" style="background: #2E7D32; color: #FAF5EE; font-size: 0.72rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; border:none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='#1B5E20'" onmouseout="this.style.background='#2E7D32'" title="A seleção está bloqueada pelo fotógrafo para análise. Clique para LIBERAR e permitir que o cliente altere as fotos">
+                <button type="button" class="card-action-pill btn-pill-liberar" onclick="window.alternarBloqueioGaleria(${proj.galeria_id || proj.id}, 0)" title="Clique para LIBERAR e permitir que o cliente altere as fotos">
                   🔓 Liberar Ajustes
                 </button>
               ` : `
-                <button type="button" class="btn-bloquear-ajustes-card" onclick="window.alternarBloqueioGaleria(${proj.galeria_id || proj.id}, 1)" style="background: #FAF5EE; border: 1px solid #D8CAB9; color: #5C4A3E; font-size: 0.72rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='#F0E5D8'" onmouseout="this.style.background='#FAF5EE'" title="Clique para BLOQUEAR a seleção para que o cliente não faça alterações">
+                <button type="button" class="card-action-pill btn-pill-bloquear" onclick="window.alternarBloqueioGaleria(${proj.galeria_id || proj.id}, 1)" title="Clique para BLOQUEAR a seleção para que o cliente não faça alterações">
                   🔒 Bloquear
                 </button>
               `}
-              <button type="button" class="btn-status-galeria-card" onclick="window.abrirModalStatusGaleria(${proj.galeria_id || proj.id}, '${(proj.nome_cliente || '').replace(/'/g, "\\'")}', '${proj.status_galeria || 'Aguardando seleção'}', ${proj.selecao_bloqueada || 0})" style="background: #FAF5EE; border: 1px solid #C59B6D; color: #8C5F35; font-size: 0.72rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s;" onmouseover="this.style.background='#FDF7F0'" onmouseout="this.style.background='#FAF5EE'" title="Alterar status da galeria">
+              <button type="button" class="card-action-pill btn-pill-status" onclick="window.abrirModalStatusGaleria(${proj.galeria_id || proj.id}, '${(proj.nome_cliente || '').replace(/'/g, "\\'")}', '${proj.status_galeria || 'Aguardando seleção'}', ${proj.selecao_bloqueada || 0})" title="Alterar status da galeria">
                 📋 ${proj.status_galeria || 'Status'} ▾
               </button>
-              <button type="button" class="btn-remover-card" onclick="removerProjetoCard(${proj.id}, '${(proj.nome_cliente || '').replace(/'/g, "\\'")}')" title="Excluir este projeto do Kanban">
+            </div>
+            <div class="card-mover-bottom-row">
+              <span class="mover-prefix">Etapa:</span>
+              <select class="select-mover-status" data-id="${proj.id}" title="Mover etapa do projeto">
+                <option value="novos" ${st==='novos'?'selected':''}>Novos</option>
+                <option value="andamento" ${st==='andamento'?'selected':''}>Em andamento</option>
+                <option value="revisao" ${st==='revisao'?'selected':''}>Em revisão</option>
+                <option value="entrega" ${st==='entrega'?'selected':''}>Entrega</option>
+                <option value="finalizados" ${st==='finalizados'?'selected':''}>Finalizados</option>
+              </select>
+              <button type="button" class="btn-remover-card-icon" onclick="removerProjetoCard(${proj.id}, '${(proj.nome_cliente || '').replace(/'/g, "\\'")}')" title="Excluir este projeto do Kanban">
                 🗑️
               </button>
             </div>
-            <select class="select-mover-status" data-id="${proj.id}" title="Mover etapa do projeto">
-              <option value="novos" ${st==='novos'?'selected':''}>Novos</option>
-              <option value="andamento" ${st==='andamento'?'selected':''}>Em andamento</option>
-              <option value="revisao" ${st==='revisao'?'selected':''}>Em revisão</option>
-              <option value="entrega" ${st==='entrega'?'selected':''}>Entrega</option>
-              <option value="finalizados" ${st==='finalizados'?'selected':''}>Finalizados</option>
-            </select>
           </div>
         `;
 
