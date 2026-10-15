@@ -2646,6 +2646,17 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
   border-color: #9E744B;
 }
 
+.btn-pill-selecao {
+  background: #FAF5EE;
+  border: 1px solid #C59B6D;
+  color: #8C5F35;
+}
+.btn-pill-selecao:hover {
+  background: #C59B6D;
+  border-color: #A37746;
+  color: #FFFFFF;
+}
+
 .btn-pill-entrega {
   background: #352319;
   border: 1px solid #352319;

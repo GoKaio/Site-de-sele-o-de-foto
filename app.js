@@ -129,24 +129,80 @@ function logoutUsuario() {
   }, 500);
 }
 
+// ============================================================================
+// AUTO-BYPASS IMEDIATO DE LOGIN (EXECUÇÃO INSTANTÂNEA ANTES DE QUALQUER RENDER)
+// ============================================================================
+(function checkImmediateAuthRedirect() {
+  try {
+    const rawPath = window.location.pathname.split('/').pop().toLowerCase();
+    const page = rawPath || 'index.html';
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetGalId = urlParams.get('id') || urlParams.get('galeria_id') || '';
+
+    const isFoto = (sessionStorage.getItem('fotografo_autenticado') === 'true') || (localStorage.getItem('fotografo_autenticado') === 'true');
+    const isAdmin = (sessionStorage.getItem('admin_autenticado') === 'true') || (localStorage.getItem('admin_autenticado') === 'true');
+    const isClient = (sessionStorage.getItem('cliente_autenticado') === 'true') || (localStorage.getItem('cliente_autenticado') === 'true');
+
+    if (targetGalId) {
+      localStorage.setItem('ultima_galeria_id', targetGalId);
+    }
+
+    // FOTÓGRAFO OU ADMIN LOGADO: Pula telas de login e vai direto para a seleção de fotos ou projetos
+    if (isFoto || isAdmin) {
+      if (page === 'login.html' || page === 'acesso.html' || page === 'login-cliente.html') {
+        const gId = targetGalId || localStorage.getItem('ultima_galeria_id') || '1';
+        window.location.replace(`escolha-fotos.html?id=${gId}&previa=true`);
+        return;
+      }
+      if (page === 'login-fotografo.html') {
+        window.location.replace('projetos.html');
+        return;
+      }
+      if (page === 'admin-login.html' && isAdmin) {
+        window.location.replace('admin.html');
+        return;
+      }
+    }
+
+    // CLIENTE LOGADO: Pula telas de login e vai para suas fotos
+    if (isClient && !isFoto && !isAdmin) {
+      if (page === 'login.html' || page === 'acesso.html' || page === 'login-cliente.html') {
+        const gId = sessionStorage.getItem('cliente_galeria_id') || localStorage.getItem('cliente_galeria_id') || targetGalId || '1';
+        window.location.replace(`escolha-fotos.html?id=${gId}`);
+        return;
+      }
+    }
+  } catch (err) {
+    console.error('Erro na verificação imediata de autenticação:', err);
+  }
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
 
-  // Restaura sessão automaticamente se o usuário marcou 'Manter conectado'
-  if (localStorage.getItem('fotografo_manter_conectado') === 'true' && localStorage.getItem('fotografo_autenticado') === 'true') {
+  // Sincroniza e restaura sessões entre localStorage e sessionStorage
+  let isFoto = (sessionStorage.getItem('fotografo_autenticado') === 'true') || (localStorage.getItem('fotografo_autenticado') === 'true');
+  let isAdmin = (sessionStorage.getItem('admin_autenticado') === 'true') || (localStorage.getItem('admin_autenticado') === 'true');
+  let isClient = (sessionStorage.getItem('cliente_autenticado') === 'true') || (localStorage.getItem('cliente_autenticado') === 'true');
+
+  if (isFoto) {
     sessionStorage.setItem('fotografo_autenticado', 'true');
-    const uNome = localStorage.getItem('usuario_nome') || localStorage.getItem('fotografo_nome');
-    if (uNome) sessionStorage.setItem('usuario_nome', uNome);
-    if (localStorage.getItem('admin_autenticado') === 'true') {
-      sessionStorage.setItem('admin_autenticado', 'true');
-      const aNome = localStorage.getItem('admin_nome');
-      if (aNome) sessionStorage.setItem('admin_nome', aNome);
-    }
+    localStorage.setItem('fotografo_autenticado', 'true');
+    const uNome = sessionStorage.getItem('usuario_nome') || localStorage.getItem('usuario_nome') || localStorage.getItem('fotografo_nome') || 'Fotógrafo';
+    sessionStorage.setItem('usuario_nome', uNome);
+    localStorage.setItem('usuario_nome', uNome);
   }
-  if (localStorage.getItem('cliente_manter_conectado') === 'true' && localStorage.getItem('cliente_autenticado') === 'true') {
+  if (isAdmin) {
+    sessionStorage.setItem('admin_autenticado', 'true');
+    localStorage.setItem('admin_autenticado', 'true');
+    const aNome = sessionStorage.getItem('admin_nome') || localStorage.getItem('admin_nome') || 'Administrador';
+    sessionStorage.setItem('admin_nome', aNome);
+    localStorage.setItem('admin_nome', aNome);
+  }
+  if (isClient) {
     sessionStorage.setItem('cliente_autenticado', 'true');
-    const cNome = localStorage.getItem('cliente_nome');
+    const cNome = sessionStorage.getItem('cliente_nome') || localStorage.getItem('cliente_nome');
     if (cNome) sessionStorage.setItem('cliente_nome', cNome);
-    const cGal = localStorage.getItem('cliente_galeria_id');
+    const cGal = sessionStorage.getItem('cliente_galeria_id') || localStorage.getItem('cliente_galeria_id');
     if (cGal) sessionStorage.setItem('cliente_galeria_id', cGal);
   }
 
@@ -155,23 +211,50 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================================
   const rawPath = window.location.pathname.split('/').pop().toLowerCase();
   const currentPage = rawPath || 'index.html';
-  
-  const isClient = sessionStorage.getItem('cliente_autenticado') === 'true';
-  const isFoto = sessionStorage.getItem('fotografo_autenticado') === 'true';
-  const isAdmin = sessionStorage.getItem('admin_autenticado') === 'true';
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetGalId = urlParams.get('id') || urlParams.get('galeria_id') || '';
 
-  // REGRA 1: "o cliente so vai te acesso a seleçao de foto"
-  // Se o cliente tentar acessar projetos, qualquer tela de galeria ou admin:
-  if (isClient) {
-    if (currentPage === 'projetos.html' || currentPage.startsWith('galeria-') || currentPage === 'admin.html') {
-      alert('Acesso restrito. Como cliente, você só tem acesso à Seleção de Fotos.');
-      window.location.href = 'escolha-fotos.html';
+  if (targetGalId) {
+    try { localStorage.setItem('ultima_galeria_id', targetGalId); } catch(e) {}
+  }
+
+  // REGRA A: FOTÓGRAFO OU ADMIN JÁ LOGADO ACESSANDO TELAS DE LOGIN/ESCOLHA DE PERFIL
+  if (isFoto || isAdmin) {
+    if (currentPage === 'login.html' || currentPage === 'acesso.html' || currentPage === 'login-cliente.html') {
+      const gId = targetGalId || localStorage.getItem('ultima_galeria_id') || '1';
+      window.location.replace(`escolha-fotos.html?id=${gId}&previa=true`);
+      return;
+    }
+    if (currentPage === 'login-fotografo.html') {
+      window.location.replace('projetos.html');
+      return;
+    }
+    if (currentPage === 'admin-login.html' && isAdmin) {
+      window.location.replace('admin.html');
       return;
     }
   }
 
-  // REGRA 2: "so o fotogafo vai te aceeso a galeria de fotos e o login do fotogafo so tem acesso a essa tela"
-  // Projetos e Configurações de Galeria são restritos ao Fotógrafo e Administrador
+  // REGRA B: CLIENTE JÁ LOGADO ACESSANDO TELAS DE LOGIN
+  if (isClient && !isFoto && !isAdmin) {
+    if (currentPage === 'login.html' || currentPage === 'acesso.html' || currentPage === 'login-cliente.html') {
+      const gId = sessionStorage.getItem('cliente_galeria_id') || localStorage.getItem('cliente_galeria_id') || targetGalId || '1';
+      window.location.replace(`escolha-fotos.html?id=${gId}`);
+      return;
+    }
+  }
+
+  // REGRA 1: Cliente restrito à seleção de fotos
+  if (isClient && !isFoto && !isAdmin) {
+    if (currentPage === 'projetos.html' || currentPage.startsWith('galeria-') || currentPage === 'admin.html') {
+      alert('Acesso restrito. Como cliente, você só tem acesso à Seleção de Fotos.');
+      const gId = sessionStorage.getItem('cliente_galeria_id') || '1';
+      window.location.href = `escolha-fotos.html?id=${gId}`;
+      return;
+    }
+  }
+
+  // REGRA 2: Projetos e Galerias restritos ao Fotógrafo e Administrador
   if (currentPage === 'projetos.html' || currentPage.startsWith('galeria-')) {
     if (!isFoto && !isAdmin) {
       window.location.href = 'login-fotografo.html';
@@ -179,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // REGRA 3: Painel Administrativo restrito exclusivamente ao Administrador
+  // REGRA 3: Admin restrito exclusivamente ao Administrador
   if (currentPage === 'admin.html') {
     if (!isAdmin) {
       window.location.href = 'admin-login.html';
@@ -187,12 +270,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // REGRA 4: Tela de Escolha de Fotos requer autenticação (cliente, fotógrafo ou admin)
-  const urlParams = new URLSearchParams(window.location.search);
+  // REGRA 4: Tela de Escolha de Fotos
   const isPrevia = urlParams.get('previa') === 'true';
   if (currentPage === 'escolha-fotos.html') {
     if (!isClient && !isFoto && !isAdmin && !isPrevia) {
-      window.location.href = 'login-cliente.html';
+      const gParam = targetGalId ? `?id=${targetGalId}` : '';
+      window.location.href = `login-cliente.html${gParam}`;
       return;
     }
   }
@@ -239,23 +322,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (isClient) {
       const nome = sessionStorage.getItem('cliente_nome') || 'Cliente';
-      // Cliente só tem acesso à escolha de fotos
+      const gId = sessionStorage.getItem('cliente_galeria_id') || localStorage.getItem('cliente_galeria_id') || '1';
       navRight.innerHTML = `
-        <a href="escolha-fotos.html" class="nav-item">Minhas Fotos (${nome})</a>
+        <a href="escolha-fotos.html?id=${gId}" class="nav-item ${currentPage === 'escolha-fotos.html' ? 'active-nav' : ''}">Minhas Fotos (${nome})</a>
         <a href="javascript:void(0)" onclick="logoutUsuario()" class="nav-item" style="color:#C59B6D;">Sair ↗</a>
       `;
     } else if (isFoto) {
       const nome = sessionStorage.getItem('usuario_nome') || 'Fotógrafo';
+      const gId = localStorage.getItem('ultima_galeria_id') || '1';
       navRight.innerHTML = `
-        <a href="projetos.html" class="nav-item">Projetos</a>
-        <a href="galeria-config.html" class="nav-item">Galeria (${nome})</a>
+        <a href="escolha-fotos.html?id=${gId}&previa=true" class="nav-item ${currentPage === 'escolha-fotos.html' ? 'active-nav' : ''}">👁️ Seleção de fotos</a>
+        <a href="projetos.html" class="nav-item ${currentPage === 'projetos.html' ? 'active-nav' : ''}">Projetos</a>
+        <a href="galeria-config.html?id=${gId}" class="nav-item ${currentPage.startsWith('galeria-') ? 'active-nav' : ''}">Galeria (${nome})</a>
         <a href="javascript:void(0)" onclick="logoutUsuario()" class="nav-item" style="color:#C59B6D;">Sair ↗</a>
       `;
     } else if (isAdmin) {
       const nome = sessionStorage.getItem('admin_nome') || 'Admin';
+      const gId = localStorage.getItem('ultima_galeria_id') || '1';
       navRight.innerHTML = `
-        <a href="admin.html" class="nav-item" style="color:#C59B6D; font-weight:700;">⚙️ Painel Admin</a>
-        <a href="projetos.html" class="nav-item">Projetos</a>
+        <a href="admin.html" class="nav-item ${currentPage === 'admin.html' ? 'active-nav' : ''}" style="color:#C59B6D; font-weight:700;">⚙️ Painel Admin</a>
+        <a href="escolha-fotos.html?id=${gId}&previa=true" class="nav-item ${currentPage === 'escolha-fotos.html' ? 'active-nav' : ''}">👁️ Seleção de fotos</a>
+        <a href="projetos.html" class="nav-item ${currentPage === 'projetos.html' ? 'active-nav' : ''}">Projetos</a>
         <a href="javascript:void(0)" onclick="logoutUsuario()" class="nav-item" style="color:#C59B6D;">Sair ↗</a>
       `;
     }
@@ -487,6 +574,34 @@ document.addEventListener('DOMContentLoaded', () => {
           } else {
             bannerContainer.innerHTML = '';
           }
+
+          if (isFoto || isAdmin) {
+            const nomeFoto = sessionStorage.getItem('usuario_nome') || 'Fotógrafo';
+            bannerContainer.innerHTML = `
+              <div style="background: linear-gradient(135deg, #1C110A 0%, #352319 100%); border: 1.5px solid #C59B6D; border-radius: 14px; padding: 1.15rem 1.4rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: #FAF5EE; box-shadow: 0 4px 18px rgba(0,0,0,0.25); flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 0.85rem;">
+                  <span style="font-size: 1.8rem;">📷</span>
+                  <div>
+                    <strong style="display: block; font-size: 1rem; color: #C59B6D; margin-bottom: 2px;">Visualização do Fotógrafo · ${nomeFoto}</strong>
+                    <span style="font-size: 0.82rem; color: #FAF5EE; opacity: 0.92; line-height: 1.4;">Você está visualizando a seleção de fotos da galeria <strong>#${galId}</strong>. O login de cliente foi ignorado automaticamente para sua conveniência.</span>
+                  </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                  <a href="galeria-config.html?id=${galId}" style="background: rgba(197, 155, 109, 0.2); color: #FAF5EE; border: 1px solid #C59B6D; font-size: 0.78rem; font-weight: 700; padding: 7px 15px; border-radius: 9999px; text-decoration: none;">⚙ Configurar Galeria</a>
+                  <a href="projetos.html" style="background: #C59B6D; color: #1C110A; font-size: 0.78rem; font-weight: 800; padding: 7px 16px; border-radius: 9999px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">← Voltar aos Projetos</a>
+                </div>
+              </div>
+            ` + bannerContainer.innerHTML;
+          }
+        }
+
+        const bc = document.getElementById('breadcrumbPathContainer');
+        if (bc && (isFoto || isAdmin)) {
+          const nomeFoto = sessionStorage.getItem('usuario_nome') || 'Fotógrafo';
+          bc.innerHTML = `
+            <span class="breadcrumb-path" style="color:#C59B6D;">Painel do Estúdio &gt; <strong style="color:#352319;">Seleção de Fotos (${nomeFoto})</strong></span>
+            <a href="projetos.html" style="font-size: 0.76rem; background: #C59B6D; color: #1C110A; font-weight: 800; padding: 4px 12px; border-radius: 9999px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">← Voltar aos Projetos</a>
+          `;
         }
 
         atualizarMetricas(data.totais, galData);
@@ -953,11 +1068,14 @@ document.addEventListener('DOMContentLoaded', () => {
               <a href="galeria-config.html?id=${proj.galeria_id || proj.id}&projeto_id=${proj.id}" class="card-action-pill btn-pill-config" title="Configurar a galeria deste projeto">
                 ⚙️ Config
               </a>
-              <a href="entrega.html?id=${proj.galeria_id || proj.id}" target="_blank" class="card-action-pill btn-pill-entrega" title="Abrir página de entrega de fotos com botão Google Drive">
-                🎁 Entrega
+              <a href="escolha-fotos.html?id=${proj.galeria_id || proj.id}&previa=true" target="_blank" class="card-action-pill btn-pill-selecao" title="Ver seleção de fotos deste cliente">
+                👁️ Seleção
               </a>
             </div>
             <div class="card-btn-grid-row">
+              <a href="entrega.html?id=${proj.galeria_id || proj.id}" target="_blank" class="card-action-pill btn-pill-entrega" title="Abrir página de entrega de fotos com botão Google Drive">
+                🎁 Entrega
+              </a>
               ${(proj.selecao_bloqueada == 1 || proj.status_galeria === 'Seleção enviada') ? `
                 <button type="button" class="card-action-pill btn-pill-liberar" onclick="window.alternarBloqueioGaleria(${proj.galeria_id || proj.id}, 0)" title="Clique para LIBERAR e permitir que o cliente altere as fotos">
                   🔓 Liberar Ajustes
@@ -967,7 +1085,9 @@ document.addEventListener('DOMContentLoaded', () => {
                   🔒 Bloquear
                 </button>
               `}
-              <button type="button" class="card-action-pill btn-pill-status" onclick="window.abrirModalStatusGaleria(${proj.galeria_id || proj.id}, '${(proj.nome_cliente || '').replace(/'/g, "\\'")}', '${proj.status_galeria || 'Aguardando seleção'}', ${proj.selecao_bloqueada || 0})" title="Alterar status da galeria">
+            </div>
+            <div class="card-btn-grid-row" style="margin-top: 3px;">
+              <button type="button" class="card-action-pill btn-pill-status" style="width: 100%;" onclick="window.abrirModalStatusGaleria(${proj.galeria_id || proj.id}, '${(proj.nome_cliente || '').replace(/'/g, "\\'")}', '${proj.status_galeria || 'Aguardando seleção'}', ${proj.selecao_bloqueada || 0})" title="Alterar status da galeria">
                 📋 ${proj.status_galeria || 'Status'} ▾
               </button>
             </div>
