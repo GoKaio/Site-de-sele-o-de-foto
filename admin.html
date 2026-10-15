@@ -34,7 +34,25 @@
       margin-bottom: 2.5rem;
     }
     @media (max-width: 850px) {
-      .admin-section-grid { grid-template-columns: 1fr; }
+      .admin-dash-container {
+        padding: 0 0.85rem;
+        margin: 1.5rem auto;
+      }
+      .admin-section-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      .item-row-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.65rem;
+        padding: 0.85rem;
+      }
+      .btn-delete-item {
+        width: 100%;
+        text-align: center;
+        padding: 0.5rem;
+      }
     }
     .badge-admin-status {
       background: #FAF2E8;
