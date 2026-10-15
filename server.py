@@ -2082,6 +2082,13 @@ BLOCKED_PATHS = {'banco.db', '.env', '.gitignore', 'requirements.txt',
 def serve_index():
     return static_file('index.html', root=BASE_DIR)
 
+@app.route('/favicon.ico')
+def serve_favicon():
+    ico_path = os.path.join(BASE_DIR, 'favicon.ico')
+    if os.path.exists(ico_path):
+        return static_file('favicon.ico', root=BASE_DIR, mimetype='image/x-icon')
+    return static_file('logo.png', root=os.path.join(BASE_DIR, 'assets', 'logo'), mimetype='image/png')
+
 @app.route('/<filepath:path>')
 def serve_static(filepath):
     # Se a requisição for para /api/ e chegou aqui, a rota da API não existe -> 404

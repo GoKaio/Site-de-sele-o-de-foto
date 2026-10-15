@@ -105,10 +105,24 @@ if (!document.getElementById('toastStyle')) {
 function logoutUsuario() {
   sessionStorage.removeItem('cliente_autenticado');
   sessionStorage.removeItem('cliente_nome');
+  sessionStorage.removeItem('cliente_galeria_id');
   sessionStorage.removeItem('fotografo_autenticado');
   sessionStorage.removeItem('usuario_nome');
   sessionStorage.removeItem('admin_autenticado');
   sessionStorage.removeItem('admin_nome');
+
+  // Limpa também do armazenamento persistente (Manter Conectado)
+  localStorage.removeItem('fotografo_manter_conectado');
+  localStorage.removeItem('fotografo_autenticado');
+  localStorage.removeItem('usuario_nome');
+  localStorage.removeItem('fotografo_nome');
+  localStorage.removeItem('admin_autenticado');
+  localStorage.removeItem('admin_nome');
+  localStorage.removeItem('cliente_manter_conectado');
+  localStorage.removeItem('cliente_autenticado');
+  localStorage.removeItem('cliente_nome');
+  localStorage.removeItem('cliente_galeria_id');
+
   showToast('Sessão encerrada com sucesso.');
   setTimeout(() => {
     window.location.href = 'login.html';
@@ -116,6 +130,25 @@ function logoutUsuario() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+
+  // Restaura sessão automaticamente se o usuário marcou 'Manter conectado'
+  if (localStorage.getItem('fotografo_manter_conectado') === 'true' && localStorage.getItem('fotografo_autenticado') === 'true') {
+    sessionStorage.setItem('fotografo_autenticado', 'true');
+    const uNome = localStorage.getItem('usuario_nome') || localStorage.getItem('fotografo_nome');
+    if (uNome) sessionStorage.setItem('usuario_nome', uNome);
+    if (localStorage.getItem('admin_autenticado') === 'true') {
+      sessionStorage.setItem('admin_autenticado', 'true');
+      const aNome = localStorage.getItem('admin_nome');
+      if (aNome) sessionStorage.setItem('admin_nome', aNome);
+    }
+  }
+  if (localStorage.getItem('cliente_manter_conectado') === 'true' && localStorage.getItem('cliente_autenticado') === 'true') {
+    sessionStorage.setItem('cliente_autenticado', 'true');
+    const cNome = localStorage.getItem('cliente_nome');
+    if (cNome) sessionStorage.setItem('cliente_nome', cNome);
+    const cGal = localStorage.getItem('cliente_galeria_id');
+    if (cGal) sessionStorage.setItem('cliente_galeria_id', cGal);
+  }
 
   // ============================================================================
   // 0. CONTROLE DE ACESSO E PERMISSÕES (ROLE-BASED ACCESS CONTROL)
@@ -164,20 +197,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 1. Carrega Logotipo oficial do estúdio em todas as telas (Login, Header institucional, etc.)
+  // 1. Carrega Logotipo oficial do estúdio em todas as telas (Login, Header institucional, Favicon, etc.)
   const siteLogoImgs = document.querySelectorAll('#authLogoImg, .auth-logo-box img, #headerLogoImg, .header-logo-card img');
-  if (siteLogoImgs.length > 0) {
-    fetch('/api/site/logo-info')
-      .then(r => r.json())
-      .then(data => {
-        if (data && data.url) {
+  fetch('/api/site/logo-info')
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.url) {
+        if (siteLogoImgs.length > 0) {
           siteLogoImgs.forEach(img => {
             img.src = data.url;
           });
         }
-      })
-      .catch(() => {});
-  }
+        // Atualiza dinamicamente o favicon na aba do navegador
+        const favicons = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon']");
+        favicons.forEach(fav => {
+          fav.href = data.url;
+        });
+      }
+    })
+    .catch(() => {});
 
   // 2. Carrega foto oficial de destaque nas telas de login se presente na página
   const authHeroImg = document.getElementById('authHeroImg') || document.querySelector('.auth-hero-photo-wrap img');
@@ -228,12 +266,26 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================================
   const formFoto = document.getElementById('formLoginFotografo');
   if (formFoto) {
+    const chkManter = document.getElementById('chkManterConectado');
+    const emailField = document.getElementById('fotoEmail');
+
+    // Recupera e-mail salvo e preferência de manter conectado
+    const savedEmail = localStorage.getItem('fotografo_lembrar_email');
+    if (savedEmail && emailField) {
+      emailField.value = savedEmail;
+    }
+    const savedManter = localStorage.getItem('fotografo_manter_conectado');
+    if (chkManter && savedManter !== null) {
+      chkManter.checked = (savedManter === 'true');
+    }
+
     formFoto.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('fotoEmail').value;
+      const email = emailField ? emailField.value.trim() : '';
       const senha = document.getElementById('fotoSenha').value;
+      const manterConectado = chkManter ? chkManter.checked : true;
       const btn = document.getElementById('btnEntrarFotografo');
-      const originalText = btn ? btn.innerHTML : 'Entrar →';
+      const originalText = btn ? btn.innerHTML : '<span>Entrar</span><span>→</span>';
 
       if (btn) btn.innerHTML = '<span>Verificando...</span>';
 
@@ -247,11 +299,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (data.success) {
           sessionStorage.setItem('fotografo_autenticado', 'true');
+          sessionStorage.setItem('usuario_nome', data.user.nome);
+
+          if (manterConectado) {
+            localStorage.setItem('fotografo_manter_conectado', 'true');
+            localStorage.setItem('fotografo_autenticado', 'true');
+            localStorage.setItem('usuario_nome', data.user.nome);
+            localStorage.setItem('fotografo_nome', data.user.nome);
+            localStorage.setItem('fotografo_lembrar_email', email);
+          } else {
+            localStorage.removeItem('fotografo_manter_conectado');
+            localStorage.removeItem('fotografo_autenticado');
+            localStorage.removeItem('usuario_nome');
+            localStorage.removeItem('fotografo_nome');
+            localStorage.removeItem('fotografo_lembrar_email');
+          }
+
           if (data.user.tipo === 'admin') {
             sessionStorage.setItem('admin_autenticado', 'true');
             sessionStorage.setItem('admin_nome', data.user.nome);
+            if (manterConectado) {
+              localStorage.setItem('admin_autenticado', 'true');
+              localStorage.setItem('admin_nome', data.user.nome);
+            } else {
+              localStorage.removeItem('admin_autenticado');
+              localStorage.removeItem('admin_nome');
+            }
           }
-          sessionStorage.setItem('usuario_nome', data.user.nome);
+
           showToast(`Bem-vindo, ${data.user.nome}! Redirecionando...`);
           setTimeout(() => {
             window.location.href = 'projetos.html';
@@ -272,10 +347,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================================
   const formCli = document.getElementById('formLoginCliente');
   if (formCli) {
+    const chkManterCli = document.getElementById('chkManterConectadoCliente');
+    const loginField = document.getElementById('clienteLogin');
+
+    // Recupera login salvo
+    const savedCliLogin = localStorage.getItem('cliente_lembrar_login');
+    if (savedCliLogin && loginField) {
+      loginField.value = savedCliLogin;
+    }
+    const savedManterCli = localStorage.getItem('cliente_manter_conectado');
+    if (chkManterCli && savedManterCli !== null) {
+      chkManterCli.checked = (savedManterCli === 'true');
+    }
+
     formCli.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const login = document.getElementById('clienteLogin').value;
+      const login = loginField ? loginField.value.trim() : '';
       const senha = document.getElementById('clienteSenha').value;
+      const manterConectado = chkManterCli ? chkManterCli.checked : true;
       const btn = document.getElementById('btnAcessarFotos');
       const originalText = btn ? btn.innerHTML : 'Acessar minhas fotos →';
 
@@ -295,6 +384,23 @@ document.addEventListener('DOMContentLoaded', () => {
           if (data.user && data.user.galeria_id) {
             sessionStorage.setItem('cliente_galeria_id', data.user.galeria_id);
           }
+
+          if (manterConectado) {
+            localStorage.setItem('cliente_manter_conectado', 'true');
+            localStorage.setItem('cliente_autenticado', 'true');
+            localStorage.setItem('cliente_nome', data.user.nome);
+            localStorage.setItem('cliente_lembrar_login', login);
+            if (data.user && data.user.galeria_id) {
+              localStorage.setItem('cliente_galeria_id', data.user.galeria_id);
+            }
+          } else {
+            localStorage.removeItem('cliente_manter_conectado');
+            localStorage.removeItem('cliente_autenticado');
+            localStorage.removeItem('cliente_nome');
+            localStorage.removeItem('cliente_galeria_id');
+            localStorage.removeItem('cliente_lembrar_login');
+          }
+
           showToast(`Acesso autorizado! Carregando sua galeria...`);
           setTimeout(() => {
             const destUrl = (data.user && data.user.galeria_id) ? `escolha-fotos.html?id=${data.user.galeria_id}` : 'escolha-fotos.html';

@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Acesso do Cliente | Casa da Foto Studio</title>
+  <!-- Favicon / Logotipo na Aba do Navegador -->
+  <link rel="icon" type="image/png" href="/assets/logo/logo.png">
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" href="/assets/logo/logo.png">
   <meta name="description" content="Acesse sua galeria exclusiva e selecione suas fotos favoritas na Casa da Foto Studio.">
   
   <!-- Google Fonts: Luxury Editorial & UI Sans -->
@@ -110,10 +114,19 @@
             </div>
           </div>
 
+          <!-- Opção: Manter Conectado -->
+          <div class="auth-remember-row" style="background: rgba(140, 95, 53, 0.07); border: 1px solid rgba(197, 155, 109, 0.35); border-radius: 12px; padding: 0.75rem 1rem; margin-bottom: 0.85rem; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s ease;">
+            <label style="display: flex; align-items: center; gap: 0.65rem; cursor: pointer; user-select: none; margin: 0; font-size: 0.92rem; font-weight: 600; color: #2D1E16;">
+              <input type="checkbox" id="chkManterConectadoCliente" checked style="accent-color: #8C5F35; width: 19px; height: 19px; cursor: pointer;">
+              <span>Manter conectado</span>
+            </label>
+            <span style="font-size: 0.78rem; color: #8C5F35; font-weight: 600; background: #FFF; padding: 0.2rem 0.55rem; border-radius: 6px; border: 1px solid rgba(197, 155, 109, 0.25);">Sessão salva</span>
+          </div>
+
           <!-- Opção: Mostrar Senha -->
           <div class="auth-row-options">
-            <label style="display: flex; align-items: center; gap: 0.45rem; cursor: pointer;">
-              <input type="checkbox" id="chkShowPassCliente">
+            <label style="display: flex; align-items: center; gap: 0.45rem; cursor: pointer; user-select: none;">
+              <input type="checkbox" id="chkShowPassCliente" style="accent-color: #8C5F35;">
               <span>Mostrar senha</span>
             </label>
           </div>
