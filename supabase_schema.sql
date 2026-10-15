@@ -85,6 +85,9 @@ CREATE TABLE IF NOT EXISTS galerias (
     enquadramento VARCHAR(100) DEFAULT 'Preservar imagem original',
     tema_visual VARCHAR(100) DEFAULT 'Casa da Foto - creme e bronze',
     tipografia VARCHAR(100) DEFAULT 'Inter - clara e acolhedora',
+    link_drive TEXT DEFAULT '',
+    status_galeria VARCHAR(100) DEFAULT 'Aguardando seleção',
+    selecao_bloqueada SMALLINT DEFAULT 0,
     criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -195,15 +198,29 @@ CREATE TABLE IF NOT EXISTS categorias (
     criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 2.14 Log de Erros do Sistema (Frontend e Backend)
+CREATE TABLE IF NOT EXISTS error_log (
+    id SERIAL PRIMARY KEY,
+    origem VARCHAR(20) DEFAULT 'frontend',
+    mensagem VARCHAR(500) NOT NULL,
+    detalhe TEXT,
+    rota VARCHAR(255),
+    ip VARCHAR(50),
+    user_agent VARCHAR(255),
+    criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ── 3. ÍNDICES DE PERFORMANCE ─────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_usuarios_login ON usuarios(login);
 CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email);
 CREATE INDEX IF NOT EXISTS idx_projetos_status ON projetos(status);
+CREATE INDEX IF NOT EXISTS idx_galerias_projeto ON galerias(projeto_id);
 CREATE INDEX IF NOT EXISTS idx_fotos_galeria ON fotos(galeria_id);
 CREATE INDEX IF NOT EXISTS idx_destinatarios_galeria ON destinatarios(galeria_id);
 CREATE INDEX IF NOT EXISTS idx_atividades_galeria ON atividades(galeria_id);
 CREATE INDEX IF NOT EXISTS idx_site_fotos_cat ON site_fotos(categoria_nome);
 CREATE INDEX IF NOT EXISTS idx_audit_ip ON audit_log(ip);
+CREATE INDEX IF NOT EXISTS idx_error_log_criado ON error_log(criado_em);
 
 -- ── 4. SUPABASE STORAGE (BUCKET PÚBLICO DE FOTOS E UPLOADS) ───────────────────
 -- Insere o bucket 'casadafoto-uploads' no storage do Supabase caso ainda não exista

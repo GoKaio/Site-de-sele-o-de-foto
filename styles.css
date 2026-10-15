@@ -2098,15 +2098,6 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
   background-color: #FFFDFB;
   box-shadow: 0 0 0 3.5px rgba(197, 155, 109, 0.22);
 }
-  background-color: #FFFFFF;
-  transition: all 0.2s ease;
-}
-
-.auth-input-field:focus {
-  outline: none;
-  border-color: #9E744B;
-  box-shadow: 0 0 0 3px rgba(158, 116, 75, 0.15);
-}
 
 .auth-row-options {
   display: flex;
@@ -4050,6 +4041,369 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
   .btn-lb-action {
     padding: 9px 18px;
     font-size: 0.82rem;
+  }
+}
+
+/* ==========================================================================
+   8. RESPONSIVIDADE MOBILE COMPLETA PARA SMARTPHONES E TABLETS
+   Garante usabilidade 100% perfeita em qualquer dispositivo móvel
+   ========================================================================== */
+
+/* Prevenção de overflow horizontal global */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+.site-wrapper {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* Telas de Tablets e Celulares Maiores (<= 992px) */
+@media (max-width: 992px) {
+  .admin-form-two-col {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+}
+
+/* Telas Mobile e Tablets (<= 900px) */
+@media (max-width: 900px) {
+  /* Cabeçalho Principal (index.html) */
+  .header-top-bar {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.85rem;
+  }
+
+  .header-nav-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .nav-links-left, .nav-links-right {
+    justify-content: center !important;
+    gap: 1.25rem !important;
+    padding: 0 !important;
+    flex-wrap: wrap !important;
+  }
+
+  .nav-item {
+    font-size: 0.95rem !important;
+    padding: 4px 8px;
+  }
+
+  /* Cabeçalho Admin / Painel do Fotógrafo */
+  .admin-header-nav {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.95rem !important;
+    text-align: center !important;
+  }
+
+  .admin-nav-center {
+    gap: 1rem !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+  }
+
+  .admin-nav-user-actions {
+    gap: 0.75rem !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+  }
+
+  /* Layout Split do Admin (Sidebar + Conteúdo) */
+  .admin-layout-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: auto !important;
+  }
+
+  .admin-sidebar {
+    width: 100% !important;
+    border-right: none !important;
+    border-bottom: 1.5px solid #E6DCD1 !important;
+    padding: 1rem 0.85rem 0.75rem !important;
+    gap: 0.75rem !important;
+  }
+
+  .sidebar-project-header {
+    margin-bottom: 0.5rem !important;
+  }
+
+  .sidebar-menu-list {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    gap: 0.5rem !important;
+    padding: 0.25rem 0 0.65rem !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin;
+  }
+
+  .sidebar-menu-list li {
+    flex-shrink: 0 !important;
+  }
+
+  .sidebar-nav-btn {
+    padding: 0.55rem 0.95rem !important;
+    font-size: 0.82rem !important;
+    white-space: nowrap !important;
+    border-radius: 9999px !important;
+  }
+
+  .admin-page-content {
+    padding: 1.25rem 1rem !important;
+  }
+
+  .admin-page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.85rem !important;
+  }
+
+  .admin-header-actions {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Quadro Kanban Mobile (Scroll Horizontal Fluido) */
+  .kanban-subbar-section {
+    padding: 0.85rem 0 0.5rem !important;
+  }
+
+  .kanban-nav-tabs {
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 1.15rem !important;
+    padding-bottom: 0.5rem !important;
+    scrollbar-width: thin;
+  }
+
+  .kanban-filter-controls-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+
+  .filter-controls-left {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+  }
+
+  .search-box-pill {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .search-box-pill input {
+    width: 100% !important;
+  }
+
+  .kanban-board-section {
+    padding: 1.25rem 0.5rem 3rem !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .kanban-columns-grid {
+    display: flex !important;
+    overflow-x: auto !important;
+    gap: 1rem !important;
+    padding-bottom: 1.25rem !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .kanban-col {
+    min-width: 275px !important;
+    max-width: 295px !important;
+    flex-shrink: 0 !important;
+    min-height: 480px !important;
+    padding: 0.85rem 0.75rem !important;
+  }
+}
+
+/* Telas de Celulares (<= 640px) */
+@media (max-width: 640px) {
+  .content-wrap, .content-wrap-wide {
+    padding: 0 1rem !important;
+  }
+
+  /* Formulários e Inputs */
+  .form-row-2col, .form-row-3col {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+  }
+
+  .admin-card-panel {
+    padding: 1.25rem 1rem !important;
+    border-radius: 14px !important;
+  }
+
+  .panel-title {
+    font-size: 1.2rem !important;
+  }
+
+  .panel-desc {
+    font-size: 0.82rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* Modais no Mobile */
+  #appModalNovoProjeto > div, #modalAddCliente > div, .alboom-modal-box {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    padding: 1.25rem 1rem !important;
+    border-radius: 14px !important;
+  }
+
+  /* Tela de Escolha de Fotos pelo Cliente (escolha-fotos.html) */
+  .selection-header-banner {
+    padding: 1.25rem 0.85rem !important;
+  }
+
+  .selection-main-title {
+    font-size: 1.45rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .selection-subtitle {
+    font-size: 0.82rem !important;
+  }
+
+  .selection-metrics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.65rem !important;
+  }
+
+  .metric-card {
+    padding: 0.85rem 0.65rem !important;
+    text-align: center !important;
+  }
+
+  .metric-card .metric-number {
+    font-size: 1.45rem !important;
+  }
+
+  .metric-card .metric-label {
+    font-size: 0.75rem !important;
+  }
+
+  .metric-card .metric-sublabel {
+    font-size: 0.65rem !important;
+  }
+
+  .proofing-tabs-row {
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 0.4rem !important;
+    padding-bottom: 0.4rem !important;
+  }
+
+  .tab-filter-btn {
+    flex-shrink: 0 !important;
+    padding: 6px 13px !important;
+    font-size: 0.76rem !important;
+  }
+
+  .proofing-cards-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.65rem !important;
+  }
+
+  .proofing-card {
+    border-radius: 12px !important;
+  }
+
+  .proofing-card-thumb-wrap {
+    height: 150px !important;
+  }
+
+  .proofing-card-content {
+    padding: 0.65rem !important;
+    gap: 0.45rem !important;
+  }
+
+  .photo-number-label {
+    font-size: 0.8rem !important;
+  }
+
+  .photo-status-tag {
+    font-size: 0.65rem !important;
+    padding: 2px 7px !important;
+  }
+
+  .btn-proof-action {
+    padding: 8px 8px !important;
+    font-size: 0.74rem !important;
+    min-height: 38px !important;
+  }
+
+  .selection-summary-panel {
+    border-radius: 14px !important;
+  }
+
+  .summary-card-body {
+    padding: 1.15rem !important;
+    gap: 1rem !important;
+  }
+
+  .btn-enviar-selecao {
+    padding: 12px 16px !important;
+    font-size: 0.88rem !important;
+  }
+
+  /* Botão Flutuante Inferior para Mobile em escolha-fotos.html */
+  .mobile-sticky-action-bar {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 9999 !important;
+    background: rgba(28, 17, 10, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    padding: 0.75rem 1rem !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    border-top: 1px solid rgba(197, 155, 109, 0.4) !important;
+    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.35) !important;
+  }
+
+  .mobile-sticky-action-bar .bar-info {
+    color: #FAF5EE !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+  }
+
+  .mobile-sticky-action-bar .bar-sub {
+    font-size: 0.7rem !important;
+    color: #C59B6D !important;
+    font-weight: 500 !important;
+  }
+
+  .mobile-sticky-action-bar .bar-btn {
+    background: linear-gradient(135deg, #C59B6D 0%, #A37746 100%) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    border-radius: 9999px !important;
+    font-size: 0.8rem !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
   }
 }
 

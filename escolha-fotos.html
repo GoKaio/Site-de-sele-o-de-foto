@@ -145,6 +145,7 @@
 
       <!-- 3. ÁREA PRINCIPAL DE SELEÇÃO (FUNDO AREIA) -->
       <section class="proofing-section" id="proofingMain">
+        <div class="content-wrap-wide" id="containerStatusBannerCliente"></div>
         <div class="content-wrap-wide proofing-layout-grid">
           
           <!-- Coluna Esquerda: Galeria de Fotos com Filtros -->
@@ -281,7 +282,7 @@
                 <span class="legend-icon-badge sq-pacote">✓</span>
                 <div class="legend-text">
                   <strong>No pacote</strong>
-                  <span>Conta entre as 10 incluídas</span>
+                  <span id="legendTextPacote">Fotos incluídas no seu pacote</span>
                 </div>
               </div>
 
@@ -307,6 +308,17 @@
         </div>
       </section>
     </main>
+
+    <!-- Barra Fixa Inferior no Mobile para Acompanhar Seleção e Enviar -->
+    <div class="mobile-sticky-action-bar" id="mobileStickyActionBar">
+      <div>
+        <div class="bar-info" id="mobileBarInfo">0 fotos escolhidas</div>
+        <div class="bar-sub" id="mobileBarSub">Toque para revisar e enviar</div>
+      </div>
+      <button type="button" class="bar-btn" onclick="window.iniciarModalEnviarSelecao()">
+        Enviar Seleção ✈
+      </button>
+    </div>
 
     <!-- Rodapé da Tela de Seleção -->
     <footer class="selection-site-footer">

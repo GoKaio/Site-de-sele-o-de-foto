@@ -38,8 +38,8 @@
         <nav class="admin-nav-center" aria-label="Navegação do Painel">
           <a href="index.html" class="nav-item">Início</a>
           <a href="projetos.html" class="nav-item active-nav">Projetos</a>
-          <a href="#clientes-menu" class="nav-item">Clientes</a>
-          <a href="#config-menu" class="nav-item">Configurações</a>
+          <a href="galeria-clientes.html" class="nav-item">Clientes</a>
+          <a href="galeria-dados.html" class="nav-item">Configurações</a>
         </nav>
 
         <!-- Ações do Fotógrafo (Direita) -->
@@ -127,7 +127,7 @@
         <div class="sidebar-help-card">
           <strong>Cada detalhe, com cuidado.</strong>
           <p>Organize a escolha e prepare uma entrega tranquila para seu cliente.</p>
-          <a href="#">Central de ajuda ↗</a>
+          <a href="javascript:void(0)" onclick="showToast('Central de Ajuda: suporte@casadafoto.com · WhatsApp (11) 98765-4321');">Central de ajuda ↗</a>
         </div>
 
       </aside>
@@ -273,8 +273,8 @@
                   As ações do fotógrafo e os acessos do cliente aparecem juntos, com data e responsável.
                 </p>
                 <span class="preview-pill-tag" style="margin-bottom: 1rem;">7 registros no exemplo</span>
-                <button type="button" class="btn-salvar-admin" style="width: 100%; justify-content: center;">📄 Exportar registro</button>
-                <span style="display: block; font-size: 0.72rem; color: var(--text-muted); text-align: center; margin-top: 0.5rem;">Exportação apenas ilustrativa; nenhum arquivo será criado.</span>
+                <button type="button" onclick="exportarHistoricoAtividades()" class="btn-salvar-admin" style="width: 100%; justify-content: center;">📄 Exportar registro</button>
+                <span style="display: block; font-size: 0.72rem; color: var(--text-muted); text-align: center; margin-top: 0.5rem;">Exporta arquivo .txt completo com todo o histórico de atividades da galeria.</span>
               </div>
 
               <div class="admin-info-box-note">

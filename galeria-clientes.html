@@ -38,8 +38,8 @@
         <nav class="admin-nav-center" aria-label="Navegação do Painel">
           <a href="index.html" class="nav-item">Início</a>
           <a href="projetos.html" class="nav-item active-nav">Projetos</a>
-          <a href="#clientes-menu" class="nav-item">Clientes</a>
-          <a href="#config-menu" class="nav-item">Configurações</a>
+          <a href="galeria-clientes.html" class="nav-item">Clientes</a>
+          <a href="galeria-dados.html" class="nav-item">Configurações</a>
         </nav>
 
         <!-- Ações do Fotógrafo (Direita) -->
@@ -127,7 +127,7 @@
         <div class="sidebar-help-card">
           <strong>Cada detalhe, com cuidado.</strong>
           <p>Organize a escolha e prepare uma entrega tranquila para seu cliente.</p>
-          <a href="#">Central de ajuda ↗</a>
+          <a href="javascript:void(0)" onclick="showToast('Central de Ajuda: suporte@casadafoto.com · WhatsApp (11) 98765-4321');">Central de ajuda ↗</a>
         </div>
 
       </aside>
@@ -163,7 +163,7 @@
                     <h3 class="panel-title">Destinatários da galeria</h3>
                     <p class="panel-desc" style="margin-bottom: 0;">1 destinatário convidado · contato fictício reservado para a demonstração.</p>
                   </div>
-                  <button type="button" class="btn-salvar-admin" style="white-space: nowrap;">+ Adicionar destinatário</button>
+                  <button type="button" onclick="abrirModalAdicionarCliente()" class="btn-salvar-admin" style="white-space: nowrap;">+ Adicionar destinatário</button>
                 </div>
 
                 <div class="form-row-2col" style="margin-bottom: 1.5rem;">
@@ -216,11 +216,11 @@
                 <div class="form-row-2col">
                   <div>
                     <label class="field-label">Nome do destinatário</label>
-                    <input type="text" class="field-input" placeholder="Nome de exibição">
+                    <input type="text" id="inputNomeNovoConvite" class="field-input" placeholder="Nome de exibição">
                   </div>
                   <div>
                     <label class="field-label">E-mail</label>
-                    <input type="email" class="field-input" placeholder="destinatario@exemplo.com">
+                    <input type="email" id="inputEmailNovoConvite" class="field-input" placeholder="destinatario@exemplo.com">
                   </div>
                 </div>
                 <div class="form-field-group">
@@ -233,7 +233,7 @@
                   <label class="field-label">Mensagem do convite</label>
                   <textarea class="field-textarea">Olá! Compartilhamos esta galeria para você acompanhar os momentos do nosso ensaio. A escolha das fotos fica com o destinatário principal.</textarea>
                 </div>
-                <button type="button" class="btn-salvar-admin">✉ Preparar convite</button>
+                <button type="button" onclick="prepararNovoConviteForm()" class="btn-salvar-admin">✉ Preparar convite</button>
                 <span class="field-hint-caption" style="margin-top: 0.5rem;">Formulário ilustrativo - nenhum contato ou envio real.</span>
               </div>
             </div>
@@ -256,7 +256,7 @@
                   </div>
                   <label class="switch-toggle"><input type="checkbox" checked><span class="switch-slider"></span></label>
                 </div>
-                <button type="button" class="btn-salvar-admin" style="width: 100%; justify-content: center;">✈ Reenviar convite</button>
+                <button type="button" onclick="reenviarConviteCliente()" class="btn-salvar-admin" style="width: 100%; justify-content: center;">✈ Reenviar convite</button>
               </div>
 
               <div class="admin-info-box-note">
@@ -279,6 +279,55 @@
       </div>
     </footer>
 
+  </div>
+
+  <!-- MODAL: ADICIONAR CLIENTE / DESTINATÁRIO -->
+  <div id="modalAddCliente" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(30, 20, 15, 0.72); backdrop-filter: blur(5px); align-items: center; justify-content: center; padding: 1.25rem;">
+    <div style="background: #FAF5EE; border: 1.5px solid #D8CAB9; border-radius: 18px; max-width: 500px; width: 100%; padding: 2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.35); position: relative; max-height: 90vh; overflow-y: auto;">
+      <button type="button" onclick="fecharModalAdicionarCliente()" style="position: absolute; top: 16px; right: 18px; background: none; border: none; font-size: 1.4rem; color: #6B5546; cursor: pointer;">✕</button>
+      <span style="font-size: 0.76rem; font-weight: 700; color: #9E744B; letter-spacing: 0.08em; display: block; margin-bottom: 4px;">ACESSO DO CLIENTE À GALERIA</span>
+      <h3 style="font-size: 1.35rem; color: #2D1D14; font-weight: 800; margin-bottom: 0.35rem;">+ Adicionar Cliente / Destinatário</h3>
+      <p style="font-size: 0.85rem; color: #7A6A5E; margin-bottom: 1.25rem;">Cadastre o cliente para liberar a escolha de fotos desta galeria.</p>
+
+      <form onsubmit="event.preventDefault(); salvarNovoDestinatarioModal();">
+        <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 1.25rem;">
+          <div>
+            <label style="display:block; font-size:0.78rem; font-weight:700; color:#5C4A3E; margin-bottom:3px;">Nome do Cliente *</label>
+            <input type="text" id="modalNomeCliente" class="field-input" placeholder="Ex: Kaio Rodrigues" required>
+          </div>
+          <div>
+            <label style="display:block; font-size:0.78rem; font-weight:700; color:#5C4A3E; margin-bottom:3px;">E-mail de Login *</label>
+            <input type="email" id="modalEmailCliente" class="field-input" placeholder="Ex: kaio@exemplo.com" required>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div>
+              <label style="display:block; font-size:0.78rem; font-weight:700; color:#5C4A3E; margin-bottom:3px;">Senha de Acesso</label>
+              <input type="text" id="modalSenhaCliente" class="field-input" value="123456" placeholder="Padrão: 123456" required>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.78rem; font-weight:700; color:#5C4A3E; margin-bottom:3px;">WhatsApp (opcional)</label>
+              <input type="text" id="modalTelefoneCliente" class="field-input" placeholder="Ex: 11987654321">
+            </div>
+          </div>
+          <div>
+            <label style="display:block; font-size:0.78rem; font-weight:700; color:#5C4A3E; margin-bottom:3px;">Permissão de Acesso</label>
+            <select id="modalPermissaoCliente" class="field-select">
+              <option value="Selecionar fotos">Selecionar fotos do pacote e extras (Padrão)</option>
+              <option value="Apenas visualizar">Apenas visualizar (sem seleção)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.25rem;">
+          <button type="button" onclick="fecharModalAdicionarCliente()" style="background: none; border: 1px solid #D8CAB9; color: #7A6A5E; padding: 0.65rem 1.25rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-modal-submit" id="btnSalvarModalCliente" style="padding: 0.65rem 1.5rem; background: #8C5F35; color: #FFF; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+            ✓ Salvar e Liberar Acesso
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- SCRIPT DE NAVEGAÇÃO INTERATIVA ENTRE AS 10 TELAS -->

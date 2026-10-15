@@ -3,7 +3,7 @@ import json
 import base64
 
 def test_novas_funcionalidades():
-    base = 'http://localhost:8082'
+    base = 'http://127.0.0.1:8082'
     print("Iniciando testes das NOVAS funcionalidades e botões...")
 
     def post_json(endpoint, data):
@@ -119,7 +119,32 @@ def test_novas_funcionalidades():
         assert 'galeria-config.html' in content, f'Redirecionamento não encontrado em {gp}'
     print("  [PASS] Todas as 10 páginas galeria-*.html redirecionam para galeria-config.html com preservação de estado")
 
+    # 12. Página de Entrega de Fotos e Botão Google Drive
+    entrega_html = urllib.request.urlopen(f'{base}/entrega.html').read().decode('utf-8', errors='ignore')
+    assert 'btnBaixarDrive' in entrega_html, 'Botão de download do Google Drive não encontrado em entrega.html'
+    assert 'Google Drive' in entrega_html, 'Menção ao Google Drive não encontrada em entrega.html'
+    print("  [PASS] Página de entrega entrega.html carregada com botão de download do Google Drive")
+
+    # 13. API de Entrega e Atualização do Link do Google Drive
+    test_link_drive = "https://drive.google.com/drive/folders/testFolder123?usp=sharing"
+    req_drive = urllib.request.Request(
+        f'{base}/api/galeria/1/link-drive',
+        data=json.dumps({'link_drive': test_link_drive}).encode('utf-8'),
+        headers={'Content-Type': 'application/json'},
+        method='PUT'
+    )
+    res_drive = urllib.request.urlopen(req_drive)
+    d_drive = json.loads(res_drive.read().decode('utf-8'))
+    assert d_drive.get('success') is True, 'Falha ao salvar link do Drive'
+
+    req_ent = urllib.request.urlopen(f'{base}/api/entrega/1')
+    d_ent = json.loads(req_ent.read().decode('utf-8'))
+    assert d_ent.get('success') is True, 'Falha ao obter dados da entrega'
+    assert d_ent.get('link_drive') == test_link_drive, 'Link do Drive não confere na API de entrega'
+    print(f"  [PASS] API /api/entrega/1 e /api/galeria/1/link-drive validados com sucesso (Link: {d_ent.get('link_drive')})")
+
     print("\nTODOS OS NOVOS TESTES FORAM CONCLUÍDOS COM 100% DE SUCESSO!")
 
 if __name__ == '__main__':
     test_novas_funcionalidades()
+

@@ -17,7 +17,8 @@ import mimetypes
 from datetime import datetime
 from collections import defaultdict
 from functools import wraps
-from bottle import Bottle, request, response, static_file, run, abort, HTTPError
+from bottle import Bottle, request, response, static_file, run, abort, HTTPError, BaseRequest
+BaseRequest.MEMFILE_MAX = 50 * 1024 * 1024  # 50 MB (permite uploads de fotos e logos em alta resolução)
 
 # Carrega variáveis de ambiente (.env se existir, caso contrário usa padrões)
 try:
@@ -160,13 +161,16 @@ def get_body() -> dict:
     try:
         if request.json:
             return request.json
+    except Exception:
+        pass
+    try:
         if hasattr(request, 'body') and request.body:
             raw = request.body.read()
             if raw:
                 return json.loads(raw.decode('utf-8'))
-        return {}
     except Exception:
-        return {}
+        pass
+    return {}
 
 # ── Sanitização e Validação de Input ─────────────────────────────────────────
 
@@ -203,6 +207,24 @@ def audit(ip, rota, metodo, usuario_id, acao, detalhe='', status=200):
         conn.close()
     except Exception:
         pass  # Não deixa falha no log quebrar a requisição
+
+# ── Log de Erros do Sistema (Frontend e Backend) ─────────────────────────────
+
+def log_error(origem: str, mensagem: str, detalhe: str = '', rota: str = '', ip: str = None, user_agent: str = None):
+    try:
+        if not ip:
+            ip = get_client_ip()
+        if not user_agent and hasattr(request, 'headers'):
+            user_agent = request.headers.get('User-Agent', '')[:250]
+        conn = get_connection()
+        conn.execute("""
+        INSERT INTO error_log (origem, mensagem, detalhe, rota, ip, user_agent)
+        VALUES (?,?,?,?,?,?)
+        """, (origem[:20], mensagem[:500], detalhe[:2000], rota[:250], ip[:50], (user_agent or '')[:250]))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[LogError] Falha ao registrar erro: {e}")
 
 # ── Hook: Security Headers em TODAS as respostas ─────────────────────────────
 
@@ -432,7 +454,9 @@ def api_get_projetos():
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
-    SELECT p.*, COALESCE(g.id, p.id) as galeria_id
+    SELECT p.*, COALESCE(g.id, p.id) as galeria_id,
+           COALESCE(g.status_galeria, 'Aguardando seleção') as status_galeria,
+           COALESCE(g.selecao_bloqueada, 0) as selecao_bloqueada
     FROM projetos p
     LEFT JOIN galerias g ON g.projeto_id = p.id
     ORDER BY p.id ASC
@@ -510,6 +534,11 @@ def api_create_projeto():
 
     sessoes = min(max(int(data.get('sessoes', 1)), 1), 50)
 
+    limite_pacote = int(data.get('limite_pacote', 10))
+    if limite_pacote <= 0:
+        limite_pacote = 10
+    valor_foto_extra = float(data.get('valor_foto_extra', 25.0))
+
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
@@ -518,16 +547,16 @@ def api_create_projeto():
     """, (nome_cliente, tipo_ensaio, categoria_tag, status, sessoes, prazo, avatar_img))
     novo_id = cur.lastrowid
 
-    # Cria automaticamente a galeria vinculada com a foto de capa definida
+    # Cria automaticamente a galeria vinculada com a foto de capa e limites definidos
     cur.execute("""
-    INSERT INTO galerias (projeto_id, nome, categoria, foto_capa)
-    VALUES (?, ?, ?, ?)
-    """, (novo_id, f"Galeria - {nome_cliente}", tipo_ensaio, foto_capa))
+    INSERT INTO galerias (projeto_id, nome, categoria, foto_capa, limite_pacote, valor_foto_extra)
+    VALUES (?, ?, ?, ?, ?, ?)
+    """, (novo_id, f"Galeria - {nome_cliente}", tipo_ensaio, foto_capa, limite_pacote, valor_foto_extra))
     galeria_id = cur.lastrowid
 
     conn.commit()
     conn.close()
-    return json_response({'success': True, 'id': novo_id, 'galeria_id': galeria_id, 'foto_capa': foto_capa})
+    return json_response({'success': True, 'id': novo_id, 'galeria_id': galeria_id, 'foto_capa': foto_capa, 'limite_pacote': limite_pacote})
 
 @app.get('/api/galerias')
 @rate_limit()
@@ -625,7 +654,8 @@ def api_update_galeria(galeria_id):
         'fotos_liberadas', 'formato_download', 'perfil_cor', 'resolucao_download',
         'versao_redes', 'agrupar_zip', 'prazo_download_dias', 'avisar_expirar',
         'organizacao_fotos', 'espacamento', 'exibir_numero', 'mostrar_boas_vindas',
-        'foto_capa', 'estilo_capa', 'enquadramento', 'tema_visual', 'tipografia'
+        'foto_capa', 'estilo_capa', 'enquadramento', 'tema_visual', 'tipografia',
+        'link_drive', 'status_galeria', 'selecao_bloqueada'
     ]
     set_clauses, values = [], []
     for f in allowed_fields:
@@ -633,7 +663,8 @@ def api_update_galeria(galeria_id):
             set_clauses.append(f"{f} = ?")
             v = data[f]
             if isinstance(v, str):
-                v = sanitize_str(v, 500)
+                max_len = 1000 if f == 'link_drive' else 500
+                v = sanitize_str(v, max_len)
             values.append(v)
 
     if set_clauses:
@@ -649,6 +680,79 @@ def api_update_galeria(galeria_id):
         conn.close()
 
     return json_response({'success': True, 'updated': len(set_clauses)})
+
+@app.put('/api/galeria/<galeria_id:int>/link-drive')
+@rate_limit()
+def api_update_link_drive(galeria_id):
+    """Atualiza de forma direta e rápida o link do Google Drive para entrega das fotos."""
+    data = get_body() or {}
+    link = sanitize_str(data.get('link_drive', ''), 1000).strip()
+    conn = get_connection()
+    try:
+        real_id = get_galeria_real_id(conn, galeria_id)
+        cur = conn.cursor()
+        cur.execute("UPDATE galerias SET link_drive = ? WHERE id = ?", (link, real_id))
+        agora = datetime.now().strftime("%d OUT %Y %H:%M")
+        cur.execute("""
+        INSERT INTO atividades (galeria_id, data_hora, autor_tipo, titulo, descricao, dispositivo, tipo_badge)
+        VALUES (?, ?, 'Fotógrafo', 'Link do Drive atualizado', 'Link de entrega das fotos atualizado.', 'Computador', 'Fotógrafo')
+        """, (real_id, agora))
+        conn.commit()
+        return json_response({'success': True, 'link_drive': link})
+    finally:
+        conn.close()
+
+@app.get('/api/entrega/<galeria_id:int>')
+@rate_limit()
+def api_get_entrega(galeria_id):
+    """Retorna os dados públicos da entrega da galeria: dados do ensaio, link do Drive e fotos entregues."""
+    conn = get_connection()
+    try:
+        real_gal_id = get_galeria_real_id(conn, galeria_id)
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM galerias WHERE id = ?", (real_gal_id,))
+        galeria_row = cur.fetchone()
+        if not galeria_row:
+            return json_response({'error': 'Entrega não encontrada.'}, 404)
+
+        galeria = dict(galeria_row)
+
+        # Busca dados do projeto associado
+        projeto = None
+        if galeria.get('projeto_id'):
+            cur.execute("SELECT id, nome_cliente, tipo_ensaio, status, prazo, avatar_img FROM projetos WHERE id = ?", (galeria['projeto_id'],))
+            proj_row = cur.fetchone()
+            if proj_row:
+                projeto = dict(proj_row)
+
+        # Fotos da galeria: prioriza fotos aprovadas (pacote / extra) ou todas disponíveis
+        cur.execute("SELECT id, numero, titulo, arquivo, status FROM fotos WHERE galeria_id = ? ORDER BY ordem ASC, id ASC", (real_gal_id,))
+        todas_fotos = [dict(f) for f in cur.fetchall()]
+
+        fotos_aprovadas = [f for f in todas_fotos if f.get('status') in ('pacote', 'extra')]
+        fotos_exibir = fotos_aprovadas if fotos_aprovadas else todas_fotos
+
+        # Informações de contato do estúdio
+        textos = get_site_textos()
+        contato = {
+            'nome_estudio': textos.get('hero_titulo', 'Casa da Foto Studio'),
+            'slogan': textos.get('header_slogan', 'Momentos que ficam'),
+            'whatsapp': textos.get('contato_whatsapp', '(11) 98765-4321'),
+            'email': textos.get('contato_email', 'contato@casadafoto.com')
+        }
+
+        return json_response({
+            'success': True,
+            'galeria': galeria,
+            'projeto': projeto,
+            'fotos': fotos_exibir,
+            'total_fotos': len(fotos_exibir),
+            'total_aprovadas': len(fotos_aprovadas),
+            'link_drive': galeria.get('link_drive', '') or '',
+            'contato': contato
+        })
+    finally:
+        conn.close()
 
 # ── ROTAS DE CATEGORIAS (Personalização de tipos de ensaio) ───────────────────
 
@@ -913,24 +1017,27 @@ def api_upload_fotos_multipart(galeria_id):
 def api_delete_foto_galeria(galeria_id, foto_id):
     """Exclui uma foto da galeria"""
     conn = get_connection()
-    conn.execute("DELETE FROM fotos WHERE id = ? AND galeria_id = ?", (foto_id, galeria_id))
+    real_gal_id = get_galeria_real_id(conn, galeria_id)
+    conn.execute("DELETE FROM fotos WHERE id = ? AND galeria_id = ?", (foto_id, real_gal_id))
     conn.commit()
     conn.close()
     return json_response({'success': True, 'deleted': foto_id})
 
 @app.put('/api/galeria/<galeria_id:int>/fotos/<foto_id:int>/capa')
+@app.post('/api/galeria/<galeria_id:int>/fotos/<foto_id:int>/capa')
 @rate_limit()
 def api_set_capa_foto(galeria_id, foto_id):
     """Define uma foto específica como a capa oficial da galeria"""
     conn = get_connection()
+    real_gal_id = get_galeria_real_id(conn, galeria_id)
     cur = conn.cursor()
-    cur.execute("SELECT arquivo, numero, titulo FROM fotos WHERE id = ? AND galeria_id = ?", (foto_id, galeria_id))
+    cur.execute("SELECT arquivo, numero, titulo FROM fotos WHERE id = ? AND galeria_id = ?", (foto_id, real_gal_id))
     row = cur.fetchone()
     if not row:
         conn.close()
         return json_response({'error': 'Foto não encontrada'}, 404)
     arquivo = row['arquivo']
-    conn.execute("UPDATE galerias SET foto_capa = ? WHERE id = ?", (arquivo, galeria_id))
+    conn.execute("UPDATE galerias SET foto_capa = ? WHERE id = ?", (arquivo, real_gal_id))
     conn.commit()
     conn.close()
     return json_response({'success': True, 'foto_capa': arquivo, 'numero': row['numero']})
@@ -940,13 +1047,14 @@ def api_set_capa_foto(galeria_id, foto_id):
 def api_get_fotos_selecionadas(galeria_id):
     """Retorna fotos escolhidas pelo cliente e nomes formatados para busca no Windows 10 e 11"""
     conn = get_connection()
+    real_gal_id = get_galeria_real_id(conn, galeria_id)
     cur = conn.cursor()
     cur.execute("""
     SELECT id, numero, titulo, arquivo, status 
     FROM fotos 
     WHERE galeria_id = ? AND status IN ('pacote', 'extra')
     ORDER BY ordem ASC, id ASC
-    """, (galeria_id,))
+    """, (real_gal_id,))
     rows = [dict(r) for r in cur.fetchall()]
     conn.close()
     
@@ -980,8 +1088,16 @@ def api_get_fotos_selecionadas(galeria_id):
 @rate_limit()
 def api_toggle_foto(galeria_id, foto_id):
     conn = get_connection()
+    real_gal_id = get_galeria_real_id(conn, galeria_id)
     cur = conn.cursor()
-    cur.execute("SELECT status FROM fotos WHERE id = ? AND galeria_id = ?", (foto_id, galeria_id))
+
+    cur.execute("SELECT selecao_bloqueada FROM galerias WHERE id = ?", (real_gal_id,))
+    grow = cur.fetchone()
+    if grow and grow['selecao_bloqueada']:
+        conn.close()
+        return json_response({'error': 'A seleção está bloqueada para análise pelo fotógrafo. Aguarde a liberação do estúdio caso precise realizar ajustes.'}, 403)
+
+    cur.execute("SELECT status FROM fotos WHERE id = ? AND galeria_id = ?", (foto_id, real_gal_id))
     row = cur.fetchone()
     if not row:
         conn.close()
@@ -992,14 +1108,14 @@ def api_toggle_foto(galeria_id, foto_id):
     novo_status = ciclo.get(cur_status, 'nao_selecionada')
 
     cur.execute("UPDATE fotos SET status = ? WHERE id = ? AND galeria_id = ?",
-                (novo_status, foto_id, galeria_id))
+                (novo_status, foto_id, real_gal_id))
 
-    cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='pacote'", (galeria_id,))
+    cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='pacote'", (real_gal_id,))
     pct = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='extra'", (galeria_id,))
+    cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='extra'", (real_gal_id,))
     ext = cur.fetchone()[0]
     cur.execute("UPDATE destinatarios SET fotos_pacote_count=?, fotos_extras_count=? WHERE galeria_id=?",
-                (pct, ext, galeria_id))
+                (pct, ext, real_gal_id))
 
     conn.commit()
     conn.close()
@@ -1014,13 +1130,27 @@ def api_set_foto_status(galeria_id, foto_id):
     if novo_status not in ('pacote', 'extra', 'nao_selecionada'):
         return json_response({'error': 'Status inválido'}, 400)
     conn = get_connection()
-    conn.execute("UPDATE fotos SET status = ? WHERE id = ? AND galeria_id = ?",
-                 (novo_status, foto_id, galeria_id))
+    real_gal_id = get_galeria_real_id(conn, galeria_id)
     cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='pacote'", (galeria_id,))
+
+    cur.execute("SELECT selecao_bloqueada FROM galerias WHERE id = ?", (real_gal_id,))
+    grow = cur.fetchone()
+    if grow and grow['selecao_bloqueada']:
+        conn.close()
+        return json_response({'error': 'A seleção está bloqueada para análise pelo fotógrafo. Aguarde a liberação do estúdio caso precise realizar ajustes.'}, 403)
+
+    conn.execute("UPDATE fotos SET status = ? WHERE id = ? AND galeria_id = ?",
+                 (novo_status, foto_id, real_gal_id))
+    cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='pacote'", (real_gal_id,))
     pct = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='extra'", (galeria_id,))
+    cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='extra'", (real_gal_id,))
     ext = cur.fetchone()[0]
+    cur.execute("""
+        UPDATE destinatarios 
+        SET fotos_pacote_count = ?, fotos_extras_count = ?,
+            status_convite = CASE WHEN status_convite = 'Seleção enviada' THEN 'Seleção enviada' ELSE 'Seleção em andamento' END
+        WHERE galeria_id = ?
+    """, (pct, ext, real_gal_id))
     conn.commit()
     conn.close()
     return json_response({'success': True, 'foto_id': foto_id, 'status': novo_status,
@@ -1032,6 +1162,7 @@ def api_set_foto_status(galeria_id, foto_id):
 def api_enviar_selecao(galeria_id):
     conn = get_connection()
     try:
+        real_gal_id = get_galeria_real_id(conn, galeria_id)
         data = get_body() or {}
         obs = sanitize_str(data.get('observacoes', ''), 500).strip()
         pacote_ids = data.get('pacote_ids', [])
@@ -1043,19 +1174,19 @@ def api_enviar_selecao(galeria_id):
         if pacote_ids:
             for pid in pacote_ids:
                 try:
-                    cur.execute("UPDATE fotos SET status='pacote' WHERE id=? AND galeria_id=?", (int(pid), galeria_id))
+                    cur.execute("UPDATE fotos SET status='pacote' WHERE id=? AND galeria_id=?", (int(pid), real_gal_id))
                 except Exception:
                     pass
         if extra_ids:
             for eid in extra_ids:
                 try:
-                    cur.execute("UPDATE fotos SET status='extra' WHERE id=? AND galeria_id=?", (int(eid), galeria_id))
+                    cur.execute("UPDATE fotos SET status='extra' WHERE id=? AND galeria_id=?", (int(eid), real_gal_id))
                 except Exception:
                     pass
 
-        cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='pacote'", (galeria_id,))
+        cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='pacote'", (real_gal_id,))
         pct = cur.fetchone()[0]
-        cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='extra'", (galeria_id,))
+        cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='extra'", (real_gal_id,))
         ext = cur.fetchone()[0]
         agora = datetime.now().strftime("%d OUT %Y %H:%M")
 
@@ -1067,12 +1198,26 @@ def api_enviar_selecao(galeria_id):
             cur.execute("""
             INSERT INTO atividades (galeria_id, data_hora, autor_tipo, titulo, descricao, dispositivo, tipo_badge)
             VALUES (?, ?, 'Cliente', 'Seleção enviada ao fotógrafo', ?, 'Computador', 'Cliente')
-            """, (galeria_id, agora, descricao_ativ))
+            """, (real_gal_id, agora, descricao_ativ))
         except Exception as e_ativ:
             print(f"[Atividades] Erro ao registrar atividade: {e_ativ}")
 
         try:
-            cur.execute("UPDATE destinatarios SET status_convite='Seleção enviada' WHERE galeria_id=?", (galeria_id,))
+            cur.execute("""
+                UPDATE destinatarios 
+                SET status_convite = 'Seleção enviada', fotos_pacote_count = ?, fotos_extras_count = ?
+                WHERE galeria_id = ?
+            """, (pct, ext, real_gal_id))
+        except Exception:
+            pass
+
+        # Bloqueia a seleção e atualiza status da galeria
+        try:
+            cur.execute("""
+                UPDATE galerias 
+                SET status_galeria = 'Seleção enviada', selecao_bloqueada = 1 
+                WHERE id = ?
+            """, (real_gal_id,))
         except Exception:
             pass
 
@@ -1081,8 +1226,109 @@ def api_enviar_selecao(galeria_id):
             'success': True,
             'mensagem': f'Seleção enviada com sucesso! {pct} do pacote + {ext} extras.',
             'pacote': pct,
-            'extra': ext
+            'extra': ext,
+            'selecao_bloqueada': 1
         })
+    finally:
+        conn.close()
+
+@app.put('/api/galeria/<galeria_id:int>/status')
+@rate_limit()
+def api_update_galeria_status(galeria_id):
+    conn = get_connection()
+    try:
+        real_gal_id = get_galeria_real_id(conn, galeria_id)
+        data = get_body() or {}
+        novo_status = sanitize_str(data.get('status_galeria') or data.get('status', ''), 100).strip()
+        bloqueado = data.get('selecao_bloqueada')
+
+        if not novo_status and bloqueado is None:
+            return json_response({'error': 'Status ou estado de bloqueio é obrigatório'}, 400)
+
+        cur = conn.cursor()
+        agora = datetime.now().strftime("%d OUT %Y %H:%M")
+
+        # Se for liberada para ajustes, desmarca bloqueio
+        if novo_status == 'Liberada para ajustes' or (bloqueado is not None and not bool(bloqueado)):
+            bloqueado_val = 0
+            if not novo_status:
+                novo_status = 'Liberada para ajustes'
+            cur.execute("UPDATE destinatarios SET status_convite = 'Liberada para ajustes' WHERE galeria_id = ?", (real_gal_id,))
+            cur.execute("""
+            INSERT INTO atividades (galeria_id, data_hora, autor_tipo, titulo, descricao, dispositivo, tipo_badge)
+            VALUES (?, ?, 'Fotógrafo', 'Galeria liberada para ajustes', 'Fotógrafo liberou a galeria para o cliente fazer novos ajustes na seleção de fotos.', 'Painel', 'Admin')
+            """, (real_gal_id, agora))
+        elif novo_status in ('Seleção enviada', 'Seleção bloqueada', 'Em análise pelo fotógrafo') or (bloqueado is not None and bool(bloqueado)):
+            bloqueado_val = 1
+            if not novo_status:
+                novo_status = 'Seleção enviada'
+            cur.execute("UPDATE destinatarios SET status_convite = ? WHERE galeria_id = ?", (novo_status, real_gal_id))
+            cur.execute("""
+            INSERT INTO atividades (galeria_id, data_hora, autor_tipo, titulo, descricao, dispositivo, tipo_badge)
+            VALUES (?, ?, 'Fotógrafo', 'Seleção bloqueada para análise', 'Fotógrafo bloqueou a seleção de fotos da galeria para análise interna.', 'Painel', 'Admin')
+            """, (real_gal_id, agora))
+        else:
+            bloqueado_val = 0 if novo_status in ('Aguardando seleção', 'Seleção em andamento') else 1
+
+        cur.execute("""
+            UPDATE galerias 
+            SET status_galeria = ?, selecao_bloqueada = ? 
+            WHERE id = ?
+        """, (novo_status, bloqueado_val, real_gal_id))
+
+        conn.commit()
+        return json_response({
+            'success': True,
+            'galeria_id': real_gal_id,
+            'status_galeria': novo_status,
+            'selecao_bloqueada': bloqueado_val
+        })
+    finally:
+        conn.close()
+
+@app.post('/api/galeria/<galeria_id:int>/liberar-ajustes')
+@rate_limit()
+def api_liberar_ajustes_galeria(galeria_id):
+    conn = get_connection()
+    try:
+        real_gal_id = get_galeria_real_id(conn, galeria_id)
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE galerias 
+            SET status_galeria = 'Liberada para ajustes', selecao_bloqueada = 0 
+            WHERE id = ?
+        """, (real_gal_id,))
+        cur.execute("UPDATE destinatarios SET status_convite = 'Liberada para ajustes' WHERE galeria_id = ?", (real_gal_id,))
+        agora = datetime.now().strftime("%d OUT %Y %H:%M")
+        cur.execute("""
+        INSERT INTO atividades (galeria_id, data_hora, autor_tipo, titulo, descricao, dispositivo, tipo_badge)
+        VALUES (?, ?, 'Fotógrafo', 'Galeria liberada para ajustes', 'Fotógrafo liberou a galeria para o cliente fazer novos ajustes na seleção.', 'Painel', 'Admin')
+        """, (real_gal_id, agora))
+        conn.commit()
+        return json_response({'success': True, 'galeria_id': real_gal_id, 'status_galeria': 'Liberada para ajustes', 'selecao_bloqueada': 0})
+    finally:
+        conn.close()
+
+@app.post('/api/galeria/<galeria_id:int>/bloquear-ajustes')
+@rate_limit()
+def api_bloquear_ajustes_galeria(galeria_id):
+    conn = get_connection()
+    try:
+        real_gal_id = get_galeria_real_id(conn, galeria_id)
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE galerias 
+            SET status_galeria = 'Seleção enviada', selecao_bloqueada = 1 
+            WHERE id = ?
+        """, (real_gal_id,))
+        cur.execute("UPDATE destinatarios SET status_convite = 'Seleção enviada' WHERE galeria_id = ?", (real_gal_id,))
+        agora = datetime.now().strftime("%d OUT %Y %H:%M")
+        cur.execute("""
+        INSERT INTO atividades (galeria_id, data_hora, autor_tipo, titulo, descricao, dispositivo, tipo_badge)
+        VALUES (?, ?, 'Fotógrafo', 'Seleção bloqueada para análise', 'Fotógrafo bloqueou a seleção de fotos da galeria para análise.', 'Painel', 'Admin')
+        """, (real_gal_id, agora))
+        conn.commit()
+        return json_response({'success': True, 'galeria_id': real_gal_id, 'status_galeria': 'Seleção enviada', 'selecao_bloqueada': 1})
     finally:
         conn.close()
 
@@ -1097,6 +1343,21 @@ def api_get_destinatarios(galeria_id):
     try:
         real_gal_id = get_galeria_real_id(conn, galeria_id)
         cur = conn.cursor()
+
+        # Sincroniza fotos_pacote_count e fotos_extras_count com a contagem real
+        cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='pacote'", (real_gal_id,))
+        pct = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id=? AND status='extra'", (real_gal_id,))
+        ext = cur.fetchone()[0]
+        if pct > 0 or ext > 0:
+            cur.execute("""
+                UPDATE destinatarios 
+                SET fotos_pacote_count = CASE WHEN fotos_pacote_count < ? THEN ? ELSE fotos_pacote_count END,
+                    fotos_extras_count = CASE WHEN fotos_extras_count < ? THEN ? ELSE fotos_extras_count END
+                WHERE galeria_id = ?
+            """, (pct, pct, ext, ext, real_gal_id))
+            conn.commit()
+
         cur.execute("SELECT * FROM destinatarios WHERE galeria_id = ? ORDER BY id ASC", (real_gal_id,))
         rows = [dict(r) for r in cur.fetchall()]
     finally:
@@ -1314,9 +1575,18 @@ def api_add_site_categoria():
 @rate_limit()
 def api_delete_site_categoria(cat_id):
     conn = get_connection()
-    conn.execute("DELETE FROM site_categorias WHERE id = ?", (cat_id,))
-    conn.commit()
-    conn.close()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT nome FROM site_categorias WHERE id = ?", (cat_id,))
+        row = cur.fetchone()
+        if row:
+            cat_nome = row['nome']
+            # Reatribui fotos da categoria para 'Geral' evitando fotos órfãs no carrossel
+            conn.execute("UPDATE site_fotos SET categoria_nome = 'Geral' WHERE categoria_nome = ?", (cat_nome,))
+        conn.execute("DELETE FROM site_categorias WHERE id = ?", (cat_id,))
+        conn.commit()
+    finally:
+        conn.close()
     return json_response({'success': True, 'deleted': cat_id})
 
 @app.get('/api/site/fotos')
@@ -1470,13 +1740,62 @@ def api_update_site_logo():
         else:
             img_base64 = img_data
         file_bytes = base64.b64decode(img_base64)
-        logo_path = os.path.join(BASE_DIR, 'assets', 'logo', 'logo.png')
-        os.makedirs(os.path.dirname(logo_path), exist_ok=True)
-        with open(logo_path, 'wb') as f:
-            f.write(file_bytes)
-        return json_response({'success': True, 'url': 'assets/logo/logo.png?v=' + str(int(time.time()))})
+        
+        # 1. Tenta atualizar o arquivo local em assets/logo/logo.png
+        try:
+            logo_path = os.path.join(BASE_DIR, 'assets', 'logo', 'logo.png')
+            os.makedirs(os.path.dirname(logo_path), exist_ok=True)
+            with open(logo_path, 'wb') as f:
+                f.write(file_bytes)
+        except Exception as e_local:
+            print(f"[Logo] Aviso ao salvar logo em assets: {e_local}")
+
+        # 2. Salva via salvar_imagem_upload (suporta Supabase Storage, Vercel Data URI e uploads/ local)
+        url = salvar_imagem_upload(file_bytes, 'logo.png')
+        if '?' not in url and not url.startswith('data:'):
+            url += f"?v={int(time.time())}"
+
+        # 3. Salva a URL no banco de dados site_textos
+        conn = get_connection()
+        conn.execute("INSERT OR REPLACE INTO site_textos (chave, valor) VALUES ('logo_url', ?)", (url,))
+        conn.commit()
+        conn.close()
+
+        return json_response({'success': True, 'url': url})
     except Exception as e:
         return json_response({'error': f'Falha ao atualizar logo: {str(e)}'}, 500)
+
+@app.get('/api/site/logo-info')
+@rate_limit()
+def api_get_site_logo_info():
+    """Retorna a URL atualizada do logotipo oficial do estúdio."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT valor FROM site_textos WHERE chave = 'logo_url'")
+    row = cur.fetchone()
+    conn.close()
+    if row and row['valor']:
+        return json_response({'url': row['valor']})
+    return json_response({'url': f'assets/logo/logo.png?v={int(time.time())}'})
+
+@app.get('/api/site/logo')
+def api_get_site_logo():
+    """Serve a Logo Oficial do estúdio."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT valor FROM site_textos WHERE chave = 'logo_url'")
+    row = cur.fetchone()
+    conn.close()
+    if row and row['valor']:
+        url = row['valor']
+        if url.startswith('http://') or url.startswith('https://'):
+            from bottle import redirect
+            return redirect(url)
+    logo_path = os.path.join(BASE_DIR, 'assets', 'logo', 'logo.png')
+    if os.path.exists(logo_path):
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        return static_file('logo.png', root=os.path.join(BASE_DIR, 'assets', 'logo'))
+    abort(404, 'Logo não encontrada')
 
 @app.post('/api/site/login-foto')
 @rate_limit(20)
@@ -1493,7 +1812,7 @@ def api_update_site_login_foto():
             img_base64 = img_data
         file_bytes = base64.b64decode(img_base64)
         url = salvar_imagem_upload(file_bytes, 'login_hero.jpg')
-        if '?' not in url:
+        if '?' not in url and not url.startswith('data:'):
             url += f"?v={int(time.time())}"
         
         # Salva no banco de dados site_textos
@@ -1515,6 +1834,9 @@ def api_get_site_login_foto():
     row = cur.fetchone()
     conn.close()
     url = row['valor'] if row else 'uploads/login_hero.jpg'
+    # Evita retornar placeholders corrompidos ou pixels de testes antigos
+    if url and url.startswith('data:image/') and len(url) < 200:
+        url = 'uploads/login_hero.jpg'
     return json_response({'url': url})
 
 
@@ -1705,6 +2027,39 @@ def api_get_audit_log():
     conn.close()
     return json_response(rows)
 
+@app.post('/api/log/error')
+@rate_limit(60)
+def api_report_client_error():
+    """Recebe erros do frontend (window.onerror / unhandledrejection) e grava no error_log"""
+    data = get_body()
+    mensagem = sanitize_str(data.get('mensagem', 'Erro desconhecido'), 500)
+    detalhe = sanitize_str(data.get('detalhe', ''), 2000)
+    rota = sanitize_str(data.get('rota', request.environ.get('HTTP_REFERER', '')), 250)
+    log_error('frontend', mensagem, detalhe, rota)
+    return json_response({'success': True})
+
+@app.get('/api/admin/error-log')
+@rate_limit()
+def api_get_error_log():
+    """Lista erros capturados do sistema (frontend e backend)."""
+    limite = min(int(request.query.get('limit', 50)), 200)
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM error_log ORDER BY id DESC LIMIT ?", (limite,))
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return json_response(rows)
+
+@app.delete('/api/admin/error-log')
+@rate_limit()
+def api_clear_error_log():
+    """Limpa a tabela de logs de erro."""
+    conn = get_connection()
+    conn.execute("DELETE FROM error_log")
+    conn.commit()
+    conn.close()
+    return json_response({'success': True, 'mensagem': 'Log de erros limpo com sucesso.'})
+
 # ==============================================================================
 # 9. ARQUIVOS ESTÁTICOS (com proteções de segurança)
 # ==============================================================================
@@ -1729,6 +2084,10 @@ def serve_index():
 
 @app.route('/<filepath:path>')
 def serve_static(filepath):
+    # Se a requisição for para /api/ e chegou aqui, a rota da API não existe -> 404
+    if filepath.startswith('api/'):
+        abort(404, 'API não encontrada')
+
     # Previne Path Traversal
     if '..' in filepath or filepath.startswith('/') or filepath.startswith('\\'):
         abort(403, 'Acesso negado')
@@ -1738,8 +2097,15 @@ def serve_static(filepath):
     if first_segment in BLOCKED_PATHS or filepath in BLOCKED_PATHS:
         abort(403, 'Acesso negado')
 
-    # Verifica extensão
+    # Se não tiver extensão, verifica se existe arquivo .html correspondente (rotas amigáveis)
     _, ext = os.path.splitext(filepath)
+    if not ext:
+        html_candidate = filepath + '.html'
+        if os.path.exists(os.path.join(BASE_DIR, html_candidate)):
+            return static_file(html_candidate, root=BASE_DIR)
+        abort(404, 'Página não encontrada')
+
+    # Verifica extensão
     if ext.lower() not in ALLOWED_EXTENSIONS:
         abort(403, 'Tipo de arquivo não permitido')
 
@@ -1753,6 +2119,63 @@ def serve_static(filepath):
             return static_file('logo.png', root=os.path.join(BASE_DIR, 'assets', 'logo'))
 
     return static_file(filepath, root=BASE_DIR)
+
+@app.error(403)
+def error_handler_403(err):
+    p = request.path if hasattr(request, 'path') else ''
+    if p.startswith('/api/'):
+        response.content_type = 'application/json; charset=utf-8'
+        return json.dumps({'error': 'Acesso negado', 'status': 403, 'path': p}, ensure_ascii=False)
+    response.content_type = 'text/html; charset=utf-8'
+    return """<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Acesso Negado | Casa da Foto Studio</title>
+  <link rel="stylesheet" href="/styles.css?v=luxo4">
+</head>
+<body style="background: #251710; color: #FAF5EE; display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; font-family: sans-serif; padding: 2rem;">
+  <div>
+    <h1 style="font-size: 3rem; color: #C59B6D; margin-bottom: 0.5rem;">403</h1>
+    <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">Acesso Negado</h2>
+    <p style="color: #D8CAB9; margin-bottom: 2rem;">Você não possui permissão para acessar este recurso.</p>
+    <a href="/index.html" style="background: #8C5F35; color: #FFF; padding: 0.75rem 1.75rem; border-radius: 9999px; text-decoration: none; font-weight: 700;">← Voltar ao Início</a>
+  </div>
+</body>
+</html>"""
+
+@app.error(404)
+def error_handler_404(err):
+    p = request.path if hasattr(request, 'path') else ''
+    if p.startswith('/api/'):
+        response.content_type = 'application/json; charset=utf-8'
+        return json.dumps({'error': 'Recurso não encontrado', 'status': 404, 'path': p}, ensure_ascii=False)
+    response.content_type = 'text/html; charset=utf-8'
+    return """<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Página Não Encontrada | Casa da Foto Studio</title>
+  <link rel="stylesheet" href="/styles.css?v=luxo4">
+</head>
+<body style="background: #251710; color: #FAF5EE; display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; font-family: sans-serif; padding: 2rem;">
+  <div>
+    <h1 style="font-size: 3rem; color: #C59B6D; margin-bottom: 0.5rem;">404</h1>
+    <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">Página Não Encontrada</h2>
+    <p style="color: #D8CAB9; margin-bottom: 2rem;">O endereço solicitado não existe ou foi movido.</p>
+    <a href="/index.html" style="background: #8C5F35; color: #FFF; padding: 0.75rem 1.75rem; border-radius: 9999px; text-decoration: none; font-weight: 700;">← Voltar ao Início</a>
+  </div>
+</body>
+</html>"""
+
+@app.error(500)
+def error_handler_500(err):
+    origem = 'backend'
+    mensagem = str(err.exception) if hasattr(err, 'exception') and err.exception else 'Erro interno do servidor 500'
+    detalhe = str(err.traceback) if hasattr(err, 'traceback') and err.traceback else ''
+    log_error(origem, mensagem, detalhe, request.path if hasattr(request, 'path') else '')
+    response.content_type = 'application/json; charset=utf-8'
+    return json.dumps({'error': 'Ocorreu um erro interno no servidor', 'status': 500})
 
 # ==============================================================================
 # 10. INICIALIZAÇÃO

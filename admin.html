@@ -122,9 +122,9 @@
     <div class="admin-card-panel" style="margin-bottom: 2rem; background: #FAF5EE; border: 1.5px solid #D8CAB9;">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
         <div>
-          <h2 class="panel-title" style="margin: 0;">👑 Logotipo Oficial do Estúdio & Marca d'água</h2>
+          <h2 class="panel-title" style="margin: 0;">👑 Logotipo Oficial do Estúdio (Cabeçalho, Telas de Login & Marca d'água)</h2>
           <p class="panel-desc" style="margin-top: 4px; margin-bottom: 0;">
-            Substitua a logomarca oficial do estúdio. Ela é exibida no cabeçalho do site e <strong>transformada automaticamente em marca d'água protetora translúcida</strong> sobre todas as fotos das galerias dos clientes.
+            Substitua a logomarca oficial do estúdio. Ela é exibida no cabeçalho do site, no topo de <strong>todas as telas de login</strong> (Cliente, Fotógrafo e Admin) e transformada automaticamente em marca d'água protetora sobre todas as fotos das galerias dos clientes.
           </p>
         </div>
         <span class="preview-pill-tag" style="background: #2D1D14; color: #FAF5EE; font-weight: 700;">Logo Ativa & Marca d'água</span>
@@ -155,9 +155,9 @@
     <div class="admin-card-panel" style="margin-bottom: 2rem; background: #FAF5EE; border: 1.5px solid #D8CAB9;">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
         <div>
-          <h2 class="panel-title" style="margin: 0;">🖼️ Foto das Telas de Login</h2>
+          <h2 class="panel-title" style="margin: 0;">🖼️ Foto de Destaque das Telas de Login (Painel Lateral)</h2>
           <p class="panel-desc" style="margin-top: 4px; margin-bottom: 0;">
-            Personalize a foto principal que aparece em destaque lateral nas telas de acesso (Login do Cliente, Fotógrafo e Administrador).
+            Personalize a foto principal de ensaio que aparece em destaque lateral nas telas de acesso (Login do Cliente, Fotógrafo e Administrador).
           </p>
         </div>
         <span class="preview-pill-tag" style="background: #2D1D14; color: #FAF5EE; font-weight: 700;">Destaque de Login</span>
@@ -476,6 +476,52 @@
       </div>
     </div>
 
+    <!-- ==============================================================
+         BLOCO 7: CENTRAL DE DIAGNÓSTICO, LOG DE ERROS & AUDITORIA
+         ============================================================== -->
+    <div class="admin-card-panel" style="margin-bottom: 2rem; background: #FAF5EE; border: 1.5px solid #D8CAB9;" id="blocoDiagnostico">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <h2 class="panel-title" style="margin: 0;">🚨 Central de Diagnóstico & Log de Erros</h2>
+          <p class="panel-desc" style="margin-top: 4px; margin-bottom: 0;">
+            Monitore falhas em tempo real capturadas no frontend e backend, além do histórico de auditoria de acessos e bloqueios de segurança.
+          </p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <button type="button" onclick="carregarLogsDiagnostico();" class="preview-pill-tag" style="cursor: pointer; border: 1px solid #D8CAB9; background: #FFF; font-weight: 600;">
+            🔄 Atualizar Logs
+          </button>
+          <button type="button" onclick="limparLogsErro();" class="preview-pill-tag" style="cursor: pointer; border: 1px solid #E57373; background: #FFEBEE; color: #C62828; font-weight: 600;">
+            🧹 Limpar Erros
+          </button>
+        </div>
+      </div>
+
+      <!-- Abas de Visualização: Erros do Sistema vs Auditoria de Acessos -->
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 1px solid #D8CAB9; padding-bottom: 0.5rem;">
+        <button type="button" id="tabBtnErros" onclick="alternarTabLog('erros')" style="padding: 6px 14px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; border: none; cursor: pointer; background: #2D1D14; color: #FAF5EE;">
+          ⚠️ Erros do Sistema (<span id="countErrosTotal">0</span>)
+        </button>
+        <button type="button" id="tabBtnAudit" onclick="alternarTabLog('audit')" style="padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #D8CAB9; cursor: pointer; background: #FFF; color: #7A6A5E;">
+          🛡️ Auditoria de Segurança (<span id="countAuditTotal">0</span>)
+        </button>
+      </div>
+
+      <!-- Container 1: Tabela de Erros -->
+      <div id="containerTabErros" style="display: block;">
+        <div id="listaErrosSistema" style="max-height: 380px; overflow-y: auto; background: #FFF; border: 1px solid #E8DDD0; border-radius: 8px; padding: 0.75rem;">
+          <div style="text-align: center; color: #999; padding: 1.5rem;">Nenhum erro registrado no sistema. Tudo funcionando 100%!</div>
+        </div>
+      </div>
+
+      <!-- Container 2: Tabela de Auditoria -->
+      <div id="containerTabAudit" style="display: none;">
+        <div id="listaAuditoriaSeguranca" style="max-height: 380px; overflow-y: auto; background: #FFF; border: 1px solid #E8DDD0; border-radius: 8px; padding: 0.75rem;">
+          <div style="text-align: center; color: #999; padding: 1.5rem;">Carregando histórico de auditoria...</div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <script src="app.js?v=luxo4"></script>
@@ -493,13 +539,15 @@
     // Carregamento de Dados da API
     async function carregarTudo() {
       await Promise.all([
+        carregarLogoAdmin(),
+        carregarFotoLoginAdmin(),
         carregarCategorias(),
         carregarFotos(),
         carregarPacotesAdmin(),
         carregarContatos(),
         carregarTextosAdmin(),
-        carregarFotoLoginAdmin(),
-        carregarFotografosAdmin()
+        carregarFotografosAdmin(),
+        carregarLogsDiagnostico()
       ]);
     }
 
@@ -597,6 +645,111 @@
         }
       } catch (err) {
         showToast('Erro ao comunicar com o servidor.', 'error');
+      }
+    }
+
+    // ── CENTRAL DE DIAGNÓSTICO & LOG DE ERROS ──
+    function alternarTabLog(tab) {
+      const tabErros = document.getElementById('containerTabErros');
+      const tabAudit = document.getElementById('containerTabAudit');
+      const btnErros = document.getElementById('tabBtnErros');
+      const btnAudit = document.getElementById('tabBtnAudit');
+
+      if (tab === 'erros') {
+        tabErros.style.display = 'block';
+        tabAudit.style.display = 'none';
+        btnErros.style.background = '#2D1D14';
+        btnErros.style.color = '#FAF5EE';
+        btnAudit.style.background = '#FFF';
+        btnAudit.style.color = '#7A6A5E';
+      } else {
+        tabErros.style.display = 'none';
+        tabAudit.style.display = 'block';
+        btnAudit.style.background = '#2D1D14';
+        btnAudit.style.color = '#FAF5EE';
+        btnErros.style.background = '#FFF';
+        btnErros.style.color = '#7A6A5E';
+      }
+    }
+
+    async function carregarLogsDiagnostico() {
+      // 1. Carrega Erros do Sistema
+      try {
+        const resErros = await fetch('/api/admin/error-log?limit=50');
+        const erros = await resErros.json();
+        const countErrosEl = document.getElementById('countErrosTotal');
+        const containerErros = document.getElementById('listaErrosSistema');
+
+        if (countErrosEl) countErrosEl.textContent = erros.length;
+
+        if (!erros || erros.length === 0) {
+          containerErros.innerHTML = '<div style="text-align: center; color: #2E7D32; padding: 1.5rem; font-weight: 600;">✓ Nenhum erro registrado no sistema. Tudo operando com 100% de estabilidade!</div>';
+        } else {
+          containerErros.innerHTML = erros.map(e => `
+            <div style="border-bottom: 1px solid #F0E6D8; padding: 0.6rem 0; font-size: 0.82rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 4px;">
+                <span style="font-weight: 700; color: ${e.origem === 'backend' ? '#C62828' : '#D84315'}; background: #FFF3E0; padding: 2px 8px; border-radius: 4px;">
+                  [${(e.origem || 'SISTEMA').toUpperCase()}]
+                </span>
+                <span style="color: #8C7A6B; font-size: 0.75rem;">${e.criado_em || ''} · IP: ${e.ip || '-'}</span>
+              </div>
+              <div style="font-weight: 600; color: #2D1D14; margin-bottom: 2px;">${e.mensagem}</div>
+              ${e.rota ? `<div style="color: #9E744B; font-size: 0.75rem;">Rota: <code>${e.rota}</code></div>` : ''}
+              ${e.detalhe ? `<details style="margin-top: 4px; font-size: 0.72rem; color: #777;"><summary style="cursor: pointer; color: #9E744B;">Ver detalhes técnicos</summary><pre style="background: #FAF5EE; padding: 6px; border-radius: 4px; white-space: pre-wrap; margin-top: 4px;">${e.detalhe}</pre></details>` : ''}
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Erro ao carregar log de erros:', err);
+      }
+
+      // 2. Carrega Log de Auditoria
+      try {
+        const resAudit = await fetch('/api/admin/audit-log?limit=50');
+        const audits = await resAudit.json();
+        const countAuditEl = document.getElementById('countAuditTotal');
+        const containerAudit = document.getElementById('listaAuditoriaSeguranca');
+
+        if (countAuditEl) countAuditEl.textContent = audits.length;
+
+        if (!audits || audits.length === 0) {
+          containerAudit.innerHTML = '<div style="text-align: center; color: #999; padding: 1.5rem;">Nenhuma ação de auditoria registrada até o momento.</div>';
+        } else {
+          containerAudit.innerHTML = audits.map(a => {
+            const isOk = a.status === 200;
+            return `
+              <div style="border-bottom: 1px solid #F0E6D8; padding: 0.5rem 0; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+                <div>
+                  <span style="font-weight: 700; color: ${isOk ? '#2E7D32' : '#C62828'}; background: ${isOk ? '#E8F5E9' : '#FFEBEE'}; padding: 2px 6px; border-radius: 4px; margin-right: 6px;">
+                    ${a.acao || 'AÇÃO'}
+                  </span>
+                  <span style="color: #2D1D14;">${a.detalhe || a.rota || ''}</span>
+                </div>
+                <div style="color: #8C7A6B; font-size: 0.75rem;">
+                  IP: ${a.ip || '-'} · ${a.criado_em || ''}
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (err) {
+        console.error('Erro ao carregar auditoria:', err);
+      }
+    }
+
+    async function limparLogsErro() {
+      if (!confirm('Deseja realmente limpar todos os registros de erros do sistema?')) return;
+      try {
+        const res = await fetch('/api/admin/error-log', { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          showToast('✓ Registros de erros limpos com sucesso.');
+          await carregarLogsDiagnostico();
+        } else {
+          showToast('Erro ao limpar logs.', 'error');
+        }
+      } catch (e) {
+        showToast('Erro de conexão ao limpar logs.', 'error');
       }
     }
 
@@ -750,18 +903,66 @@
       }
     }
 
+    // ── OTIMIZADOR DE IMAGENS CLIENT-SIDE (CANVAS) ──
+    function redimensionarImagem(file, maxWidth, maxHeight, qualidade, callback) {
+      if (file && file.name && file.name.match(/\.(heic|heif|raw|cr2|cr3|nef|arw|dng|orf)$/i)) {
+        showToast('Formato RAW/HEIC não é suportado diretamente no navegador. Por favor, utilize JPG, PNG ou WebP.', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth || height > maxHeight) {
+            if (width / height > maxWidth / maxHeight) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const isPng = file.type === 'image/png';
+          const mimeType = isPng ? 'image/png' : 'image/jpeg';
+          const dataUrl = canvas.toDataURL(mimeType, isPng ? undefined : qualidade);
+          callback(dataUrl);
+        };
+        img.onerror = function() {
+          callback(e.target.result);
+        };
+        img.src = e.target.result;
+      };
+      reader.onerror = function() {
+        showToast('Erro ao ler arquivo de imagem.', 'error');
+      };
+      reader.readAsDataURL(file);
+    }
+
     // ── GESTÃO DE LOGO E MARCA D'ÁGUA ──
     let novaLogoBase64 = null;
     function previewNovaLogo(event) {
       const file = event.target.files && event.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        novaLogoBase64 = e.target.result;
+
+      const btn = document.getElementById('btnSalvarLogo');
+      if (btn) btn.innerHTML = '⏳ Otimizando logo...';
+
+      redimensionarImagem(file, 1000, 1000, 0.92, function(base64Otimizado) {
+        novaLogoBase64 = base64Otimizado;
         const img = document.getElementById('imgLogoAdminPreview');
         if (img) img.src = novaLogoBase64;
-      };
-      reader.readAsDataURL(file);
+        if (btn) btn.innerHTML = '💾 Atualizar Logotipo e Marca d\'água';
+      });
     }
 
     async function salvarNovaLogo() {
@@ -781,9 +982,11 @@
         });
         const data = await res.json();
         if (data.success) {
-          showToast('✓ Logotipo oficial e marca d\'água atualizados com sucesso!');
+          showToast('✓ Logotipo oficial atualizado com sucesso em todo o site e telas de login!');
           const img = document.getElementById('imgLogoAdminPreview');
           if (img) img.src = data.url;
+          const headerLogo = document.getElementById('headerLogoImg');
+          if (headerLogo) headerLogo.src = data.url;
           novaLogoBase64 = null;
           const inp = document.getElementById('inputUploadLogo');
           if (inp) inp.value = '';
@@ -798,18 +1001,34 @@
       }
     }
 
+    async function carregarLogoAdmin() {
+      try {
+        const res = await fetch('/api/site/logo-info');
+        const d = await res.json();
+        if (d && d.url) {
+          const img = document.getElementById('imgLogoAdminPreview');
+          if (img) img.src = d.url;
+        }
+      } catch (e) {
+        console.error('Erro ao carregar logo admin:', e);
+      }
+    }
+
     // ── GESTÃO DE FOTO DAS TELAS DE LOGIN ──
     let novaFotoLoginBase64 = null;
     function previewNovaFotoLogin(event) {
       const file = event.target.files && event.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        novaFotoLoginBase64 = e.target.result;
+
+      const btn = document.getElementById('btnSalvarFotoLogin');
+      if (btn) btn.innerHTML = '⏳ Otimizando foto...';
+
+      redimensionarImagem(file, 1920, 1920, 0.88, function(base64Otimizado) {
+        novaFotoLoginBase64 = base64Otimizado;
         const img = document.getElementById('imgLoginAdminPreview');
         if (img) img.src = novaFotoLoginBase64;
-      };
-      reader.readAsDataURL(file);
+        if (btn) btn.innerHTML = '💾 Salvar Foto das Telas de Login';
+      });
     }
 
     async function salvarNovaFotoLogin() {
@@ -829,7 +1048,7 @@
         });
         const data = await res.json();
         if (data.success) {
-          showToast('✓ Foto das telas de login atualizada com sucesso!');
+          showToast('✓ Foto lateral das telas de login atualizada com sucesso!');
           const img = document.getElementById('imgLoginAdminPreview');
           if (img) img.src = data.url;
           novaFotoLoginBase64 = null;

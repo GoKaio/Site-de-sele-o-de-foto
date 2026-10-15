@@ -235,6 +235,12 @@ def init_db(conn=None):
                     cur.execute("INSERT INTO categorias (nome) VALUES (%s) ON CONFLICT (nome) DO NOTHING", (c_nome,))
             c.commit()
 
+            try:
+                cur.execute("ALTER TABLE galerias ADD COLUMN IF NOT EXISTS link_drive TEXT DEFAULT ''")
+                c.commit()
+            except Exception:
+                pass
+
             cur.execute("SELECT 1 FROM information_schema.tables WHERE table_name = 'usuarios'")
             row = cur.fetchone()
             if conn is None:
@@ -330,6 +336,9 @@ def init_db(conn=None):
         enquadramento         TEXT DEFAULT 'Preservar imagem original',
         tema_visual           TEXT DEFAULT 'Casa da Foto - creme e bronze',
         tipografia            TEXT DEFAULT 'Inter - clara e acolhedora',
+        link_drive            TEXT DEFAULT '',
+        status_galeria        TEXT DEFAULT 'Aguardando seleção',
+        selecao_bloqueada     INTEGER DEFAULT 0,
         criado_em             DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE SET NULL
     )
@@ -479,19 +488,53 @@ def init_db(conn=None):
     except Exception:
         pass
 
+    # ── 12.2 Log de Erros do Sistema (Frontend e Backend) ──────────────────
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS error_log (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        origem     TEXT DEFAULT 'frontend',
+        mensagem   TEXT NOT NULL,
+        detalhe    TEXT,
+        rota       TEXT,
+        ip         TEXT,
+        user_agent TEXT,
+        criado_em  DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
     # ── 13. Índices para Performance ──────────────────────────────────────
     cur.execute("CREATE INDEX IF NOT EXISTS idx_usuarios_login ON usuarios(login)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_fotos_galeria ON fotos(galeria_id)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_atividades_galeria ON atividades(galeria_id)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_site_fotos_cat ON site_fotos(categoria_nome)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_galerias_projeto ON galerias(projeto_id)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_audit_ip ON audit_log(ip)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_error_log_criado ON error_log(criado_em)")
 
     conn.commit()
 
-    # Migração suave para coluna de valor de foto extra
+    # Migração suave para coluna de valor de foto extra e link_drive
     try:
         cur.execute("ALTER TABLE galerias ADD COLUMN valor_foto_extra REAL DEFAULT 25.00")
+        conn.commit()
+    except Exception:
+        pass
+
+    try:
+        cur.execute("ALTER TABLE galerias ADD COLUMN link_drive TEXT DEFAULT ''")
+        conn.commit()
+    except Exception:
+        pass
+
+    try:
+        cur.execute("ALTER TABLE galerias ADD COLUMN status_galeria TEXT DEFAULT 'Aguardando seleção'")
+        conn.commit()
+    except Exception:
+        pass
+
+    try:
+        cur.execute("ALTER TABLE galerias ADD COLUMN selecao_bloqueada INTEGER DEFAULT 0")
         conn.commit()
     except Exception:
         pass
@@ -585,6 +628,17 @@ def init_db(conn=None):
         cur.executemany("""
         INSERT OR IGNORE INTO site_textos (chave, valor, descricao) VALUES (?, ?, ?)
         """, textos_iniciais)
+
+    # Sincroniza fotos_pacote_count e fotos_extras_count em destinatarios existentes
+    try:
+        cur.execute("""
+        UPDATE destinatarios 
+        SET fotos_pacote_count = (SELECT COUNT(*) FROM fotos WHERE fotos.galeria_id = destinatarios.galeria_id AND fotos.status = 'pacote'),
+            fotos_extras_count = (SELECT COUNT(*) FROM fotos WHERE fotos.galeria_id = destinatarios.galeria_id AND fotos.status = 'extra')
+        WHERE EXISTS (SELECT 1 FROM fotos WHERE fotos.galeria_id = destinatarios.galeria_id)
+        """)
+    except Exception:
+        pass
 
     conn.commit()
     if should_close:

@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrega de Fotos | Casa da Foto Studio</title>
+  <meta name="description" content="Página oficial de entrega de fotos em alta resolução da Casa da Foto Studio. Baixe seus arquivos diretamente pelo Google Drive.">
+
+  <!-- Google Fonts: Editorial & UI Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css?v=luxo4">
+
+  <style>
+    /* Estilos Premium Exclusivos da Página de Entrega */
+    .entrega-hero-section {
+      background: linear-gradient(180deg, #251710 0%, #170E08 100%);
+      color: #FAF5EE;
+      padding: 4.5rem 1.5rem 5.5rem;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+    .entrega-hero-section::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 20%, rgba(197, 155, 109, 0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .entrega-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(197, 155, 109, 0.15);
+      border: 1px solid rgba(197, 155, 109, 0.4);
+      color: #F5D7B0;
+      padding: 0.45rem 1.25rem;
+      border-radius: 9999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+    .entrega-hero-title {
+      font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
+      font-size: clamp(2.4rem, 5vw, 3.8rem);
+      font-weight: 600;
+      line-height: 1.15;
+      color: #FFFFFF;
+      max-width: 860px;
+      margin: 0 auto 1.2rem;
+    }
+    .entrega-hero-title span {
+      background: linear-gradient(135deg, #F5D7B0 0%, #C59B6D 50%, #E6CCA9 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .entrega-hero-subtitle {
+      font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
+      font-size: clamp(1rem, 1.8vw, 1.15rem);
+      color: #D8CAB9;
+      max-width: 680px;
+      margin: 0 auto 2rem;
+      line-height: 1.6;
+      font-weight: 400;
+    }
+    .entrega-meta-chips {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 2.5rem;
+      font-size: 0.88rem;
+    }
+    .entrega-meta-chip {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 0.4rem 0.9rem;
+      color: #FAF5EE;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* CARD PRINCIPAL DE DOWNLOAD DO GOOGLE DRIVE */
+    .download-card-container {
+      max-width: 820px;
+      margin: -3.5rem auto 3rem;
+      padding: 0 1.25rem;
+      position: relative;
+      z-index: 10;
+    }
+    .download-card {
+      background: #FFFFFF;
+      border: 2px solid #C59B6D;
+      border-radius: 20px;
+      box-shadow: 0 20px 45px rgba(37, 23, 16, 0.15), 0 0 30px rgba(197, 155, 109, 0.25);
+      padding: 2.75rem 2.25rem;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .download-card-header {
+      margin-bottom: 1.75rem;
+    }
+    .download-card-header .cloud-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: #FAF5EE;
+      color: #8C5F35;
+      border: 1px solid #D8CAB9;
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .download-card-title {
+      font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
+      font-size: 1.9rem;
+      color: #251710;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+    .download-card-desc {
+      color: #66564B;
+      font-size: 0.92rem;
+      max-width: 540px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    /* BOTÃO GIGANTE DE DOWNLOAD DIRETO DO DRIVE */
+    .btn-download-drive-hero {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      background: linear-gradient(135deg, #A87D4F 0%, #8C5F35 50%, #684221 100%);
+      color: #FFFFFF !important;
+      font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
+      font-size: 1.25rem;
+      font-weight: 800;
+      padding: 1.25rem 2.75rem;
+      border-radius: 14px;
+      text-decoration: none;
+      box-shadow: 0 10px 25px rgba(140, 95, 53, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      margin: 1.25rem 0 1rem;
+      width: 100%;
+      max-width: 580px;
+    }
+    .btn-download-drive-hero:hover {
+      background: linear-gradient(135deg, #B88B5B 0%, #9E744B 50%, #754E29 100%);
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 16px 36px rgba(140, 95, 53, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      color: #FFFFFF !important;
+    }
+    .btn-download-drive-hero:active {
+      transform: translateY(1px);
+    }
+    .drive-icon-svg {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+    }
+
+    /* Botões Auxiliares */
+    .auxiliary-actions-row {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 1.25rem;
+    }
+    .btn-aux-action {
+      background: #FAF5EE;
+      border: 1px solid #D8CAB9;
+      color: #352319;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.65rem 1.25rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .btn-aux-action:hover {
+      background: #F0E6D8;
+      border-color: #C59B6D;
+      color: #1F150F;
+    }
+
+    /* CARDS DE ESPECIFICAÇÃO DA ENTREGA */
+    .specs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      max-width: 1080px;
+      margin: 0 auto 3.5rem;
+      padding: 0 1.25rem;
+    }
+    .spec-card {
+      background: #FFFFFF;
+      border: 1px solid #EFE5D9;
+      border-radius: 14px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+      transition: transform 0.2s;
+    }
+    .spec-card:hover {
+      transform: translateY(-2px);
+      border-color: #D8CAB9;
+    }
+    .spec-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: #FAF5EE;
+      color: #8C5F35;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      flex-shrink: 0;
+      border: 1px solid #EAE0D5;
+    }
+    .spec-card h4 {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #251710;
+      margin-bottom: 0.25rem;
+    }
+    .spec-card p {
+      font-size: 0.8rem;
+      color: #7A6A5E;
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    /* GUIA DE INSTRUÇÕES */
+    .guide-section {
+      max-width: 960px;
+      margin: 0 auto 4rem;
+      padding: 0 1.25rem;
+    }
+    .guide-card {
+      background: #FAF5EE;
+      border: 1.5px solid #E0D3C3;
+      border-radius: 18px;
+      padding: 2.25rem;
+    }
+    .guide-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .guide-header h3 {
+      font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
+      font-size: 1.8rem;
+      color: #251710;
+      margin-bottom: 0.4rem;
+    }
+    .guide-header p {
+      font-size: 0.88rem;
+      color: #7A6A5E;
+    }
+    .guide-steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.75rem;
+    }
+    .guide-device-col {
+      background: #FFFFFF;
+      border: 1px solid #EAE0D5;
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .guide-device-col h4 {
+      font-size: 1rem;
+      color: #8C5F35;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .guide-steps-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+    .guide-steps-list li {
+      font-size: 0.85rem;
+      color: #4A3B32;
+      line-height: 1.45;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+    .step-number {
+      background: #8C5F35;
+      color: #FFF;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* PRÉVIA DAS FOTOS ENTREGUES */
+    .preview-photos-section {
+      max-width: 1200px;
+      margin: 0 auto 4.5rem;
+      padding: 0 1.25rem;
+    }
+    .preview-section-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .preview-section-header h3 {
+      font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
+      font-size: 2rem;
+      color: #251710;
+      margin-bottom: 0.3rem;
+    }
+    .preview-section-header p {
+      font-size: 0.9rem;
+      color: #7A6A5E;
+    }
+    .photos-gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1.25rem;
+    }
+    .photo-preview-item {
+      position: relative;
+      background: #FFFFFF;
+      border: 1px solid #EAE0D5;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+    .photo-preview-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 24px rgba(37, 23, 16, 0.12);
+      border-color: #C59B6D;
+    }
+    .photo-preview-item img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+    .photo-preview-item:hover img {
+      transform: scale(1.04);
+    }
+    .photo-meta-info {
+      padding: 0.65rem 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #FFFFFF;
+      border-top: 1px solid #F0E6D8;
+    }
+    .photo-number-tag {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: #352319;
+    }
+    .photo-status-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      background: #FAF5EE;
+      color: #8C5F35;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      border: 1px solid #D8CAB9;
+    }
+
+    /* CARD DE AJUDA WHATSAPP NO RODAPÉ */
+    .support-card-section {
+      max-width: 760px;
+      margin: 0 auto 5rem;
+      padding: 0 1.25rem;
+    }
+    .support-card {
+      background: linear-gradient(135deg, #1E3A2F 0%, #152720 100%);
+      color: #FAF5EE;
+      border-radius: 20px;
+      padding: 2.25rem;
+      text-align: center;
+      box-shadow: 0 15px 35px rgba(21, 39, 32, 0.25);
+    }
+    .support-card h4 {
+      font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
+      font-size: 1.7rem;
+      color: #FFFFFF;
+      margin-bottom: 0.5rem;
+    }
+    .support-card p {
+      font-size: 0.88rem;
+      color: #D0E3D9;
+      max-width: 520px;
+      margin: 0 auto 1.5rem;
+      line-height: 1.5;
+    }
+    .btn-wa-support {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: #25D366;
+      color: #FFFFFF !important;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 0.85rem 2rem;
+      border-radius: 9999px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-wa-support:hover {
+      background: #1EBE5D;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(37, 211, 102, 0.35);
+    }
+
+    /* LIGHTBOX MODAL */
+    #lightboxModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: rgba(20, 12, 8, 0.94);
+      backdrop-filter: blur(10px);
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    #lightboxModal img {
+      max-width: 90vw;
+      max-height: 85vh;
+      border-radius: 8px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+      object-fit: contain;
+    }
+    .lightbox-close-btn {
+      position: absolute;
+      top: 20px;
+      right: 25px;
+      background: none;
+      border: none;
+      font-size: 2rem;
+      color: #FAF5EE;
+      cursor: pointer;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Full-Width Fluid Wrapper -->
+  <div class="site-wrapper" id="siteWrapper">
+
+    <!-- 1. HEADER (100% FULL-WIDTH) -->
+    <header class="site-header" id="siteHeader">
+      
+      <!-- Top Bar: Subtítulo & Ornamentos -->
+      <div class="header-top-bar">
+        <div class="ornament-line" aria-hidden="true">
+          <span class="ornament-dot"></span>
+          <span class="ornament-dash"></span>
+          <span class="ornament-dot"></span>
+        </div>
+
+        <div class="header-brand-title">
+          <span class="header-brand-name">ESTÚDIO CASA DA FOTO</span>
+          <span class="header-brand-slogan">Momentos que ficam</span>
+        </div>
+
+        <div class="ornament-line" aria-hidden="true">
+          <span class="ornament-dot"></span>
+          <span class="ornament-dash"></span>
+          <span class="ornament-dot"></span>
+        </div>
+      </div>
+
+      <!-- Main Nav: Links e Logo Card Central -->
+      <div class="content-wrap">
+        <nav class="header-nav-grid" aria-label="Navegação da Entrega">
+          
+          <!-- Links da Esquerda -->
+          <div class="nav-links-left">
+            <a href="index.html" class="nav-item">Página Inicial</a>
+            <a href="index.html#sobre" class="nav-item">Sobre o Estúdio</a>
+          </div>
+
+          <!-- Card Central da Logo Oficial -->
+          <a href="index.html" class="header-logo-card" title="Ir para a Página Inicial">
+            <img src="assets/logo/logo.png" alt="Logo Casa da Foto - Estúdio Fotográfico" id="headerLogoImg">
+          </a>
+
+          <!-- Links da Direita -->
+          <div class="nav-links-right">
+            <a href="login.html" class="nav-item">Área do Cliente</a>
+            <a href="javascript:void(0)" onclick="abrirSuporteWhatsApp()" class="nav-item">Suporte WhatsApp</a>
+          </div>
+
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      
+      <!-- 2. HERO DA ENTREGA -->
+      <section class="entrega-hero-section">
+        <div class="content-wrap">
+          <div class="entrega-badge">
+            <span>✨</span> Entrega Oficial Finalizada
+          </div>
+
+          <h1 class="entrega-hero-title" id="heroTituloEntrega">
+            Sua Coleção de Fotos <span>Está Pronta!</span>
+          </h1>
+
+          <p class="entrega-hero-subtitle" id="heroSubtituloEntrega">
+            Preparamos cada arquivo com altíssima resolução e tratamento profissional. Baixe suas fotos diretamente pelo Google Drive com segurança e total fidelidade de cores.
+          </p>
+
+          <div class="entrega-meta-chips" id="entregaMetaChips">
+            <div class="entrega-meta-chip">
+              <span>👤 Cliente:</span>
+              <strong id="metaNomeCliente">Carregando...</strong>
+            </div>
+            <div class="entrega-meta-chip">
+              <span>📷 Ensaio:</span>
+              <strong id="metaTipoEnsaio">Ensaio Fotográfico</strong>
+            </div>
+            <div class="entrega-meta-chip">
+              <span>📅 Data da Sessão:</span>
+              <strong id="metaDataTrabalho">--/--/----</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. CARD PRINCIPAL DE DOWNLOAD (GOOGLE DRIVE) -->
+      <div class="download-card-container">
+        <div class="download-card" id="downloadMainCard">
+          
+          <div class="download-card-header">
+            <span class="cloud-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+              Armazenamento em Nuvem Oficial
+            </span>
+            <h2 class="download-card-title" id="downloadCardTitle">Baixar Coleção Completa</h2>
+            <p class="download-card-desc">
+              Todos os seus arquivos foram reunidos em uma pasta exclusiva no Google Drive para você baixar em um clique no computador ou celular.
+            </p>
+          </div>
+
+          <!-- BOTÃO PRINCIPAL COM LINK DIRETO DO GOOGLE DRIVE -->
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <a id="btnBaixarDrive" href="#" target="_blank" rel="noopener noreferrer" class="btn-download-drive-hero">
+              <!-- Ícone Google Drive em SVG de Alta Fidelidade -->
+              <svg class="drive-icon-svg" viewBox="0 0 87.3 78" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5l5.4 9.35z" fill="#0066DA"/>
+                <path d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3L1.2 52.85c-.8 1.4-1.2 2.95-1.2 4.5h27.5L43.65 25z" fill="#00AC47"/>
+                <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.85 10.15 7.9 13.65z" fill="#EA4335"/>
+                <path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.95 0H34.35c-1.55 0-3.1.4-4.45 1.2L43.65 25z" fill="#00832D"/>
+                <path d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.45 1.2h50.9c1.55 0 3.1-.4 4.45-1.2L59.8 53z" fill="#2684FC"/>
+                <path d="M73.4 26.5l-12.75-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.5c0-1.55-.4-3.1-1.2-4.5l-12.7-22z" fill="#FFBA00"/>
+              </svg>
+              <span>Baixar Fotos no Google Drive</span>
+              <span style="font-size: 1.4rem; opacity: 0.85;">↗</span>
+            </a>
+
+            <!-- Aviso caso o link do Drive ainda não esteja preenchido -->
+            <div id="drivePendenteAviso" style="display: none; background: #FFF8E1; border: 1.5px solid #FFE082; color: #795548; padding: 1rem 1.5rem; border-radius: 12px; font-size: 0.88rem; max-width: 580px; margin: 1rem 0; line-height: 1.5;">
+              ⏳ <strong>Upload em finalização pelo fotógrafo:</strong> O link do Google Drive está sendo preparado com os arquivos finais tratados. Se você já recebeu a confirmação por WhatsApp, entre em contato com o estúdio pelo botão abaixo.
+            </div>
+          </div>
+
+          <!-- AÇÕES AUXILIARES: COPIAR LINK E COMPARTILHAR -->
+          <div class="auxiliary-actions-row">
+            <button type="button" class="btn-aux-action" onclick="copiarLinkDrive()" id="btnCopiarLink">
+              <span>📋</span> Copiar Link do Google Drive
+            </button>
+            <button type="button" class="btn-aux-action" onclick="compartilharEntrega()" id="btnCompartilhar">
+              <span>🔗</span> Compartilhar Link da Entrega
+            </button>
+            <a href="javascript:void(0)" onclick="abrirSuporteWhatsApp()" class="btn-aux-action" style="color: #1E3A2F;">
+              <span>💬</span> Dúvidas? Falar no WhatsApp
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 4. CARDS DE ESPECIFICAÇÃO DA COLEÇÃO -->
+      <section class="specs-grid">
+        <div class="spec-card">
+          <div class="spec-icon-box">🖼️</div>
+          <div>
+            <h4 id="specTotalFotos">-- Fotos Entregues</h4>
+            <p>Arquivos finais conferidos, selecionados e prontos para uso.</p>
+          </div>
+        </div>
+
+        <div class="spec-card">
+          <div class="spec-icon-box">💎</div>
+          <div>
+            <h4>Resolução Máxima</h4>
+            <p>JPEG em 300 DPI (sRGB), perfeito para ampliações, álbuns e impressões.</p>
+          </div>
+        </div>
+
+        <div class="spec-card">
+          <div class="spec-icon-box">📱</div>
+          <div>
+            <h4>Perfeitas para Redes</h4>
+            <p>Cores calibradas para visualização nítida no celular, Instagram e WhatsApp.</p>
+          </div>
+        </div>
+
+        <div class="spec-card">
+          <div class="spec-icon-box">🛡️</div>
+          <div>
+            <h4>Segurança e Backup</h4>
+            <p>Hospedadas com segurança no Google Drive para download descomplicado.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. GUIA PASSO A PASSO: COMO BAIXAR SUAS FOTOS -->
+      <section class="guide-section">
+        <div class="guide-card">
+          <div class="guide-header">
+            <span class="preview-pill-tag">TUTORIAL SIMPLES</span>
+            <h3>Como Baixar Suas Fotos no Google Drive</h3>
+            <p>Veja como fazer o download no computador ou diretamente pelo celular.</p>
+          </div>
+
+          <div class="guide-steps-grid">
+            
+            <!-- Computador -->
+            <div class="guide-device-col">
+              <h4>💻 No Computador (PC / Mac)</h4>
+              <ul class="guide-steps-list">
+                <li>
+                  <span class="step-number">1</span>
+                  <span>Clique no botão marrom <strong>"Baixar Fotos no Google Drive"</strong> acima.</span>
+                </li>
+                <li>
+                  <span class="step-number">2</span>
+                  <span>Na página do Google Drive, clique na seta ao lado do título da pasta ou no botão superior <strong>"Fazer download de tudo"</strong>.</span>
+                </li>
+                <li>
+                  <span class="step-number">3</span>
+                  <span>O Drive compactará suas fotos em um arquivo <strong>.ZIP</strong>. Descompacte-o para guardar suas fotos no disco.</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Celular -->
+            <div class="guide-device-col">
+              <h4>📱 No Celular (Android / iPhone)</h4>
+              <ul class="guide-steps-list">
+                <li>
+                  <span class="step-number">1</span>
+                  <span>Toque no botão <strong>"Baixar Fotos no Google Drive"</strong> para abrir no app do Drive ou navegador.</span>
+                </li>
+                <li>
+                  <span class="step-number">2</span>
+                  <span>Toque nos <strong>3 pontinhos (...)</strong> ao lado da foto que deseja salvar.</span>
+                </li>
+                <li>
+                  <span class="step-number">3</span>
+                  <span>Escolha <strong>"Download"</strong> ou <strong>"Salvar no dispositivo"</strong> para enviar direto para sua galeria do celular.</span>
+                </li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. PRÉVIA DAS FOTOS ENTREGUES -->
+      <section class="preview-photos-section" id="secaoFotosEntrega">
+        <div class="preview-section-header">
+          <span class="preview-pill-tag">VISUALIZAÇÃO RÁPIDA</span>
+          <h3>Prévia das Fotos Entregues</h3>
+          <p>Clique em qualquer foto para ampliar e ver os detalhes.</p>
+        </div>
+
+        <div class="photos-gallery-grid" id="gridFotosEntrega">
+          <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: #7A6A5E;">
+            Carregando prévia das fotos...
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. CARD DE SUPORTE WHATSAPP -->
+      <section class="support-card-section">
+        <div class="support-card">
+          <h4>Precisa de Ajuda para Baixar ou Imprimir?</h4>
+          <p>Nossa equipe está pronta para orientar você a descompactar os arquivos, escolher os melhores papéis e mandar para impressão.</p>
+          <a href="javascript:void(0)" onclick="abrirSuporteWhatsApp()" class="btn-wa-support">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2z"/></svg>
+            <span>Falar com o Estúdio no WhatsApp</span>
+          </a>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER ELEGANTE -->
+    <footer class="site-footer">
+      <div class="content-wrap" style="text-align: center; padding: 2.5rem 1rem;">
+        <div style="display: flex; justify-content: center; align-items: center; gap: 0.8rem; margin-bottom: 0.75rem;">
+          <img src="assets/logo/logo.png" alt="Logo Casa da Foto" style="height: 38px; filter: brightness(0) invert(1);">
+          <strong style="color: #FAF5EE; letter-spacing: 0.05em;">CASA DA FOTO STUDIO</strong>
+        </div>
+        <p style="color: #B5A496; font-size: 0.82rem; margin-bottom: 0.5rem;">Momentos que ficam · Todos os direitos reservados</p>
+        <a href="index.html" style="color: #C59B6D; font-size: 0.8rem; text-decoration: none;">← Voltar para a Página Inicial</a>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- LIGHTBOX MODAL -->
+  <div id="lightboxModal" onclick="fecharLightbox(event)">
+    <button class="lightbox-close-btn" onclick="fecharLightbox(event)">✕</button>
+    <img id="lightboxImg" src="" alt="Foto em alta resolução">
+  </div>
+
+  <script src="app.js?v=luxo4"></script>
+  <script>
+    // Lógica da Página de Entrega
+    let entregaData = null;
+
+    function getParametroUrl(nome) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(nome) || '';
+    }
+
+    async function carregarDadosEntrega() {
+      const galId = getParametroUrl('id') || getParametroUrl('galeria') || getParametroUrl('projeto_id') || '1';
+      
+      try {
+        const res = await fetch(`/api/entrega/${galId}`);
+        const data = await res.json();
+        
+        if (!data || !data.success) {
+          throw new Error(data.error || 'Entrega não encontrada');
+        }
+
+        entregaData = data;
+        renderizarEntrega(data);
+      } catch (err) {
+        console.warn('Erro ao carregar entrega pela API dedicada, tentando fallback:', err);
+        tentarCarregarFallback(galId);
+      }
+    }
+
+    async function tentarCarregarFallback(galId) {
+      try {
+        const [resGal, resFotos] = await Promise.all([
+          fetch(`/api/galeria/${galId}`),
+          fetch(`/api/galeria/${galId}/fotos`)
+        ]);
+        const gal = await resGal.json();
+        const fotos = await resFotos.json();
+
+        entregaData = {
+          success: true,
+          galeria: gal,
+          fotos: Array.isArray(fotos) ? fotos : [],
+          total_fotos: Array.isArray(fotos) ? fotos.length : 0,
+          link_drive: gal.link_drive || '',
+          contato: {
+            whatsapp: '(11) 98765-4321',
+            email: 'contato@casadafoto.com',
+            nome_estudio: 'Casa da Foto Studio'
+          }
+        };
+
+        renderizarEntrega(entregaData);
+      } catch (e) {
+        console.error('Falha geral ao carregar dados:', e);
+        document.getElementById('heroTituloEntrega').textContent = 'Entrega de Fotos';
+        document.getElementById('metaNomeCliente').textContent = 'Cliente Casa da Foto';
+        document.getElementById('drivePendenteAviso').style.display = 'block';
+        const grid = document.getElementById('gridFotosEntrega');
+        if (grid) {
+          grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem; background: #FFF; border: 1.5px dashed #D8CAB9; border-radius: 12px; color: #7A6A5E;">
+              📸 Entrega em preparação ou ID não localizado. Se necessário, confirme o link com o estúdio pelo botão de WhatsApp abaixo.
+            </div>
+          `;
+        }
+      }
+    }
+
+    function renderizarEntrega(data) {
+      const gal = data.galeria || {};
+      const proj = data.projeto || {};
+      const linkDrive = (data.link_drive || gal.link_drive || '').trim();
+
+      // Metadados do Cliente e Ensaio
+      const nomeCliente = proj.nome_cliente || 'Cliente Especial';
+      document.getElementById('metaNomeCliente').textContent = nomeCliente;
+      document.getElementById('metaTipoEnsaio').textContent = proj.tipo_ensaio || gal.categoria || 'Ensaio Fotográfico';
+      document.getElementById('metaDataTrabalho').textContent = gal.data_trabalho || 'Outubro 2026';
+
+      // Título personalizado
+      document.getElementById('heroTituloEntrega').innerHTML = `Entrega de Fotos · <span>${nomeCliente}</span>`;
+
+      // Botão Google Drive
+      const btnDrive = document.getElementById('btnBaixarDrive');
+      const avisoPendente = document.getElementById('drivePendenteAviso');
+
+      if (linkDrive && linkDrive.length > 5) {
+        btnDrive.href = linkDrive;
+        btnDrive.target = '_blank';
+        btnDrive.style.display = 'inline-flex';
+        btnDrive.classList.remove('disabled');
+        avisoPendente.style.display = 'none';
+      } else {
+        btnDrive.href = 'javascript:void(0)';
+        btnDrive.removeAttribute('target');
+        btnDrive.onclick = () => {
+          showToast('O fotógrafo está concluindo o envio para o Drive. Fale no WhatsApp para receber o link.', 'error');
+        };
+        avisoPendente.style.display = 'block';
+      }
+
+      // Estatísticas
+      const total = data.total_fotos || (data.fotos ? data.fotos.length : 0);
+      document.getElementById('specTotalFotos').textContent = `${total} Fotos Entregues`;
+
+      // Renderiza Grid de Fotos
+      renderizarFotosGrid(data.fotos || []);
+    }
+
+    function renderizarFotosGrid(fotos) {
+      const grid = document.getElementById('gridFotosEntrega');
+      if (!grid) return;
+
+      if (!fotos || fotos.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: #FFF; border: 1px dashed #D8CAB9; border-radius: 12px; color: #7A6A5E;">
+            📸 Suas fotos em alta resolução estão todas reunidas no Google Drive pelo botão acima.
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = fotos.map((f, idx) => {
+        const src = f.arquivo || 'assets/logo/logo.png';
+        const num = f.numero || `Foto ${(idx + 1).toString().padStart(3, '0')}`;
+        const titulo = f.titulo || 'Alta Resolução';
+        return `
+          <div class="photo-preview-item" onclick="abrirLightbox('${src}')">
+            <img src="${src}" alt="${num}" loading="lazy" onerror="this.src='assets/logo/logo.png'">
+            <div class="photo-meta-info">
+              <span class="photo-number-tag">${num}</span>
+              <span class="photo-status-badge">✓ Liberada</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function copiarLinkDrive() {
+      const link = (entregaData && (entregaData.link_drive || (entregaData.galeria && entregaData.galeria.link_drive))) || '';
+      if (!link) {
+        showToast('Link do Google Drive ainda não foi cadastrado pelo fotógrafo.', 'error');
+        return;
+      }
+      navigator.clipboard.writeText(link).then(() => {
+        showToast('✓ Link do Google Drive copiado para a área de transferência!');
+      }).catch(() => {
+        prompt('Copie o link do Drive abaixo:', link);
+      });
+    }
+
+    function compartilharEntrega() {
+      const url = window.location.href;
+      if (navigator.share) {
+        navigator.share({
+          title: 'Entrega de Fotos - Casa da Foto Studio',
+          text: 'Acesse e baixe as fotos do nosso ensaio no Google Drive:',
+          url: url
+        }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(url).then(() => {
+          showToast('✓ Link da página de entrega copiado para compartilhar!');
+        });
+      }
+    }
+
+    function abrirSuporteWhatsApp() {
+      const whats = (entregaData && entregaData.contato && entregaData.contato.whatsapp) || '11987654321';
+      const cleanPhone = whats.replace(/\D/g, '');
+      const nomeCli = (entregaData && entregaData.projeto && entregaData.projeto.nome_cliente) || 'Cliente';
+      const msg = encodeURIComponent(`Olá Casa da Foto Studio! Sou ${nomeCli} e estou na página de entrega das fotos. Gostaria de tirar uma dúvida.`);
+      window.open(`https://wa.me/55${cleanPhone}?text=${msg}`, '_blank');
+    }
+
+    function abrirLightbox(src) {
+      const modal = document.getElementById('lightboxModal');
+      const img = document.getElementById('lightboxImg');
+      if (modal && img) {
+        img.src = src;
+        modal.style.display = 'flex';
+      }
+    }
+
+    function fecharLightbox(e) {
+      if (e.target.id === 'lightboxModal' || e.target.classList.contains('lightbox-close-btn')) {
+        document.getElementById('lightboxModal').style.display = 'none';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      carregarDadosEntrega();
+    });
+  </script>
+</body>
+</html>

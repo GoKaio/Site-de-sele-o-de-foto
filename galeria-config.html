@@ -37,8 +37,8 @@
         <nav class="admin-nav-center" aria-label="Navegação do Painel">
           <a href="index.html" class="nav-item">Início</a>
           <a href="projetos.html" class="nav-item active-nav">Projetos</a>
-          <a href="#clientes-menu" class="nav-item">Clientes</a>
-          <a href="#config-menu" class="nav-item">Configurações</a>
+          <a href="#clientes" class="nav-item">Clientes</a>
+          <a href="#dados" class="nav-item">Configurações</a>
         </nav>
 
         <!-- Ações do Fotógrafo (Direita) -->
@@ -123,6 +123,14 @@
           </li>
         </ul>
 
+        <!-- Botão Rápido para a Página de Entrega de Fotos -->
+        <div style="padding: 0 0.5rem; margin-top: 0.5rem;">
+          <a href="entrega.html" id="btnSidebarVerEntrega" target="_blank" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: linear-gradient(135deg, #FAF5EE 0%, #F5ECE1 100%); border: 1.5px solid #C59B6D; border-radius: 12px; color: #352319; text-decoration: none; font-size: 0.82rem; font-weight: 700; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+            <span style="display: flex; align-items: center; gap: 0.5rem;">🎁 Página de Entrega (Drive)</span>
+            <span style="color:#C59B6D; font-size: 1rem;">↗</span>
+          </a>
+        </div>
+
         <!-- Card de Ajuda no Rodapé da Sidebar -->
         <div class="sidebar-help-card">
           <strong>Cada detalhe, com cuidado.</strong>
@@ -143,14 +151,31 @@
           <span class="admin-badge-demo">Demonstração · sem valores comerciais</span>
         </div>
 
-        <div class="admin-header-action-row">
+        <div class="admin-header-action-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.85rem;">
           <div>
             <h1 class="admin-page-title" id="pageTitle">Dados da galeria</h1>
             <p class="admin-page-subtitle" id="pageSubtitle">Organize as informações e a mensagem que acolhe o cliente na galeria.</p>
           </div>
-          <a href="escolha-fotos.html?previa=true" class="btn-previa-cliente">
-            <span>👁 Prévia do cliente</span>
-          </a>
+          <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 6px; background: #FFFFFF; border: 1.5px solid #D8CAB9; padding: 4px 10px; border-radius: 10px;">
+              <span style="font-size: 0.76rem; font-weight: 700; color: #5C4A3E;">Status:</span>
+              <select id="selectStatusGaleriaConfig" onchange="window.salvarStatusGaleriaDireto(this.value)" style="border: none; background: transparent; font-size: 0.82rem; font-weight: 800; color: #8C5F35; cursor: pointer; outline: none;">
+                <option value="Aguardando seleção">Aguardando seleção</option>
+                <option value="Seleção em andamento">Seleção em andamento</option>
+                <option value="Seleção enviada">Seleção enviada</option>
+                <option value="Em análise pelo fotógrafo">Em análise pelo fotógrafo</option>
+                <option value="Liberada para ajustes">Liberada para ajustes</option>
+                <option value="Pronta para entrega">Pronta para entrega</option>
+                <option value="Finalizada">Finalizada</option>
+              </select>
+            </div>
+            <button type="button" id="btnToggleBloqueioConfig" onclick="window.alternarBloqueioGaleriaAtual()" class="btn-liberar-ajustes" style="display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 9999px; font-size: 0.78rem; font-weight: 800; cursor: pointer; border: none; transition: all 0.2s; background: #2E7D32; color: #FFF;" title="Clique para liberar ou bloquear alterações pelo cliente">
+              🔓 Liberar para Ajustes
+            </button>
+            <a href="escolha-fotos.html?previa=true" class="btn-previa-cliente">
+              <span>👁 Prévia do cliente</span>
+            </a>
+          </div>
         </div>
 
         <!-- ====================================================================
@@ -532,7 +557,7 @@
                     <li>Preparar os arquivos de entrega.</li>
                   </ol>
                 </div>
-                <button type="button" class="btn-salvar-admin" style="width: 100%; justify-content: center;">📋 Preparar revisão</button>
+                <button type="button" onclick="prepararRevisaoGaleria()" class="btn-salvar-admin" style="width: 100%; justify-content: center;">📋 Preparar revisão</button>
               </div>
 
               <div class="admin-info-box-note">
@@ -954,7 +979,7 @@
                   <label class="field-label">Mensagem do convite</label>
                   <textarea class="field-textarea">Olá! Compartilhamos esta galeria para você acompanhar os momentos do nosso ensaio. A escolha das fotos fica com o destinatário principal.</textarea>
                 </div>
-                <button type="button" class="btn-salvar-admin" id="btnPrepararNovoConvite">✉ Preparar convite</button>
+                <button type="button" onclick="prepararNovoConviteForm()" class="btn-salvar-admin" id="btnPrepararNovoConvite">✉ Preparar convite</button>
                 <span class="field-hint-caption" style="margin-top: 0.5rem;">Cadastra o convite no banco de dados da galeria.</span>
               </div>
             </div>
@@ -977,7 +1002,7 @@
                   </div>
                   <label class="switch-toggle"><input type="checkbox" checked><span class="switch-slider"></span></label>
                 </div>
-                <button type="button" class="btn-salvar-admin" style="width: 100%; justify-content: center;">✈ Reenviar convite</button>
+                <button type="button" onclick="reenviarConviteCliente()" class="btn-salvar-admin" style="width: 100%; justify-content: center;">✈ Reenviar convite</button>
               </div>
 
               <div class="admin-info-box-note">
@@ -994,6 +1019,42 @@
         <div class="tab-pane" id="tab-download" style="display: none;">
           <div class="admin-form-two-col">
             <div>
+              <!-- Bloco 0: Entrega de Fotos no Google Drive (Download pelo Link) -->
+              <div class="admin-card-panel" style="border: 2px solid #C59B6D; background: #FFFDF9; margin-bottom: 1.5rem; box-shadow: 0 4px 18px rgba(197, 155, 109, 0.12);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                  <h3 class="panel-title" style="margin: 0; display: flex; align-items: center; gap: 0.5rem; color: #2D1D14;">
+                    <span style="font-size: 1.4rem;">📥</span> Link do Google Drive para Entrega das Fotos
+                  </h3>
+                  <span class="preview-pill-tag" style="background: #FAF5EE; color: #8C5F35; border: 1px solid #D8CAB9; font-weight: 700;">Google Drive Nuvem</span>
+                </div>
+                <p class="panel-desc" style="margin-bottom: 1.25rem;">
+                  Insira o link da pasta ou do arquivo ZIP no Google Drive com as fotos finais em alta resolução. O cliente poderá baixar tudo com um clique através da página oficial de entrega.
+                </p>
+
+                <div class="form-field-group">
+                  <label class="field-label" style="font-weight: 700; color: #352319;">URL da Pasta ou Arquivo no Google Drive</label>
+                  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <input type="url" id="inputLinkGoogleDrive" class="field-input" placeholder="https://drive.google.com/drive/folders/..." style="flex: 1; min-width: 260px; font-family: monospace; font-size: 0.88rem;">
+                    <button type="button" onclick="salvarLinkDrive()" id="btnSalvarLinkDrive" class="btn-salvar-admin" style="background: #8C5F35; color: #FFF; border: none; font-weight: 700; white-space: nowrap; padding: 0.65rem 1.4rem;">
+                      ✓ Salvar Link do Drive
+                    </button>
+                  </div>
+                  <span class="field-hint-caption" style="margin-top: 0.5rem;">Exemplo: Link compartilhado do Google Drive com acesso "Qualquer pessoa com o link pode ler/baixar".</span>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px dashed #E0D3C3;">
+                  <button type="button" onclick="abrirPaginaEntrega()" class="btn-salvar-admin" style="background: #352319; color: #FAF5EE; border: none; font-weight: 700; padding: 0.65rem 1.25rem;">
+                    🎁 Abrir Página de Entrega ↗
+                  </button>
+                  <button type="button" onclick="copiarLinkPaginaEntrega()" style="background: #FAF5EE; border: 1px solid #D8CAB9; color: #352319; font-weight: 600; padding: 0.65rem 1.15rem; border-radius: 8px; cursor: pointer;">
+                    📋 Copiar Link da Entrega
+                  </button>
+                  <button type="button" onclick="enviarEntregaWhatsApp()" style="background: #25D366; border: none; color: #FFF; font-weight: 700; padding: 0.65rem 1.25rem; border-radius: 8px; cursor: pointer;">
+                    🟢 Enviar Entrega no WhatsApp
+                  </button>
+                </div>
+              </div>
+
               <!-- Bloco 1: Disponibilidade dos arquivos -->
               <div class="admin-card-panel">
                 <h3 class="panel-title">Disponibilidade dos arquivos</h3>
@@ -1093,6 +1154,22 @@
 
             <!-- Coluna Direita -->
             <div class="admin-side-cards-col">
+              <div class="admin-preview-box" style="border: 1.5px solid #C59B6D; background: #FFFDF9;">
+                <h4 style="color: #2D1D14; font-size: 1rem;">Página de Entrega Oficial</h4>
+                <div style="font-size: 2.2rem; margin-bottom: 0.4rem;">🎁</div>
+                <span class="preview-pill-tag" style="background: #E8F8F0; color: #1E8E5A; border: 1px solid #A3E9C7; font-weight: 700;">Pronto para o Cliente</span>
+                <strong style="display: block; font-size: 1.1rem; color: var(--text-dark); margin: 0.5rem 0;">Download via Google Drive</strong>
+                <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 1rem;">
+                  Página personalizada com o nome do cliente, prévia das fotos, instruções passo a passo para computador e celular e botão direto para o Drive.
+                </p>
+                <button type="button" onclick="abrirPaginaEntrega()" class="btn-salvar-admin" style="width: 100%; justify-content: center; background: #352319; color: #FFF; border: none; margin-bottom: 0.5rem;">
+                  Ver Página do Cliente ↗
+                </button>
+                <button type="button" onclick="copiarLinkPaginaEntrega()" style="width: 100%; justify-content: center; background: #FAF5EE; border: 1px solid #D8CAB9; color: #352319; font-weight: 600; padding: 0.6rem; border-radius: 8px; cursor: pointer; font-size: 0.78rem; display: flex; align-items: center; gap: 0.4rem;">
+                  📋 Copiar Link da Entrega
+                </button>
+              </div>
+
               <div class="admin-preview-box">
                 <h4>Prévia da entrega</h4>
                 <div style="font-size: 2rem; margin-bottom: 0.4rem;">📁</div>
@@ -1131,7 +1208,7 @@
                     <span>Escolha de fotos</span>
                   </div>
                   <div style="padding: 1.25rem; display: flex; gap: 1rem; align-items: center; border-bottom: 1px solid #EFE6DC;">
-                    <img src="assets/images/familia.jpg" style="width: 140px; height: 90px; object-fit: cover; border-radius: 8px;">
+                    <img src="assets/images/familia.jpg" onerror="this.src='assets/logo/logo.png'" alt="Amostra Família" style="width: 140px; height: 90px; object-fit: cover; border-radius: 8px;">
                     <div>
                       <span class="preview-pill-tag">Exemplo de seleção</span>
                       <strong style="display: block; font-size: 1.1rem; color: var(--text-dark);">Escolha os momentos que ficam.</strong>
@@ -1139,9 +1216,9 @@
                     </div>
                   </div>
                   <div style="padding: 1rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
-                    <div><img src="assets/images/familia.jpg" style="width: 100%; height: 60px; object-fit: cover; border-radius: 6px;"><div style="font-size: 0.68rem; margin-top: 2px;">Foto 001</div></div>
-                    <div><img src="assets/images/gestante.jpg" style="width: 100%; height: 60px; object-fit: cover; border-radius: 6px;"><div style="font-size: 0.68rem; margin-top: 2px;">Foto 002</div></div>
-                    <div><img src="assets/images/bebe.jpg" style="width: 100%; height: 60px; object-fit: cover; border-radius: 6px;"><div style="font-size: 0.68rem; margin-top: 2px;">Foto 003</div></div>
+                    <div><img src="assets/images/familia.jpg" onerror="this.src='assets/logo/logo.png'" alt="Foto 001" style="width: 100%; height: 60px; object-fit: cover; border-radius: 6px;"><div style="font-size: 0.68rem; margin-top: 2px;">Foto 001</div></div>
+                    <div><img src="assets/images/gestante.jpg" onerror="this.src='assets/logo/logo.png'" alt="Foto 002" style="width: 100%; height: 60px; object-fit: cover; border-radius: 6px;"><div style="font-size: 0.68rem; margin-top: 2px;">Foto 002</div></div>
+                    <div><img src="assets/images/bebe.jpg" onerror="this.src='assets/logo/logo.png'" alt="Foto 003" style="width: 100%; height: 60px; object-fit: cover; border-radius: 6px;"><div style="font-size: 0.68rem; margin-top: 2px;">Foto 003</div></div>
                   </div>
                 </div>
                 <span class="field-hint-caption">A capa usa a imagem original. A composição mantém o enquadramento do estúdio.</span>

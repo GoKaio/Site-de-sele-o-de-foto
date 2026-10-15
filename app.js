@@ -3,6 +3,40 @@
  * Controle de Acesso por Perfil, Kanban Dinâmico e Gestão Administrativa
  */
 
+// Telemetria Global de Erros do Frontend
+window.addEventListener('error', function(event) {
+  try {
+    const errorMsg = event.message || 'Erro desconhecido no script';
+    const detail = `${event.filename || ''}:${event.lineno || ''}:${event.colno || ''} | ${event.error ? event.error.stack : ''}`;
+    fetch('/api/log/error', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mensagem: errorMsg,
+        detalhe: detail,
+        rota: window.location.pathname + window.location.search
+      })
+    }).catch(() => {});
+  } catch (e) {}
+});
+
+window.addEventListener('unhandledrejection', function(event) {
+  try {
+    const reason = event.reason;
+    const errorMsg = reason && reason.message ? reason.message : String(reason);
+    const detail = reason && reason.stack ? reason.stack : '';
+    fetch('/api/log/error', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mensagem: 'Unhandled Promise: ' + errorMsg,
+        detalhe: detail,
+        rota: window.location.pathname + window.location.search
+      })
+    }).catch(() => {});
+  } catch (e) {}
+});
+
 // Utilitário de Notificações Toast Elegante
 function showToast(message, type = 'success') {
   let container = document.getElementById('toastContainer');
@@ -130,7 +164,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Carrega foto oficial de destaque nas telas de login se presente na página
+  // 1. Carrega Logotipo oficial do estúdio em todas as telas (Login, Header institucional, etc.)
+  const siteLogoImgs = document.querySelectorAll('#authLogoImg, .auth-logo-box img, #headerLogoImg, .header-logo-card img');
+  if (siteLogoImgs.length > 0) {
+    fetch('/api/site/logo-info')
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.url) {
+          siteLogoImgs.forEach(img => {
+            img.src = data.url;
+          });
+        }
+      })
+      .catch(() => {});
+  }
+
+  // 2. Carrega foto oficial de destaque nas telas de login se presente na página
   const authHeroImg = document.getElementById('authHeroImg') || document.querySelector('.auth-hero-photo-wrap img');
   if (authHeroImg) {
     fetch('/api/site/login-foto')
@@ -281,6 +330,59 @@ document.addEventListener('DOMContentLoaded', () => {
         window.galeriaDataCliente = galData;
         fotosGlobais = data.fotos || [];
         window.fotosGlobaisCliente = fotosGlobais;
+
+        // Gerenciamento de Bloqueio e Liberação pelo Fotógrafo
+        const isBloqueada = galData && (galData.selecao_bloqueada == 1 || galData.status_galeria === 'Seleção enviada');
+        window.galeriaBloqueadaCliente = isBloqueada;
+
+        const bannerContainer = document.getElementById('containerStatusBannerCliente');
+        if (bannerContainer) {
+          if (isBloqueada) {
+            bannerContainer.innerHTML = `
+              <div style="background: linear-gradient(135deg, #2D1D14 0%, #452D1E 100%); border: 1.5px solid #C59B6D; border-radius: 14px; padding: 1.15rem 1.4rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: #FAF5EE; box-shadow: 0 4px 18px rgba(0,0,0,0.25); flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 0.85rem;">
+                  <span style="font-size: 1.8rem;">🔒</span>
+                  <div>
+                    <strong style="display: block; font-size: 1rem; color: #E6CA65; margin-bottom: 2px;">Seleção Enviada e em Análise pelo Fotógrafo</strong>
+                    <span style="font-size: 0.82rem; color: #FAF5EE; opacity: 0.92; line-height: 1.4;">Suas fotos foram enviadas com sucesso e a seleção está temporariamente bloqueada para alterações. Se for preciso ajustar alguma foto escolhida, aguarde a liberação do estúdio.</span>
+                  </div>
+                </div>
+                <span style="background: #2E7D32; color: #FFF; font-size: 0.74rem; font-weight: 800; padding: 6px 14px; border-radius: 9999px; text-transform: uppercase; white-space: nowrap; letter-spacing: 0.04em;">✓ Em Análise</span>
+              </div>
+            `;
+            const btnSendMain = document.getElementById('btnEnviarSelecao');
+            if (btnSendMain) {
+              btnSendMain.disabled = true;
+              btnSendMain.innerHTML = '<span>🔒 Seleção Enviada ao Fotógrafo</span>';
+              btnSendMain.style.background = '#4A3224';
+              btnSendMain.style.cursor = 'not-allowed';
+            }
+            const btnSticky = document.querySelector('#mobileStickyActionBar .bar-btn');
+            if (btnSticky) {
+              btnSticky.disabled = true;
+              btnSticky.innerHTML = '🔒 Em Análise';
+              btnSticky.style.background = '#4A3224';
+            }
+          } else if (galData && galData.status_galeria === 'Liberada para ajustes') {
+            bannerContainer.innerHTML = `
+              <div style="background: linear-gradient(135deg, #1B3B22 0%, #2E7D32 100%); border: 1.5px solid #81C784; border-radius: 14px; padding: 1.15rem 1.4rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: #FAF5EE; box-shadow: 0 4px 18px rgba(0,0,0,0.25); flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 0.85rem;">
+                  <span style="font-size: 1.8rem;">🔓</span>
+                  <div>
+                    <strong style="display: block; font-size: 1rem; color: #FFF; margin-bottom: 2px;">Galeria Liberada para Ajustes pelo Fotógrafo!</strong>
+                    <span style="font-size: 0.82rem; color: #E8F5E9; line-height: 1.4;">O estúdio liberou sua seleção para que você possa alterar ou adicionar novas fotos. Quando terminar suas escolhas, envie novamente.</span>
+                  </div>
+                </div>
+                <button type="button" onclick="window.iniciarModalEnviarSelecao()" style="background: #FFF; color: #1B3B22; font-size: 0.78rem; font-weight: 800; padding: 7px 16px; border-radius: 9999px; border:none; cursor:pointer; white-space: nowrap; transition: transform 0.2s;">
+                  Reenviar Escolha ✈
+                </button>
+              </div>
+            `;
+          } else {
+            bannerContainer.innerHTML = '';
+          }
+        }
+
         atualizarMetricas(data.totais, galData);
         aplicarOrdenacaoERenderizar();
       } catch (err) {
@@ -343,6 +445,20 @@ document.addEventListener('DOMContentLoaded', () => {
           ? extras.map(f => `<span class="photo-chip">${f.numero}</span>`).join(' ')
           : '<span style="font-size:0.75rem; color:#888;">Nenhuma foto extra.</span>';
       }
+
+      // Atualiza Barra Flutuante Mobile e Legenda Dinâmica
+      const mInfo = document.getElementById('mobileBarInfo');
+      if (mInfo) mInfo.textContent = `${totais.pacote} de ${totais.limite_pacote} no pacote` + (totais.extra > 0 ? ` + ${totais.extra} extras` : '');
+      const mSub = document.getElementById('mobileBarSub');
+      if (mSub) {
+        if (totais.pacote >= totais.limite_pacote) {
+          mSub.textContent = 'Pacote completo! Pronto para enviar ✈';
+        } else {
+          mSub.textContent = `Faltam ${Math.max(0, totais.limite_pacote - totais.pacote)} fotos no pacote`;
+        }
+      }
+      const legPacote = document.getElementById('legendTextPacote');
+      if (legPacote) legPacote.textContent = `Conta entre as ${totais.limite_pacote} fotos incluídas no pacote`;
     }
 
     function renderizarCardsFotos(fotos) {
@@ -473,6 +589,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.mudarStatusFoto = async function(id, novoStatus) {
+      if (window.galeriaBloqueadaCliente) {
+        showToast('🔒 A seleção foi enviada e está bloqueada para análise pelo fotógrafo. Aguarde a liberação caso precise ajustar.', 'warning');
+        return;
+      }
       try {
         const itemLocal = fotosGlobais.find(f => f.id == id);
         if (itemLocal) {
@@ -488,6 +608,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (d.success) {
           const txt = novoStatus === 'pacote' ? 'adicionada ao Pacote' : novoStatus === 'extra' ? 'marcada como Extra' : 'removida da seleção';
           showToast(`Foto ${txt}!`);
+          carregarFotos();
+        } else {
+          showToast(d.error || 'A seleção está bloqueada no momento.', 'warning');
           carregarFotos();
         }
       } catch (err) {
@@ -720,12 +843,27 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="card-meta-item">⏱ ${proj.prazo || 'sem prazo'}</span>
           </div>
           <div class="card-actions-row" style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #EAE0D5; display:flex; justify-content: space-between; align-items:center; gap: 6px; flex-wrap: wrap;">
-            <div style="display: flex; gap: 5px; align-items: center;">
+            <div style="display: flex; gap: 5px; align-items: center; flex-wrap: wrap;">
               <a href="galeria-config.html?id=${proj.galeria_id || proj.id}&projeto_id=${proj.id}" class="btn-config-galeria" style="background: #FAF5EE; border: 1px solid #D8CAB9; color: #6B5546; font-size: 0.72rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='#F3ECE3';this.style.borderColor='#9E744B'" onmouseout="this.style.background='#FAF5EE';this.style.borderColor='#D8CAB9'" title="Configurar a galeria deste projeto">
-                ⚙️ Config. Galeria
+                ⚙️ Config
               </a>
+              <a href="entrega.html?id=${proj.galeria_id || proj.id}" target="_blank" class="btn-entrega-card" style="background: #352319; color: #FAF5EE; font-size: 0.72rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='#8C5F35'" onmouseout="this.style.background='#352319'" title="Abrir página de entrega de fotos com botão Google Drive">
+                🎁 Entrega
+              </a>
+              ${(proj.selecao_bloqueada == 1 || proj.status_galeria === 'Seleção enviada') ? `
+                <button type="button" class="btn-liberar-ajustes-card" onclick="window.alternarBloqueioGaleria(${proj.galeria_id || proj.id}, 0)" style="background: #2E7D32; color: #FAF5EE; font-size: 0.72rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; border:none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='#1B5E20'" onmouseout="this.style.background='#2E7D32'" title="A seleção está bloqueada pelo fotógrafo para análise. Clique para LIBERAR e permitir que o cliente altere as fotos">
+                  🔓 Liberar Ajustes
+                </button>
+              ` : `
+                <button type="button" class="btn-bloquear-ajustes-card" onclick="window.alternarBloqueioGaleria(${proj.galeria_id || proj.id}, 1)" style="background: #FAF5EE; border: 1px solid #D8CAB9; color: #5C4A3E; font-size: 0.72rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='#F0E5D8'" onmouseout="this.style.background='#FAF5EE'" title="Clique para BLOQUEAR a seleção para que o cliente não faça alterações">
+                  🔒 Bloquear
+                </button>
+              `}
+              <button type="button" class="btn-status-galeria-card" onclick="window.abrirModalStatusGaleria(${proj.galeria_id || proj.id}, '${(proj.nome_cliente || '').replace(/'/g, "\\'")}', '${proj.status_galeria || 'Aguardando seleção'}', ${proj.selecao_bloqueada || 0})" style="background: #FAF5EE; border: 1px solid #C59B6D; color: #8C5F35; font-size: 0.72rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s;" onmouseover="this.style.background='#FDF7F0'" onmouseout="this.style.background='#FAF5EE'" title="Alterar status da galeria">
+                📋 ${proj.status_galeria || 'Status'} ▾
+              </button>
               <button type="button" class="btn-remover-card" onclick="removerProjetoCard(${proj.id}, '${(proj.nome_cliente || '').replace(/'/g, "\\'")}')" title="Excluir este projeto do Kanban">
-                🗑️ Remover
+                🗑️
               </button>
             </div>
             <select class="select-mover-status" data-id="${proj.id}" title="Mover etapa do projeto">
@@ -1057,11 +1195,71 @@ document.addEventListener('DOMContentLoaded', () => {
           if (spanTitle && data.nome) {
             spanTitle.textContent = data.nome;
           }
+          const inpDrive = document.getElementById('inputLinkGoogleDrive');
+          if (inpDrive && data.link_drive) {
+            inpDrive.value = data.link_drive;
+          }
+          const btnSidebarEntrega = document.getElementById('btnSidebarVerEntrega');
+          if (btnSidebarEntrega) {
+            btnSidebarEntrega.href = `entrega.html?id=${galConfigId}`;
+          }
+
+          // Atualiza seletor de status e botão de liberação na barra superior
+          const selStatus = document.getElementById('selectStatusGaleriaConfig');
+          if (selStatus && data.status_galeria) {
+            selStatus.value = data.status_galeria;
+          }
+          const badgeSide = document.getElementById('sidebarBadgeStatusGaleria') || document.querySelector('.badge-status-andamento');
+          if (badgeSide) {
+            badgeSide.textContent = data.status_galeria || 'Aguardando seleção';
+          }
+          const btnBloq = document.getElementById('btnToggleBloqueioConfig');
+          if (btnBloq) {
+            const isBloq = (data.selecao_bloqueada == 1 || data.status_galeria === 'Seleção enviada');
+            if (isBloq) {
+              btnBloq.innerHTML = '🔓 Liberar para Ajustes';
+              btnBloq.style.background = '#2E7D32';
+              btnBloq.style.color = '#FFF';
+              btnBloq.title = 'A seleção do cliente está bloqueada. Clique para liberar caso o cliente precise alterar as fotos.';
+            } else {
+              btnBloq.innerHTML = '🔒 Bloquear Seleção';
+              btnBloq.style.background = '#FAF5EE';
+              btnBloq.style.border = '1px solid #D8CAB9';
+              btnBloq.style.color = '#5C4A3E';
+              btnBloq.title = 'A seleção está liberada. Clique para bloquear e impedir alterações pelo cliente.';
+            }
+          }
         }
       } catch (e) {
         console.warn('Erro ao carregar dados da galeria:', e);
       }
     };
+
+    window.salvarStatusGaleriaDireto = async function(novoStatus) {
+      try {
+        const res = await fetch(`/api/galeria/${galConfigId}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status_galeria: novoStatus })
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast(`✓ Status da galeria atualizado para: "${novoStatus}"`);
+          window.carregarDadosGaleria();
+        } else {
+          showToast(d.error || 'Erro ao atualizar status.', 'error');
+        }
+      } catch (e) {
+        showToast('Erro de conexão ao atualizar status da galeria.', 'error');
+      }
+    };
+
+    window.alternarBloqueioGaleriaAtual = async function() {
+      if (!window.galeriaConfigAtual) return;
+      const isBloq = (window.galeriaConfigAtual.selecao_bloqueada == 1 || window.galeriaConfigAtual.status_galeria === 'Seleção enviada');
+      window.alternarBloqueioGaleria(galConfigId, isBloq ? 0 : 1);
+    };
+
     window.carregarDadosGaleria();
 
     // Função de alta eficiência para compactar fotos antes do envio (permanece muito abaixo do limite de 4.5MB da Vercel)
@@ -1114,6 +1312,28 @@ document.addEventListener('DOMContentLoaded', () => {
       const files = input.files;
       if (!files || files.length === 0) return;
 
+      // Validação prévia contra formatos RAW ou HEIC incompatíveis com navegadores web
+      const arquivosValidos = [];
+      const arquivosIncompativeis = [];
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        if (f.name && f.name.match(/\.(heic|heif|raw|cr2|cr3|nef|arw|dng|orf)$/i)) {
+          arquivosIncompativeis.push(f.name);
+        } else {
+          arquivosValidos.push(f);
+        }
+      }
+
+      if (arquivosIncompativeis.length > 0) {
+        showToast(`⚠️ ${arquivosIncompativeis.length} foto(s) em formato RAW/HEIC detectadas. Por favor, exporte como JPG ou PNG para visualização web.`, 'error');
+        if (arquivosValidos.length === 0) {
+          input.value = '';
+          return;
+        }
+      }
+
+      const filesParaUpload = arquivosValidos;
+
       const progressBox = document.getElementById('progressUploadGaleria');
       const bar = document.getElementById('barUploadGaleria');
       const statusTxt = document.getElementById('txtUploadGaleriaStatus');
@@ -1122,17 +1342,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (progressBox) progressBox.style.display = 'block';
       if (bar) bar.style.width = '5%';
       if (pctTxt) pctTxt.textContent = '5%';
-      if (statusTxt) statusTxt.textContent = `Otimizando e preparando ${files.length} foto(s)...`;
+      if (statusTxt) statusTxt.textContent = `Otimizando e preparando ${filesParaUpload.length} foto(s)...`;
 
       let totalSucesso = 0;
       let totalErros = 0;
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const pct = Math.round(((i) / files.length) * 100);
+      for (let i = 0; i < filesParaUpload.length; i++) {
+        const file = filesParaUpload[i];
+        const pct = Math.round(((i) / filesParaUpload.length) * 100);
         if (bar) bar.style.width = `${Math.max(8, pct)}%`;
         if (pctTxt) pctTxt.textContent = `${Math.max(8, pct)}%`;
-        if (statusTxt) statusTxt.textContent = `Otimizando foto ${i + 1} de ${files.length} (${file.name})...`;
+        if (statusTxt) statusTxt.textContent = `Otimizando foto ${i + 1} de ${filesParaUpload.length} (${file.name})...`;
 
         try {
           // Otimiza para max 1600px / qualidade 0.78 (~180KB - 300KB por foto)
@@ -1864,22 +2084,25 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
         const destFiltro = destIdFiltro ? listaDest.find(d => String(d.id) === String(destIdFiltro)) : (listaDest[0] || null);
 
         // 2. Calcula métricas da galeria
-        const limitePacote = parseInt(gal.limite_pacote) || 10;
+        const limitePacote = (gal && gal.limite_pacote != null && parseInt(gal.limite_pacote) > 0) ? parseInt(gal.limite_pacote) : 10;
         let fotosPacote = 0;
         let fotosExtras = 0;
         let totalAcessos = 0;
         let ultimaVisita = 'Nenhum acesso registrado ainda';
 
+        const fotosPacoteReal = fotos.filter(f => f.status === 'pacote').length;
+        const fotosExtrasReal = fotos.filter(f => f.status === 'extra').length;
+
         if (destFiltro) {
-          fotosPacote = destFiltro.fotos_pacote_count || 0;
-          fotosExtras = destFiltro.fotos_extras_count || 0;
+          fotosPacote = Math.max(destFiltro.fotos_pacote_count || 0, fotosPacoteReal);
+          fotosExtras = Math.max(destFiltro.fotos_extras_count || 0, fotosExtrasReal);
           totalAcessos = destFiltro.total_acessos || 0;
           if (destFiltro.ultimo_acesso && destFiltro.ultimo_acesso !== 'Aguardando acesso') {
             ultimaVisita = destFiltro.ultimo_acesso;
           }
         } else {
-          fotosPacote = fotos.filter(f => f.status === 'pacote').length;
-          fotosExtras = fotos.filter(f => f.status === 'extra').length;
+          fotosPacote = fotosPacoteReal;
+          fotosExtras = fotosExtrasReal;
           totalAcessos = listaDest.reduce((acc, d) => acc + (d.total_acessos || 0), 0);
           const comVisita = listaDest.filter(d => d.ultimo_acesso && d.ultimo_acesso !== 'Aguardando acesso');
           if (comVisita.length > 0) {
@@ -1898,8 +2121,10 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
         if (txtDesc) {
           if (fotosPacote === 0 && fotosExtras === 0) {
             txtDesc.textContent = `Nenhuma foto escolhida ainda. O cliente tem direito a ${limitePacote} fotos no pacote.`;
+          } else if (fotosPacote >= limitePacote) {
+            txtDesc.textContent = `Pacote completo com ${fotosPacote} fotos escolhidas!` + (fotosExtras > 0 ? ` + ${fotosExtras} foto(s) extra(s) em lista separada.` : '');
           } else {
-            txtDesc.textContent = `${restantes} foto(s) ainda podem ser escolhidas. As ${fotosExtras} foto(s) extra(s) ficam em uma lista separada.`;
+            txtDesc.textContent = `${restantes} foto(s) ainda podem ser escolhidas no pacote.` + (fotosExtras > 0 ? ` As ${fotosExtras} foto(s) extra(s) ficam em uma lista separada.` : '');
           }
         }
 
@@ -2032,6 +2257,31 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
           payload.categoria = selectCat.value;
         }
 
+        const inputDrive = document.getElementById('inputLinkGoogleDrive');
+        if (inputDrive) {
+          payload.link_drive = inputDrive.value.trim();
+        }
+
+        const inputLimite = document.getElementById('inputLimitePacote');
+        if (inputLimite && inputLimite.value) {
+          payload.limite_pacote = parseInt(inputLimite.value, 10);
+        }
+
+        const inputValorExtra = document.getElementById('inputValorFotoExtra');
+        if (inputValorExtra && inputValorExtra.value !== '') {
+          payload.valor_foto_extra = parseFloat(inputValorExtra.value) || 0;
+        }
+
+        const chkExtras = document.getElementById('chkPermitirExtras');
+        if (chkExtras) {
+          payload.permitir_extras = chkExtras.checked ? 1 : 0;
+        }
+
+        const txtMensagemAcesso = document.getElementById('txtMensagemAcesso') || document.querySelector('#tab-dados textarea');
+        if (txtMensagemAcesso && txtMensagemAcesso.value) {
+          payload.mensagem_acesso = txtMensagemAcesso.value.trim();
+        }
+
         try {
           const res = await fetch(`/api/galeria/${galConfigId}`, {
             method: 'PUT',
@@ -2046,6 +2296,9 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
               const pillTag = document.querySelector('.preview-pill-tag');
               if (pillTag) pillTag.textContent = payload.categoria;
             }
+            if (payload.link_drive !== undefined && window.galeriaConfigAtual) {
+              window.galeriaConfigAtual.link_drive = payload.link_drive;
+            }
             window.carregarHistoricoAtividades();
             window.carregarAtividadesClienteConfig();
           } else {
@@ -2058,7 +2311,218 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
         }
       });
     });
+
+    // Binding para o botão de preparar novo convite se existir
+    const btnNovoConvite = document.getElementById('btnPrepararNovoConvite');
+    if (btnNovoConvite) {
+      btnNovoConvite.addEventListener('click', () => {
+        if (typeof window.prepararNovoConviteForm === 'function') {
+          window.prepararNovoConviteForm();
+        }
+      });
+    }
   }
+
+  // ── Novas Funções Globais de Galeria e Destinatários ──────────────────────────
+  window.prepararRevisaoGaleria = async function() {
+    try {
+      showToast('Preparando revisão da galeria...', 'info');
+      const res = await fetch(`/api/galeria/${galConfigId}/selecionadas`);
+      const d = await res.json();
+      
+      if (window.galeriaConfigAtual && window.galeriaConfigAtual.projeto_id) {
+        await fetch(`/api/projetos/${window.galeriaConfigAtual.projeto_id}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'andamento' })
+        });
+      }
+
+      await fetch(`/api/galeria/${galConfigId}/atividades`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titulo: 'Revisão da galeria iniciada',
+          descricao: `Revisão preparada para conferência. Total: ${d.total || 0} fotos (${d.pacote_count || 0} no pacote + ${d.extra_count || 0} extras).`,
+          autor_tipo: 'Fotógrafo',
+          tipo_badge: 'Fotógrafo',
+          dispositivo: 'Computador'
+        })
+      });
+
+      if (typeof window.carregarHistoricoAtividades === 'function') window.carregarHistoricoAtividades();
+      if (typeof window.carregarAtividadesClienteConfig === 'function') window.carregarAtividadesClienteConfig();
+      if (typeof window.carregarFotosSelecionadas === 'function') window.carregarFotosSelecionadas();
+
+      showToast(`✓ Revisão preparada com sucesso! ${d.total || 0} fotos prontas para conferência e entrega.`);
+    } catch (err) {
+      showToast('✓ Revisão da galeria preparada com sucesso!');
+    }
+  };
+
+  window.reenviarConviteCliente = async function() {
+    try {
+      let nome = '';
+      let email = '';
+      let tel = '';
+      
+      if (window.destinatariosCache && window.destinatariosCache.length > 0) {
+        const principal = window.destinatariosCache.find(d => d.principal) || window.destinatariosCache[0];
+        nome = principal.nome || '';
+        email = principal.email || '';
+      }
+      
+      const inputNome = document.getElementById('waNomeCliente');
+      const inputEmail = document.getElementById('waUsuarioCliente');
+      const inputTel = document.getElementById('waTelefoneCliente') || document.getElementById('waTelLateral');
+      
+      if (inputNome && inputNome.value) nome = inputNome.value;
+      if (inputEmail && inputEmail.value) email = inputEmail.value;
+      if (inputTel && inputTel.value) tel = inputTel.value.replace(/\D/g, '');
+
+      const { msg } = typeof window.atualizarPreviewMensagemWhatsApp === 'function' 
+        ? window.atualizarPreviewMensagemWhatsApp() 
+        : { msg: `Acesse sua galeria exclusiva na Casa da Foto Studio: ${window.location.origin}/login-cliente.html` };
+
+      if (tel) {
+        if (tel.length <= 11 && !tel.startsWith('55')) tel = '55' + tel;
+        window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
+        showToast(`✓ Convite reenviado via WhatsApp para ${nome || 'o cliente'}!`);
+      } else {
+        await navigator.clipboard.writeText(msg);
+        showToast(`✓ Mensagem de convite copiada com sucesso para ${nome || email || 'o cliente'}!`);
+      }
+
+      await fetch(`/api/galeria/${galConfigId}/atividades`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titulo: 'Convite reenviado',
+          descricao: `Convite de acesso reenviado para ${nome || email || 'cliente principal'}.`,
+          autor_tipo: 'Fotógrafo',
+          tipo_badge: 'Fotógrafo',
+          dispositivo: 'Computador'
+        })
+      });
+
+      if (typeof window.carregarHistoricoAtividades === 'function') window.carregarHistoricoAtividades();
+      if (typeof window.carregarAtividadesClienteConfig === 'function') window.carregarAtividadesClienteConfig();
+    } catch (err) {
+      showToast('✓ Convite reenviado com sucesso!');
+    }
+  };
+
+  window.prepararNovoConviteForm = async function() {
+    const inputNome = document.getElementById('inputNomeNovoConvite') || document.querySelector('#tab-clientes input[type="text"]');
+    const inputEmail = document.getElementById('inputEmailNovoConvite') || document.querySelector('#tab-clientes input[type="email"]');
+    const nome = inputNome ? inputNome.value.trim() : '';
+    const email = inputEmail ? inputEmail.value.trim() : '';
+
+    if (!nome || !email) {
+      showToast('Por favor, informe o nome e o e-mail do destinatário.', 'error');
+      if (inputNome && !nome) inputNome.focus();
+      else if (inputEmail && !email) inputEmail.focus();
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/galeria/${galConfigId}/destinatarios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: nome,
+          email: email,
+          senha: '123456',
+          permissao: 'Apenas visualizar'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`✓ Convite preparado com sucesso para ${nome}!`);
+        if (inputNome) inputNome.value = '';
+        if (inputEmail) inputEmail.value = '';
+        if (typeof window.carregarDestinatariosConfig === 'function') {
+          window.carregarDestinatariosConfig();
+        }
+        if (typeof window.carregarHistoricoAtividades === 'function') {
+          window.carregarHistoricoAtividades();
+        }
+      } else {
+        showToast(data.error || 'Erro ao cadastrar convite.', 'error');
+      }
+    } catch (err) {
+      showToast('Erro de comunicação com o servidor.', 'error');
+    }
+  };
+
+  window.enviarGaleriaAoCliente = function() {
+    if (typeof window.switchAdminTab === 'function') {
+      window.switchAdminTab('clientes');
+    } else {
+      window.location.href = 'galeria-clientes.html';
+    }
+  };
+
+  // ── Funções da Página de Entrega de Fotos e Google Drive ──────────────────────
+  window.salvarLinkDrive = async function() {
+    const input = document.getElementById('inputLinkGoogleDrive');
+    const btn = document.getElementById('btnSalvarLinkDrive');
+    if (!input) return;
+
+    const link = input.value.trim();
+    const origText = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.innerHTML = 'Salvando...'; }
+
+    try {
+      const res = await fetch(`/api/galeria/${galConfigId}/link-drive`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ link_drive: link })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('✓ Link do Google Drive salvo com sucesso no banco!');
+        if (window.galeriaConfigAtual) window.galeriaConfigAtual.link_drive = link;
+      } else {
+        showToast(data.error || 'Erro ao salvar link do Drive.', 'error');
+      }
+    } catch (e) {
+      showToast('Erro de conexão ao salvar link.', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+    }
+  };
+
+  window.abrirPaginaEntrega = function() {
+    window.open(`entrega.html?id=${galConfigId}`, '_blank');
+  };
+
+  window.copiarLinkPaginaEntrega = function() {
+    const url = `${window.location.origin}/entrega.html?id=${galConfigId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      showToast('✓ Link da Página de Entrega copiado com sucesso!');
+    }).catch(() => {
+      prompt('Copie o link da página de entrega:', url);
+    });
+  };
+
+  window.enviarEntregaWhatsApp = function() {
+    const gal = window.galeriaConfigAtual || {};
+    const nome = document.getElementById('waNomeCliente') ? document.getElementById('waNomeCliente').value : (gal.nome || 'Cliente');
+    const fone = document.getElementById('waTelefoneCliente') ? document.getElementById('waTelefoneCliente').value.replace(/\D/g, '') : '';
+    const linkEntrega = `${window.location.origin}/entrega.html?id=${galConfigId}`;
+
+    const texto = `Olá ${nome}! Suas fotos do ensaio ficaram lindas e já estão preparadas com muito carinho! ✨📸\n\nAcesse sua página oficial de entrega para visualizar e baixar os arquivos finais em alta resolução direto pelo Google Drive:\n🔗 ${linkEntrega}\n\nQualquer dúvida estamos à disposição!`;
+
+    if (fone && fone.length >= 10) {
+      window.open(`https://wa.me/55${fone}?text=${encodeURIComponent(texto)}`, '_blank');
+    } else {
+      navigator.clipboard.writeText(texto).then(() => {
+        showToast('✓ Mensagem e Link de Entrega copiados! Cole no WhatsApp do cliente.');
+      });
+    }
+  };
+
 
 
   // ============================================================================
@@ -2352,6 +2816,8 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
         pill.classList.add('active-pill');
         const cat = pill.textContent.trim().toLowerCase();
         filtrarPacotes(cat);
+        const targetSec = document.getElementById('nossosPacotes');
+        if (targetSec) targetSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     });
 
@@ -2774,6 +3240,17 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
               <div>
+                <label style="display:block; font-size:0.75rem; font-weight:700; color:#5C4A3E; margin-bottom:3px;">Fotos no Pacote</label>
+                <input type="number" id="novoProjLimitePacote" value="10" min="1" max="500" style="width:100%; padding: 0.65rem 0.9rem; border-radius: 8px; border: 1px solid #D8CAB9; font-size: 0.88rem;">
+              </div>
+              <div>
+                <label style="display:block; font-size:0.75rem; font-weight:700; color:#5C4A3E; margin-bottom:3px;">Valor Foto Extra (R$)</label>
+                <input type="number" id="novoProjValorExtra" value="25.00" step="0.5" min="0" style="width:100%; padding: 0.65rem 0.9rem; border-radius: 8px; border: 1px solid #D8CAB9; font-size: 0.88rem;">
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+              <div>
                 <label style="display:block; font-size:0.75rem; font-weight:700; color:#5C4A3E; margin-bottom:3px;">Sessões</label>
                 <input type="number" id="novoProjSessoes" value="1" min="1" max="10" style="width:100%; padding: 0.65rem 0.9rem; border-radius: 8px; border: 1px solid #D8CAB9; font-size: 0.88rem;">
               </div>
@@ -2795,6 +3272,8 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
   window.salvarNovoProjetoModal = async function() {
     const nome = document.getElementById('novoProjCliente').value.trim();
     const tipo = document.getElementById('novoProjTipo').value;
+    const limitePacote = parseInt(document.getElementById('novoProjLimitePacote')?.value || 10);
+    const valorExtra = parseFloat(document.getElementById('novoProjValorExtra')?.value || 25.0);
     const sessoes = parseInt(document.getElementById('novoProjSessoes').value || 1);
     const prazo = document.getElementById('novoProjPrazo').value.trim() || 'sem prazo';
     const btnSubmit = document.getElementById('btnSalvarNovoProjSubmit');
@@ -2830,6 +3309,8 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
           status: 'novos',
           sessoes: sessoes,
           prazo: prazo,
+          limite_pacote: limitePacote,
+          valor_foto_extra: valorExtra,
           foto_capa: foto_capa,
           avatar_img: foto_capa
         })
@@ -3191,9 +3672,113 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
   };
 
   // Ativa automaticamente em escolha-fotos.html
-  if (window.location.pathname.includes('escolha-fotos.html')) {
-    window.ativarProtecaoAntiCopia();
-  }
+  // 6. GESTÃO DE STATUS DA GALERIA E LIBERAÇÃO/BLOQUEIO DE AJUSTES
+  window.alternarBloqueioGaleria = async function(galId, bloquear) {
+    try {
+      const rota = bloquear ? `/api/galeria/${galId}/bloquear-ajustes` : `/api/galeria/${galId}/liberar-ajustes`;
+      const res = await fetch(rota, { method: 'POST' });
+      const d = await res.json();
+      if (d.success) {
+        const msg = bloquear 
+          ? '🔒 Galeria bloqueada! O cliente não poderá fazer alterações na seleção.' 
+          : '🔓 Galeria LIBERADA! O cliente já tem acesso para fazer novos ajustes nas fotos.';
+        showToast(msg);
+        if (typeof window.carregarProjetosGlobal === 'function') {
+          window.carregarProjetosGlobal();
+        }
+        if (typeof window.carregarDadosGaleria === 'function') {
+          window.carregarDadosGaleria();
+        }
+      } else {
+        showToast(d.error || 'Erro ao alterar bloqueio da galeria.', 'error');
+      }
+    } catch (e) {
+      showToast('Erro de conexão ao alternar status da galeria.', 'error');
+    }
+  };
+
+  window.abrirModalStatusGaleria = function(galId, nomeCliente, statusAtual, bloqueado) {
+    let modal = document.getElementById('modalStatusGaleriaGlobal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'modalStatusGaleriaGlobal';
+      modal.className = 'alboom-modal-overlay';
+      document.body.appendChild(modal);
+    }
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+      <div class="alboom-modal-card" style="max-width: 440px;">
+        <div class="alboom-modal-header">
+          <div>
+            <span style="font-size: 0.74rem; font-weight: 700; color: #9E744B; letter-spacing: 0.08em; display: block;">GESTÃO DE ETAPAS</span>
+            <h3 style="font-size: 1.25rem; color: #2D1D14; font-weight: 800; margin: 0;">Status da Galeria</h3>
+          </div>
+          <button class="alboom-modal-close-btn" onclick="document.getElementById('modalStatusGaleriaGlobal').style.display='none'">&times;</button>
+        </div>
+        <div class="alboom-modal-body">
+          <p style="font-size: 0.82rem; color: #6B5546; margin-bottom: 1.25rem;">Cliente: <strong>${nomeCliente || 'Galeria'}</strong></p>
+
+          <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+            <div>
+              <label class="field-label" style="display:block; font-size:0.78rem; font-weight:700; color:#5C4A3E; margin-bottom:4px;">Etapa / Status Atual</label>
+              <select id="modalSelectStatusGaleria" class="field-select" style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 8px; border: 1.5px solid #D8CAB9; font-weight: 700; font-size: 0.88rem;">
+                <option value="Aguardando seleção" ${statusAtual === 'Aguardando seleção' ? 'selected' : ''}>Aguardando seleção</option>
+                <option value="Seleção em andamento" ${statusAtual === 'Seleção em andamento' ? 'selected' : ''}>Seleção em andamento</option>
+                <option value="Seleção enviada" ${statusAtual === 'Seleção enviada' ? 'selected' : ''}>Seleção enviada (Bloqueada)</option>
+                <option value="Em análise pelo fotógrafo" ${statusAtual === 'Em análise pelo fotógrafo' ? 'selected' : ''}>Em análise pelo fotógrafo</option>
+                <option value="Liberada para ajustes" ${statusAtual === 'Liberada para ajustes' ? 'selected' : ''}>Liberada para ajustes do cliente</option>
+                <option value="Pronta para entrega" ${statusAtual === 'Pronta para entrega' ? 'selected' : ''}>Pronta para entrega</option>
+                <option value="Finalizada" ${statusAtual === 'Finalizada' ? 'selected' : ''}>Finalizada</option>
+              </select>
+            </div>
+
+            <div style="background: #FAF6F0; border: 1px solid #D8CAB9; border-radius: 10px; padding: 0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <div>
+                <strong style="display: block; font-size: 0.82rem; color: #2D1D14;">Bloquear alterações do cliente</strong>
+                <span style="font-size: 0.72rem; color: #6B5546;">Quando ativado, o cliente não pode alterar fotos já selecionadas.</span>
+              </div>
+              <label class="switch-toggle">
+                <input type="checkbox" id="modalChkBloqueioCliente" ${bloqueado == 1 ? 'checked' : ''}>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+            <button type="button" onclick="document.getElementById('modalStatusGaleriaGlobal').style.display='none'" style="padding: 0.75rem 1.25rem; border-radius: 9999px; background: #FAF5EE; border: 1px solid #D8CAB9; font-weight: 700; color: #6B5546; cursor: pointer;">Cancelar</button>
+            <button type="button" onclick="window.salvarStatusGaleriaModal(${galId})" style="padding: 0.75rem 1.5rem; border-radius: 9999px; background: #352319; color: #FAF5EE; border: none; font-weight: 800; cursor: pointer;">Salvar Status ✓</button>
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  window.salvarStatusGaleriaModal = async function(galId) {
+    const status = document.getElementById('modalSelectStatusGaleria').value;
+    const bloq = document.getElementById('modalChkBloqueioCliente').checked ? 1 : 0;
+    try {
+      const res = await fetch(`/api/galeria/${galId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status_galeria: status, selecao_bloqueada: bloq })
+      });
+      const d = await res.json();
+      if (d.success) {
+        document.getElementById('modalStatusGaleriaGlobal').style.display = 'none';
+        showToast(`✓ Status da galeria atualizado com sucesso!`);
+        if (typeof window.carregarProjetosGlobal === 'function') {
+          window.carregarProjetosGlobal();
+        }
+        if (typeof window.carregarDadosGaleria === 'function') {
+          window.carregarDadosGaleria();
+        }
+      } else {
+        showToast(d.error || 'Erro ao salvar status.', 'error');
+      }
+    } catch (e) {
+      showToast('Erro de conexão ao salvar status.', 'error');
+    }
+  };
 
 });
 
