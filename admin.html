@@ -647,11 +647,20 @@
   <script>
     // Proteção de Acesso Administrativo
     if (!sessionStorage.getItem('admin_autenticado')) {
-      window.location.href = 'admin-login.html';
+      if (localStorage.getItem('admin_autenticado') === 'true') {
+        sessionStorage.setItem('admin_autenticado', 'true');
+        sessionStorage.setItem('admin_nome', localStorage.getItem('admin_nome') || 'Administrador');
+      } else {
+        window.location.href = 'admin-login.html';
+      }
     }
 
     function logoutAdmin() {
       sessionStorage.removeItem('admin_autenticado');
+      sessionStorage.removeItem('admin_nome');
+      localStorage.removeItem('admin_autenticado');
+      localStorage.removeItem('admin_nome');
+      localStorage.removeItem('admin_manter_conectado');
       window.location.href = 'admin-login.html';
     }
 
