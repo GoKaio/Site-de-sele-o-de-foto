@@ -347,12 +347,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const gId = sessionStorage.getItem('cliente_galeria_id') || localStorage.getItem('cliente_galeria_id') || '1';
       navRight.innerHTML = `
         <a href="escolha-fotos.html?id=${gId}" class="nav-item ${currentPage === 'escolha-fotos.html' ? 'active-nav' : ''}">Minhas Fotos (${nome})</a>
+        <a href="entrega.html?id=${gId}" class="nav-item ${currentPage === 'entrega.html' ? 'active-nav' : ''}" target="_blank" title="Baixar Fotos pelo Google Drive">🎁 Baixar Fotos (Drive)</a>
         <a href="javascript:void(0)" onclick="logoutUsuario()" class="nav-item" style="color:#C59B6D;">Sair ↗</a>
       `;
     } else if (isAdmin) {
       const gId = localStorage.getItem('ultima_galeria_id') || '1';
       navRight.innerHTML = `
         <a href="escolha-fotos.html?id=${gId}&previa=true" class="nav-item ${currentPage === 'escolha-fotos.html' ? 'active-nav' : ''}">👁️ Seleção de fotos</a>
+        <a href="entrega.html?id=${gId}" class="nav-item ${currentPage === 'entrega.html' ? 'active-nav' : ''}" target="_blank" title="Página Oficial de Entrega de Fotos com link do Google Drive">🎁 Entrega (Drive)</a>
         <a href="projetos.html" class="nav-item ${currentPage === 'projetos.html' ? 'active-nav' : ''}">Projetos</a>
         <a href="admin.html" class="nav-item nav-admin-btn ${currentPage === 'admin.html' ? 'active-admin' : ''}" title="Painel de Administração">
           <span class="nav-admin-icon" aria-hidden="true">⚙️</span>
@@ -364,6 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const gId = localStorage.getItem('ultima_galeria_id') || '1';
       navRight.innerHTML = `
         <a href="escolha-fotos.html?id=${gId}&previa=true" class="nav-item ${currentPage === 'escolha-fotos.html' ? 'active-nav' : ''}">👁️ Seleção de fotos</a>
+        <a href="entrega.html?id=${gId}" class="nav-item ${currentPage === 'entrega.html' ? 'active-nav' : ''}" target="_blank" title="Página Oficial de Entrega de Fotos com link do Google Drive">🎁 Entrega (Drive)</a>
         <a href="projetos.html" class="nav-item ${currentPage === 'projetos.html' ? 'active-nav' : ''}">Projetos</a>
         <a href="javascript:void(0)" onclick="logoutUsuario()" class="nav-item" style="color:#C59B6D;">Sair ↗</a>
       `;
@@ -1150,6 +1153,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
         col.appendChild(card);
       });
+
+      // Se a coluna de Entrega estiver vazia, exibe atalho amigável para a Página de Entrega
+      if (counts['entrega'] === 0 && colunas['entrega']) {
+        const emptyEntrega = document.createElement('div');
+        emptyEntrega.style.cssText = 'padding: 1.5rem 1rem; text-align: center; background: #FFFDF9; border: 1.5px dashed #C59B6D; border-radius: 12px; margin: 0.5rem; box-shadow: 0 2px 8px rgba(140,95,53,0.06);';
+        emptyEntrega.innerHTML = `
+          <div style="font-size: 2rem; margin-bottom: 0.35rem;">🎁</div>
+          <strong style="color: #2D1D14; font-size: 0.9rem; display: block; margin-bottom: 0.3rem;">Página de Entrega (Drive)</strong>
+          <span style="color: #7A6A5E; font-size: 0.77rem; display: block; margin-bottom: 0.9rem; line-height: 1.4;">Acesse ou envie a página oficial onde o cliente faz o download das fotos finais em alta resolução via Google Drive.</span>
+          <a href="entrega.html" target="_blank" style="display: inline-block; background: #8C5F35; color: #FFF; padding: 0.55rem 1.2rem; border-radius: 9999px; text-decoration: none; font-size: 0.8rem; font-weight: 700; box-shadow: 0 2px 6px rgba(140,95,53,0.3);">
+            Abrir Página de Entrega ↗
+          </a>
+        `;
+        colunas['entrega'].appendChild(emptyEntrega);
+      }
+
+      // Se o Kanban estiver 100% vazio, exibe dica para criar o primeiro projeto
+      if (counts['novos'] === 0 && colunas['novos'] && filtrados.length === 0) {
+        const emptyNovos = document.createElement('div');
+        emptyNovos.style.cssText = 'padding: 1.5rem 1rem; text-align: center; background: #FFFFFF; border: 1.5px dashed #D8CAB9; border-radius: 12px; margin: 0.5rem;';
+        emptyNovos.innerHTML = `
+          <div style="font-size: 1.8rem; margin-bottom: 0.35rem;">📷</div>
+          <strong style="color: #2D1D14; font-size: 0.88rem; display: block; margin-bottom: 0.25rem;">Nenhum projeto ainda</strong>
+          <span style="color: #7A6A5E; font-size: 0.76rem; display: block; margin-bottom: 0.75rem;">Adicione seu primeiro ensaio para gerenciar seleção e entrega.</span>
+          <button type="button" onclick="const b=document.getElementById('btnNovoProjeto'); if(b) b.click();" style="background: #8C5F35; color: #FFF; border: none; padding: 0.5rem 1.1rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; cursor: pointer;">
+            + Criar Novo Projeto
+          </button>
+        `;
+        colunas['novos'].appendChild(emptyNovos);
+      }
 
       // 5. Atualiza os contadores das colunas
       Object.keys(counts).forEach(k => {
