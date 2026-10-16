@@ -2828,6 +2828,26 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
   background: #FDF7F0;
 }
 
+.btn-pill-drive {
+  background: linear-gradient(135deg, #1E3A2F 0%, #152720 100%);
+  border: 1px solid #2D5A47;
+  color: #FFFFFF !important;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  box-shadow: 0 2px 6px rgba(30, 58, 47, 0.25);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-pill-drive:hover {
+  background: linear-gradient(135deg, #2A5243 0%, #1E3A2F 100%);
+  border-color: #3D785F;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(30, 58, 47, 0.35);
+  color: #FFFFFF !important;
+}
+
 .card-mover-bottom-row {
   display: flex;
   align-items: center;

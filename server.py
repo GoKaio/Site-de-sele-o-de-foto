@@ -448,22 +448,89 @@ def api_login_cliente():
 # 2. ROTAS DE PROJETOS (KANBAN)
 # ==============================================================================
 
+def semear_projetos_iniciais(conn):
+    """Semeia projetos e galerias de demonstração caso o banco esteja vazio."""
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM projetos")
+        count = cur.fetchone()[0]
+        if count > 0:
+            return
+
+        projetos_demo = [
+            ('Camila & Pedro', 'Ensaio Gestante', 'Gestante', 'novos', 1, 'sem prazo', 'assets/logo/logo.png'),
+            ('Família Silva', 'Ensaio Família', 'Família', 'andamento', 2, '15 nov', 'assets/logo/logo.png'),
+            ('Nicoly', '15 anos', 'Retrato', 'revisao', 1, '22 nov', 'assets/logo/logo.png'),
+            ('Helena (Primeiro Aninho)', 'Ensaio Bebê', 'Bebê', 'entrega', 1, '30 nov', 'assets/logo/logo.png'),
+            ('Mariana & João', 'Bodas de Prata', 'Família', 'finalizados', 1, 'Concluído', 'assets/logo/logo.png')
+        ]
+        
+        link_drive_demo = 'https://drive.google.com/drive/folders/pastaEntregaE2E?usp=sharing'
+        msg_template = "Olá {nome}! ✨📸 Suas fotos do {ensaio} ficaram maravilhosas e já estão preparadas com todo carinho pela Casa da Foto Studio! Acesse o link oficial para baixar todos os arquivos em alta resolução no Google Drive."
+
+        for nome, tipo, tag, st, sessoes, prazo, avatar in projetos_demo:
+            cur.execute("""
+            INSERT INTO projetos (nome_cliente, tipo_ensaio, categoria_tag, status, sessoes, prazo, avatar_img)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (nome, tipo, tag, st, sessoes, prazo, avatar))
+            proj_id = cur.lastrowid
+            
+            drive_link = link_drive_demo if st in ('entrega', 'finalizados') else ''
+            msg_personalizada = msg_template.format(nome=nome, ensaio=tipo)
+            cur.execute("""
+            INSERT INTO galerias (projeto_id, nome, categoria, data_trabalho, prazo_selecao, limite_pacote, valor_foto_extra, foto_capa, link_drive, mensagem_acesso, status_galeria)
+            VALUES (?, ?, ?, '15/10/2026', '30/10/2026', 15, 25.00, 'assets/logo/logo.png', ?, ?, ?)
+            """, (proj_id, f"Galeria - {nome}", tipo, drive_link, msg_personalizada, 'Seleção aprovada' if st in ('entrega', 'finalizados') else 'Aguardando seleção'))
+
+        conn.commit()
+    except Exception as e:
+        print(f"[Seed Projetos] Erro ao semear projetos padrão: {e}")
+
 @app.get('/api/projetos')
 @rate_limit()
 def api_get_projetos():
     conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
-    SELECT p.*, COALESCE(g.id, p.id) as galeria_id,
-           COALESCE(g.status_galeria, 'Aguardando seleção') as status_galeria,
-           COALESCE(g.selecao_bloqueada, 0) as selecao_bloqueada
-    FROM projetos p
-    LEFT JOIN galerias g ON g.projeto_id = p.id
-    ORDER BY p.id ASC
-    """)
-    rows = [dict(row) for row in cur.fetchall()]
-    conn.close()
-    return json_response(rows)
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+        SELECT p.*, COALESCE(g.id, p.id) as galeria_id,
+               COALESCE(g.status_galeria, 'Aguardando seleção') as status_galeria,
+               COALESCE(g.selecao_bloqueada, 0) as selecao_bloqueada,
+               COALESCE(g.link_drive, '') as link_drive,
+               COALESCE(g.mensagem_acesso, '') as mensagem_acesso
+        FROM projetos p
+        LEFT JOIN galerias g ON g.projeto_id = p.id
+        ORDER BY p.id ASC
+        """)
+        rows = [dict(row) for row in cur.fetchall()]
+        
+        if len(rows) == 0:
+            semear_projetos_iniciais(conn)
+            cur.execute("""
+            SELECT p.*, COALESCE(g.id, p.id) as galeria_id,
+                   COALESCE(g.status_galeria, 'Aguardando seleção') as status_galeria,
+                   COALESCE(g.selecao_bloqueada, 0) as selecao_bloqueada,
+                   COALESCE(g.link_drive, '') as link_drive,
+                   COALESCE(g.mensagem_acesso, '') as mensagem_acesso
+            FROM projetos p
+            LEFT JOIN galerias g ON g.projeto_id = p.id
+            ORDER BY p.id ASC
+            """)
+            rows = [dict(row) for row in cur.fetchall()]
+
+        return json_response(rows)
+    finally:
+        conn.close()
+
+@app.post('/api/projetos/restaurar-exemplos')
+@rate_limit()
+def api_restaurar_projetos_exemplos():
+    conn = get_connection()
+    try:
+        semear_projetos_iniciais(conn)
+        return json_response({'success': True, 'mensagem': 'Galerias demonstrativas restauradas com sucesso!'})
+    finally:
+        conn.close()
 
 @app.post('/api/upload')
 @rate_limit(30)
@@ -684,28 +751,32 @@ def api_update_galeria(galeria_id):
 @app.put('/api/galeria/<galeria_id:int>/link-drive')
 @rate_limit()
 def api_update_link_drive(galeria_id):
-    """Atualiza de forma direta e rápida o link do Google Drive para entrega das fotos."""
+    """Atualiza de forma direta e rápida o link do Google Drive e a mensagem personalizada de entrega das fotos."""
     data = get_body() or {}
     link = sanitize_str(data.get('link_drive', ''), 1000).strip()
+    msg = sanitize_str(data.get('mensagem_acesso', ''), 3000).strip()
     conn = get_connection()
     try:
         real_id = get_galeria_real_id(conn, galeria_id)
         cur = conn.cursor()
-        cur.execute("UPDATE galerias SET link_drive = ? WHERE id = ?", (link, real_id))
+        if msg:
+            cur.execute("UPDATE galerias SET link_drive = ?, mensagem_acesso = ? WHERE id = ?", (link, msg, real_id))
+        else:
+            cur.execute("UPDATE galerias SET link_drive = ? WHERE id = ?", (link, real_id))
         agora = datetime.now().strftime("%d OUT %Y %H:%M")
         cur.execute("""
         INSERT INTO atividades (galeria_id, data_hora, autor_tipo, titulo, descricao, dispositivo, tipo_badge)
-        VALUES (?, ?, 'Fotógrafo', 'Link do Drive atualizado', 'Link de entrega das fotos atualizado.', 'Computador', 'Fotógrafo')
+        VALUES (?, ?, 'Fotógrafo', 'Link do Drive e Mensagem de Entrega atualizados', 'Link e mensagem de entrega das fotos atualizados.', 'Computador', 'Fotógrafo')
         """, (real_id, agora))
         conn.commit()
-        return json_response({'success': True, 'link_drive': link})
+        return json_response({'success': True, 'link_drive': link, 'mensagem_acesso': msg})
     finally:
         conn.close()
 
 @app.get('/api/entrega/<galeria_id:int>')
 @rate_limit()
 def api_get_entrega(galeria_id):
-    """Retorna os dados públicos da entrega da galeria: dados do ensaio, link do Drive e fotos entregues."""
+    """Retorna os dados públicos da entrega da galeria: dados do ensaio, link do Drive, mensagem personalizada e fotos entregues."""
     conn = get_connection()
     try:
         real_gal_id = get_galeria_real_id(conn, galeria_id)
@@ -741,6 +812,17 @@ def api_get_entrega(galeria_id):
             'email': textos.get('contato_email', 'contato@casadafoto.com')
         }
 
+        # Mensagem personalizada de entrega
+        nome_cli = (projeto.get('nome_cliente') if projeto else None) or galeria.get('nome', 'Cliente')
+        tipo_ens = (projeto.get('tipo_ensaio') if projeto else None) or galeria.get('categoria', 'Ensaio Fotográfico')
+        msg_entrega = galeria.get('mensagem_acesso')
+        if not msg_entrega:
+            msg_entrega = (
+                f"Olá {nome_cli}! ✨📸 É com imensa alegria que entregamos as fotos do seu {tipo_ens}! "
+                f"Cada imagem foi preparada e tratada com todo o cuidado, carinho e dedicação da equipe Casa da Foto Studio para eternizar os seus melhores momentos. "
+                f"Aproveite para visualizar e baixar todos os arquivos em alta resolução diretamente pelo Google Drive!"
+            )
+
         return json_response({
             'success': True,
             'galeria': galeria,
@@ -749,6 +831,7 @@ def api_get_entrega(galeria_id):
             'total_fotos': len(fotos_exibir),
             'total_aprovadas': len(fotos_aprovadas),
             'link_drive': galeria.get('link_drive', '') or '',
+            'mensagem_personalizada': msg_entrega,
             'contato': contato
         })
     finally:

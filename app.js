@@ -1116,6 +1116,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 📋 ${proj.status_galeria || 'Status'} ▾
               </button>
             </div>
+            <div class="card-btn-grid-row" style="margin-top: 3px;">
+              <button type="button" class="card-action-pill btn-pill-drive" style="width: 100%; font-size: 0.77rem; padding: 0.45rem 0.6rem;" onclick="window.abrirModalLinkDrive(${proj.galeria_id || proj.id}, '${(proj.nome_cliente || '').replace(/'/g, "\\'")}', '${(proj.tipo_ensaio || '').replace(/'/g, "\\'")}', '${(proj.link_drive || '').replace(/'/g, "\\'")}', '${(proj.mensagem_acesso || '').replace(/'/g, "\\'").replace(/\r?\n/g, '\\n')}')" title="Inserir ou editar link do Google Drive e mensagem personalizada de entrega">
+                🔗 Link do Drive & Mensagem
+              </button>
+            </div>
             <div class="card-mover-bottom-row">
               <span class="mover-prefix">Etapa:</span>
               <select class="select-mover-status" data-id="${proj.id}" title="Mover etapa do projeto">
@@ -1169,17 +1174,22 @@ document.addEventListener('DOMContentLoaded', () => {
         colunas['entrega'].appendChild(emptyEntrega);
       }
 
-      // Se o Kanban estiver 100% vazio, exibe dica para criar o primeiro projeto
-      if (counts['novos'] === 0 && colunas['novos'] && filtrados.length === 0) {
+      // Se o Kanban estiver 100% vazio, exibe dica para criar projeto ou restaurar exemplos
+      if (filtrados.length === 0 && colunas['novos']) {
         const emptyNovos = document.createElement('div');
-        emptyNovos.style.cssText = 'padding: 1.5rem 1rem; text-align: center; background: #FFFFFF; border: 1.5px dashed #D8CAB9; border-radius: 12px; margin: 0.5rem;';
+        emptyNovos.style.cssText = 'padding: 1.75rem 1.1rem; text-align: center; background: #FFFFFF; border: 2px dashed #C59B6D; border-radius: 14px; margin: 0.5rem; box-shadow: 0 4px 12px rgba(45,29,20,0.04);';
         emptyNovos.innerHTML = `
-          <div style="font-size: 1.8rem; margin-bottom: 0.35rem;">📷</div>
-          <strong style="color: #2D1D14; font-size: 0.88rem; display: block; margin-bottom: 0.25rem;">Nenhum projeto ainda</strong>
-          <span style="color: #7A6A5E; font-size: 0.76rem; display: block; margin-bottom: 0.75rem;">Adicione seu primeiro ensaio para gerenciar seleção e entrega.</span>
-          <button type="button" onclick="const b=document.getElementById('btnNovoProjeto'); if(b) b.click();" style="background: #8C5F35; color: #FFF; border: none; padding: 0.5rem 1.1rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; cursor: pointer;">
-            + Criar Novo Projeto
-          </button>
+          <div style="font-size: 2rem; margin-bottom: 0.35rem;">📷</div>
+          <strong style="color: #2D1D14; font-size: 0.95rem; display: block; margin-bottom: 0.25rem;">Nenhum projeto encontrado</strong>
+          <span style="color: #7A6A5E; font-size: 0.78rem; display: block; margin-bottom: 0.9rem; line-height: 1.4;">Restaure as 5 galerias e ensaios de exemplo completos ou cadastre um novo projeto.</span>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <button type="button" onclick="window.restaurarGaleriasExemplo()" style="background: linear-gradient(135deg, #8C5F35 0%, #684221 100%); color: #FFF; border: none; padding: 0.6rem 1.15rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(140,95,53,0.3);">
+              ✨ Restaurar Galerias de Exemplo
+            </button>
+            <button type="button" onclick="const b=document.getElementById('btnNovoProjeto'); if(b) b.click();" style="background: #FAF5EE; color: #5C4A3E; border: 1px solid #D8CAB9; padding: 0.5rem 1.1rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; cursor: pointer;">
+              + Criar Novo Projeto
+            </button>
+          </div>
         `;
         colunas['novos'].appendChild(emptyNovos);
       }
@@ -1197,6 +1207,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const res = await fetch('/api/projetos');
         listaProjetosCache = await res.json();
+        window.listaProjetosCache = listaProjetosCache;
         atualizarSelectClientes(listaProjetosCache);
         renderizarKanbanComFiltros();
       } catch (err) {
@@ -4063,6 +4074,259 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
       }
     } catch (e) {
       showToast('Erro de conexão ao salvar status.', 'error');
+    }
+  };
+
+  // ============================================================================
+  // 10. GESTÃO DO LINK DO GOOGLE DRIVE & MENSAGEM PERSONALIZADA DE ENTREGA
+  // ============================================================================
+
+  // ── RESTAURAR GALERIAS E PROJETOS DE DEMONSTRAÇÃO ──
+  window.restaurarGaleriasExemplo = async function() {
+    try {
+      showToast('Restaurando 5 galerias e ensaios de exemplo...');
+      const res = await fetch('/api/projetos/restaurar-exemplos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('✓ 5 Galerias de exemplo restauradas com sucesso!');
+        if (typeof window.carregarProjetosGlobal === 'function') {
+          await window.carregarProjetosGlobal();
+        }
+      } else {
+        showToast(data.error || 'Erro ao restaurar exemplos.', 'error');
+      }
+    } catch (e) {
+      showToast('Erro de conexão ao restaurar exemplos.', 'error');
+    }
+  };
+
+  // ── GERADOR DE MENSAGEM PERSONALIZADA DE ENTREGA (ALTA CONVERSÃO & AFETO) ──
+  window.gerarMensagemEntregaPadrao = function(nomeCliente, tipoEnsaio, linkDrive, galId) {
+    const nome = (nomeCliente || 'Cliente Especial').trim();
+    const ensaio = (tipoEnsaio || 'Ensaio Fotográfico').trim();
+    const drive = (linkDrive || '').trim();
+    const origin = window.location.origin || 'http://localhost:8082';
+    const linkWeb = `${origin}/entrega.html?id=${galId || 1}`;
+
+    return `Olá, ${nome}! ✨📸
+
+É com imensa alegria que entregamos as fotos oficiais do seu ${ensaio}! Cada imagem foi tratada com todo o carinho, afeto e excelência da equipe Casa da Foto Studio para eternizar os seus momentos mais especiais.
+
+Acesse sua pasta exclusiva no Google Drive para visualizar e baixar todos os arquivos em alta resolução:
+🔗 ${drive || '[Link do Google Drive pendente]'}
+
+Ou confira a sua página oficial de entrega:
+🎁 ${linkWeb}
+
+Esperamos de coração que você se apaixone pelo resultado tanto quanto nós nos apaixonamos em fotografar! Qualquer dúvida sobre como baixar ou imprimir, conte sempre conosco.
+
+Com muito carinho,
+Equipe Casa da Foto Studio 💛
+Momentos que ficam`;
+  };
+
+  // ── MODAL EXCLUSIVO PARA INSERÇÃO DO LINK DO DRIVE E MENSAGEM DE ENTREGA ──
+  window.abrirModalLinkDrive = function(galeriaId, nomeCliente, tipoEnsaio, linkDriveAtual, msgAcessoAtual) {
+    let modal = document.getElementById('modalLinkDriveMsgGlobal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'modalLinkDriveMsgGlobal';
+      modal.className = 'alboom-modal-overlay';
+      modal.style.zIndex = '99999';
+      document.body.appendChild(modal);
+    }
+
+    const galId = galeriaId || 1;
+    const nomeCli = nomeCliente || 'Cliente Especial';
+    const tipoEns = tipoEnsaio || 'Ensaio Fotográfico';
+    const driveLink = (linkDriveAtual || '').trim();
+    
+    // Mensagem: usa a salva caso válida; senão, template personalizado
+    const msgInicial = (msgAcessoAtual && msgAcessoAtual.trim().length > 15) 
+      ? msgAcessoAtual.trim() 
+      : window.gerarMensagemEntregaPadrao(nomeCli, tipoEns, driveLink, galId);
+
+    const origin = window.location.origin || 'http://localhost:8082';
+    const linkPaginaEntrega = `${origin}/entrega.html?id=${galId}`;
+
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+      <div class="alboom-modal-card" style="max-width: 640px; width: 95%;">
+        <div class="alboom-modal-header" style="border-bottom: 1.5px solid #EFE5D9; padding-bottom: 1rem;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: #FAF5EE; border: 1.5px solid #C59B6D; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+              🔗
+            </div>
+            <div>
+              <span style="font-size: 0.74rem; font-weight: 700; color: #8C5F35; letter-spacing: 0.08em; text-transform: uppercase; display: block;">ENTREGA DE FOTOS · GOOGLE DRIVE</span>
+              <h3 style="font-size: 1.35rem; color: #2D1D14; font-weight: 800; margin: 0; line-height: 1.2;">Link do Drive & Mensagem Personalizada</h3>
+            </div>
+          </div>
+          <button class="alboom-modal-close-btn" onclick="document.getElementById('modalLinkDriveMsgGlobal').style.display='none'">&times;</button>
+        </div>
+
+        <div class="alboom-modal-body" style="padding-top: 1.25rem;">
+          
+          <!-- Chip com Identificação do Cliente -->
+          <div style="background: #FAF6F0; border: 1px solid #E5D7C6; border-radius: 10px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <span style="font-size: 0.72rem; color: #7A6A5E; display: block;">Cliente & Ensaio:</span>
+              <strong style="color: #2D1D14; font-size: 0.95rem;">👤 ${nomeCli} · 📷 ${tipoEns}</strong>
+            </div>
+            <a href="${linkPaginaEntrega}" target="_blank" style="font-size: 0.78rem; font-weight: 700; color: #8C5F35; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; background: #FFFFFF; border: 1px solid #D8CAB9; padding: 0.35rem 0.85rem; border-radius: 9999px;">
+              <span>🎁 Abrir Página de Entrega ↗</span>
+            </a>
+          </div>
+
+          <!-- CAMPO 1: LINK DO GOOGLE DRIVE -->
+          <div style="margin-bottom: 1.25rem;">
+            <label style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; color: #352319; margin-bottom: 0.4rem;">
+              <span>🔗 Link da Pasta no Google Drive:</span>
+              <span style="font-size: 0.74rem; color: #8C5F35; font-weight: 600;">(Visível no botão de download da Entrega)</span>
+            </label>
+            <input type="url" id="modalInputDriveLink" value="${driveLink}" placeholder="https://drive.google.com/drive/folders/1a2b3c4d5e...usp=sharing" style="width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1.5px solid #D8CAB9; font-size: 0.88rem; box-sizing: border-box; background: #FFFDF9; font-family: monospace;">
+            <span style="display: block; font-size: 0.72rem; color: #7A6A5E; margin-top: 0.35rem;">
+              💡 Dica: No Google Drive, clique com o botão direito na pasta de fotos, vá em <strong>Compartilhar</strong> e selecione <strong>"Qualquer pessoa com o link pode ser Leitor"</strong>.
+            </span>
+          </div>
+
+          <!-- CAMPO 2: MENSAGEM PERSONALIZADA DE ENTREGA -->
+          <div style="margin-bottom: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+              <label style="font-size: 0.82rem; font-weight: 700; color: #352319;">
+                ✉️ Mensagem Personalizada de Entrega (WhatsApp & E-mail):
+              </label>
+              <button type="button" onclick="window.resetarMensagemDriveModal(${galId}, '${(nomeCli).replace(/'/g, "\\'")}', '${(tipoEns).replace(/'/g, "\\'")}')" style="background: none; border: none; font-size: 0.74rem; font-weight: 700; color: #8C5F35; cursor: pointer; text-decoration: underline;">
+                ✨ Restaurar Modelo Padrão
+              </button>
+            </div>
+            <textarea id="modalTextareaDriveMsg" rows="7" style="width: 100%; padding: 0.85rem 1rem; border-radius: 10px; border: 1.5px solid #D8CAB9; font-size: 0.84rem; line-height: 1.55; box-sizing: border-box; background: #FFFFFF; font-family: inherit; resize: vertical;">${msgInicial}</textarea>
+            <span style="display: block; font-size: 0.72rem; color: #7A6A5E; margin-top: 0.35rem;">
+              ✨ Esta dedicatória personalizada é exibida com destaque na <strong>Página de Entrega Oficial</strong> e fica pronta para enviar no <strong>WhatsApp</strong> do cliente.
+            </span>
+          </div>
+
+          <!-- BOTÕES DE AÇÃO RÁPIDA: COPIAR E WHATSAPP -->
+          <div style="display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.25rem; padding: 0.85rem; background: #FAF5EE; border-radius: 10px; border: 1px solid #EAE0D5;">
+            <button type="button" onclick="window.copiarMensagemDriveModal()" style="flex: 1; min-width: 160px; background: #FFFFFF; border: 1.5px solid #D8CAB9; border-radius: 8px; padding: 0.6rem 0.9rem; font-size: 0.8rem; font-weight: 700; color: #352319; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; transition: all 0.2s;">
+              <span>📋</span> Copiar Mensagem Completa
+            </button>
+            <button type="button" onclick="window.enviarWhatsAppDriveModal()" style="flex: 1; min-width: 160px; background: #25D366; border: 1px solid #1EBE5D; border-radius: 8px; padding: 0.6rem 0.9rem; font-size: 0.8rem; font-weight: 700; color: #FFFFFF; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; box-shadow: 0 2px 6px rgba(37,211,102,0.3); transition: all 0.2s;">
+              <span>🟢</span> Enviar no WhatsApp
+            </button>
+          </div>
+
+          <!-- FOOTER / BOTÕES PRINCIPAIS -->
+          <div style="display: flex; gap: 0.75rem; justify-content: flex-end; align-items: center; border-top: 1.5px solid #EFE5D9; padding-top: 1rem;">
+            <button type="button" onclick="document.getElementById('modalLinkDriveMsgGlobal').style.display='none'" style="padding: 0.75rem 1.25rem; border-radius: 9999px; background: #FAF5EE; border: 1px solid #D8CAB9; font-weight: 700; color: #6B5546; cursor: pointer;">
+              Fechar
+            </button>
+            <button type="button" id="btnSalvarModalDrive" onclick="window.salvarLinkDriveModal(${galId})" style="padding: 0.75rem 1.6rem; border-radius: 9999px; background: linear-gradient(135deg, #8C5F35 0%, #684221 100%); color: #FAF5EE; border: none; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(140,95,53,0.3); display: inline-flex; align-items: center; gap: 0.4rem;">
+              <span>💾 Salvar Link & Mensagem</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    // Atualização em tempo real do link no corpo da mensagem ao digitar no campo do Drive
+    const inpDrive = document.getElementById('modalInputDriveLink');
+    const taMsg = document.getElementById('modalTextareaDriveMsg');
+    if (inpDrive && taMsg) {
+      inpDrive.addEventListener('input', () => {
+        const novoLink = inpDrive.value.trim();
+        let texto = taMsg.value;
+        if (texto.includes('[Link do Google Drive pendente]')) {
+          taMsg.value = texto.replace('[Link do Google Drive pendente]', novoLink || '[Link do Google Drive pendente]');
+        } else if (driveLink && texto.includes(driveLink)) {
+          taMsg.value = texto.replace(driveLink, novoLink || '[Link do Google Drive pendente]');
+        }
+      });
+    }
+  };
+
+  window.resetarMensagemDriveModal = function(galId, nomeCli, tipoEns) {
+    const linkDrive = document.getElementById('modalInputDriveLink')?.value || '';
+    const novaMsg = window.gerarMensagemEntregaPadrao(nomeCli, tipoEns, linkDrive, galId);
+    const ta = document.getElementById('modalTextareaDriveMsg');
+    if (ta) ta.value = novaMsg;
+    showToast('✓ Modelo de mensagem padrão restaurado!');
+  };
+
+  window.copiarMensagemDriveModal = function() {
+    const msg = document.getElementById('modalTextareaDriveMsg')?.value || '';
+    if (!msg) {
+      showToast('Nenhuma mensagem para copiar.', 'error');
+      return;
+    }
+    navigator.clipboard.writeText(msg).then(() => {
+      showToast('✓ Mensagem de entrega copiada para a área de transferência!');
+    }).catch(() => {
+      prompt('Copie o texto da mensagem abaixo:', msg);
+    });
+  };
+
+  window.enviarWhatsAppDriveModal = function() {
+    const msg = document.getElementById('modalTextareaDriveMsg')?.value || '';
+    if (!msg) {
+      showToast('Preencha a mensagem antes de enviar.', 'error');
+      return;
+    }
+    const tel = prompt('Digite o WhatsApp do cliente com DDD (ou deixe em branco para selecionar no WhatsApp):', '');
+    let url = 'https://wa.me/?text=' + encodeURIComponent(msg);
+    if (tel && tel.trim()) {
+      let cleanTel = tel.replace(/\D/g, '');
+      if (cleanTel.length <= 11 && !cleanTel.startsWith('55')) {
+        cleanTel = '55' + cleanTel;
+      }
+      url = `https://wa.me/${cleanTel}?text=` + encodeURIComponent(msg);
+    }
+    window.open(url, '_blank');
+  };
+
+  window.salvarLinkDriveModal = async function(galId) {
+    const link = document.getElementById('modalInputDriveLink')?.value.trim() || '';
+    const msg = document.getElementById('modalTextareaDriveMsg')?.value.trim() || '';
+    const btn = document.getElementById('btnSalvarModalDrive');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span>Salvando...</span>'; }
+
+    try {
+      const res = await fetch(`/api/galeria/${galId}/link-drive`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ link_drive: link, mensagem_acesso: msg })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('✓ Link do Drive e mensagem de entrega salvos com sucesso!');
+        const modal = document.getElementById('modalLinkDriveMsgGlobal');
+        if (modal) modal.style.display = 'none';
+        if (typeof window.carregarProjetosGlobal === 'function') {
+          await window.carregarProjetosGlobal();
+        }
+        if (typeof window.carregarDadosGaleria === 'function') {
+          await window.carregarDadosGaleria();
+        }
+      } else {
+        showToast(data.error || 'Erro ao salvar link do Drive.', 'error');
+      }
+    } catch (err) {
+      showToast('Erro de conexão ao salvar link do Drive.', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<span>💾 Salvar Link & Mensagem</span>'; }
+    }
+  };
+
+  window.abrirModalLinkDriveRapido = function() {
+    if (window.listaProjetosCache && window.listaProjetosCache.length > 0) {
+      const p = window.listaProjetosCache[0];
+      window.abrirModalLinkDrive(p.galeria_id || p.id, p.nome_cliente, p.tipo_ensaio, p.link_drive, p.mensagem_acesso);
+    } else {
+      window.abrirModalLinkDrive(1, 'Cliente Especial', 'Ensaio Fotográfico', '', '');
     }
   };
 

@@ -661,6 +661,21 @@
 
       <!-- 3. CARD PRINCIPAL DE DOWNLOAD (GOOGLE DRIVE) -->
       <div class="download-card-container">
+        
+        <!-- CARD DE MENSAGEM PERSONALIZADA / DEDICATÓRIA DO ESTÚDIO -->
+        <div id="cardMensagemPersonalizada" style="display: none; background: #FFFFFF; border: 2px solid #C59B6D; border-radius: 18px; padding: 2rem 2.25rem; margin-bottom: 2rem; text-align: left; box-shadow: 0 10px 30px rgba(37, 23, 16, 0.08); position: relative;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; border-bottom: 1px solid #F0E6D8; padding-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+              <span style="font-size: 1.5rem;">💌</span>
+              <strong style="font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif); font-size: 1.4rem; color: #251710; font-weight: 700;">Mensagem Especial da Casa da Foto Studio</strong>
+            </div>
+            <button type="button" onclick="copiarMensagemPersonalizada()" style="background: #FAF5EE; border: 1px solid #D8CAB9; border-radius: 9999px; font-size: 0.78rem; padding: 0.4rem 1rem; color: #8C5F35; cursor: pointer; font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.2s;">
+              <span>📋</span> Copiar Dedicatória
+            </button>
+          </div>
+          <p id="textoMensagemPersonalizada" style="font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif); font-size: 0.98rem; color: #4A3B32; line-height: 1.7; white-space: pre-wrap; margin: 0; font-style: italic;"></p>
+        </div>
+
         <div class="download-card" id="downloadMainCard">
           
           <div class="download-card-header">
@@ -931,6 +946,19 @@
       // Título personalizado
       document.getElementById('heroTituloEntrega').innerHTML = `Entrega de Fotos · <span>${nomeCliente}</span>`;
 
+      // Mensagem personalizada / Dedicatória do Estúdio
+      const msgPersonalizada = (data.mensagem_personalizada || gal.mensagem_acesso || '').trim();
+      const cardMsg = document.getElementById('cardMensagemPersonalizada');
+      const textoMsg = document.getElementById('textoMensagemPersonalizada');
+      if (cardMsg && textoMsg) {
+        if (msgPersonalizada) {
+          textoMsg.textContent = msgPersonalizada;
+          cardMsg.style.display = 'block';
+        } else {
+          cardMsg.style.display = 'none';
+        }
+      }
+
       // Botão Google Drive
       const btnDrive = document.getElementById('btnBaixarDrive');
       const avisoPendente = document.getElementById('drivePendenteAviso');
@@ -997,6 +1025,19 @@
         showToast('✓ Link do Google Drive copiado para a área de transferência!');
       }).catch(() => {
         prompt('Copie o link do Drive abaixo:', link);
+      });
+    }
+
+    function copiarMensagemPersonalizada() {
+      const txt = document.getElementById('textoMensagemPersonalizada')?.textContent || '';
+      if (!txt) {
+        showToast('Nenhuma mensagem para copiar.', 'error');
+        return;
+      }
+      navigator.clipboard.writeText(txt).then(() => {
+        showToast('✓ Dedicatória do estúdio copiada com sucesso!');
+      }).catch(() => {
+        prompt('Copie a mensagem:', txt);
       });
     }
 
