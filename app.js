@@ -303,6 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
         favicons.forEach(fav => {
           fav.href = data.url;
         });
+        document.documentElement.style.setProperty('--watermark-img', `url('${data.url}')`);
       }
     })
     .catch(() => {});
@@ -319,6 +320,20 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .catch(() => {});
   }
+
+  // 3. Carrega configurações globais da Marca d'Água (Posição, Tamanho, Opacidade e Mosaico)
+  fetch('/api/site/marca-dagua')
+    .then(r => r.json())
+    .then(cfg => {
+      if (cfg) {
+        if (cfg.posicao_css) document.documentElement.style.setProperty('--watermark-position', cfg.posicao_css);
+        if (cfg.tamanho_css) document.documentElement.style.setProperty('--watermark-size', cfg.tamanho_css);
+        if (cfg.tamanho_large_css) document.documentElement.style.setProperty('--watermark-size-large', cfg.tamanho_large_css);
+        if (cfg.opacidade_css) document.documentElement.style.setProperty('--watermark-opacity', cfg.opacidade_css);
+        if (cfg.repeat) document.documentElement.style.setProperty('--watermark-repeat', cfg.repeat);
+      }
+    })
+    .catch(() => {});
 
   // Atualiza barra de navegação superior com status de usuário logado
   atualizarHeaderStatus();

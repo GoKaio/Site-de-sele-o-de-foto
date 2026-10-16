@@ -2925,12 +2925,12 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
   pointer-events: none;
   user-select: none;
   z-index: 3;
-  background-image: url('assets/logo/logo.png');
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: 55% auto;
-  opacity: 0.35;
-  transition: opacity 0.2s ease;
+  background-image: var(--watermark-img, url('assets/logo/logo.png'));
+  background-repeat: var(--watermark-repeat, no-repeat);
+  background-position: var(--watermark-position, center center);
+  background-size: var(--watermark-size, 55% auto);
+  opacity: var(--watermark-opacity, 0.35);
+  transition: opacity 0.2s ease, background-position 0.25s ease, background-size 0.25s ease;
 }
 
 .watermark-overlay-large {
@@ -2939,11 +2939,81 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
   pointer-events: none;
   user-select: none;
   z-index: 10;
-  background-image: url('assets/logo/logo.png');
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: 42% auto;
-  opacity: 0.32;
+  background-image: var(--watermark-img, url('assets/logo/logo.png'));
+  background-repeat: var(--watermark-repeat, no-repeat);
+  background-position: var(--watermark-position, center center);
+  background-size: var(--watermark-size-large, 42% auto);
+  opacity: var(--watermark-opacity, 0.32);
+  transition: opacity 0.2s ease, background-position 0.25s ease, background-size 0.25s ease;
+}
+
+/* Controles do Painel de Marca d'Água no Admin */
+.btn-pos-watermark {
+  background: #FFFFFF;
+  border: 1.5px solid #D8CAB9;
+  border-radius: 8px;
+  padding: 0.6rem 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #5C4638;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  text-align: center;
+}
+
+.btn-pos-watermark:hover {
+  background: #F5EFEB;
+  border-color: #8C5F35;
+  color: #2D1D14;
+}
+
+.btn-pos-watermark.active {
+  background: #2D1D14;
+  color: #FAF5EE;
+  border-color: #2D1D14;
+  box-shadow: 0 3px 8px rgba(45, 29, 20, 0.25);
+}
+
+.btn-preset-size {
+  background: #FFFFFF;
+  border: 1.5px solid #D8CAB9;
+  border-radius: 9999px;
+  padding: 0.4rem 0.95rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #5C4638;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-preset-size:hover {
+  background: #F5EFEB;
+  border-color: #8C5F35;
+}
+
+.btn-preset-size.active {
+  background: #8C5F35;
+  color: #FFFFFF;
+  border-color: #8C5F35;
+  box-shadow: 0 2px 6px rgba(140, 95, 53, 0.3);
+}
+
+.custom-slider {
+  accent-color: #8C5F35;
+  height: 6px;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+@media (max-width: 850px) {
+  .watermark-grid-responsive {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
 }
 
 .proofing-thumb-wrapper {

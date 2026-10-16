@@ -1833,6 +1833,82 @@ def api_get_site_login_foto():
         url = 'uploads/login_hero.jpg'
     return json_response({'url': url})
 
+@app.get('/api/site/marca-dagua')
+@rate_limit()
+def api_get_site_marca_dagua():
+    """Retorna as configurações atuais de posição, tamanho e opacidade da marca d'água."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT chave, valor FROM site_textos WHERE chave IN ('marca_posicao', 'marca_tamanho', 'marca_opacidade')")
+    rows = dict(cur.fetchall())
+    conn.close()
+    
+    pos = rows.get('marca_posicao') or 'center'
+    try:
+        tam = int(rows.get('marca_tamanho') or 55)
+    except Exception:
+        tam = 55
+    try:
+        opac = int(rows.get('marca_opacidade') or 35)
+    except Exception:
+        opac = 35
+
+    pos_map = {
+        'center': 'center center',
+        'bottom-right': 'calc(100% - 18px) calc(100% - 18px)',
+        'bottom-left': '18px calc(100% - 18px)',
+        'top-right': 'calc(100% - 18px) 18px',
+        'top-left': '18px 18px',
+        'repeat': 'center center'
+    }
+    repeat_val = 'repeat' if pos == 'repeat' else 'no-repeat'
+    pos_css = pos_map.get(pos, 'center center')
+    size_css = f"{tam}% auto" if pos != 'repeat' else "28% auto"
+    size_large_css = f"{int(tam * 0.8)}% auto" if pos != 'repeat' else "22% auto"
+    opac_css = str(round(opac / 100.0, 2))
+
+    return json_response({
+        'posicao': pos,
+        'tamanho': tam,
+        'opacidade': opac,
+        'posicao_css': pos_css,
+        'tamanho_css': size_css,
+        'tamanho_large_css': size_large_css,
+        'opacidade_css': opac_css,
+        'repeat': repeat_val
+    })
+
+@app.post('/api/site/marca-dagua')
+@rate_limit(30)
+def api_update_site_marca_dagua():
+    """Salva a posição, tamanho e opacidade da marca d'água no banco."""
+    data = get_body()
+    pos = sanitize_str(data.get('posicao', 'center'), 50)
+    try:
+        tam = max(15, min(95, int(data.get('tamanho', 55))))
+    except Exception:
+        tam = 55
+    try:
+        opac = max(5, min(95, int(data.get('opacidade', 35))))
+    except Exception:
+        opac = 35
+
+    if pos not in ['center', 'bottom-right', 'bottom-left', 'top-right', 'top-left', 'repeat']:
+        pos = 'center'
+
+    update_site_textos({
+        'marca_posicao': pos,
+        'marca_tamanho': str(tam),
+        'marca_opacidade': str(opac)
+    })
+
+    return json_response({
+        'success': True,
+        'posicao': pos,
+        'tamanho': tam,
+        'opacidade': opac
+    })
+
 
 @app.get('/api/site/pacotes')
 @rate_limit()

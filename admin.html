@@ -176,6 +176,99 @@
     </div>
 
     <!-- ==============================================================
+         BLOCO 0.3: POSICIONAMENTO E TAMANHO DA MARCA D'ÁGUA
+         ============================================================== -->
+    <div class="admin-card-panel" style="margin-bottom: 2rem; background: #FAF5EE; border: 1.5px solid #D8CAB9;" id="painelMarcaDagua">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+        <div>
+          <h2 class="panel-title" style="margin: 0;">🛡️ Posicionamento e Tamanho da Marca d'Água</h2>
+          <p class="panel-desc" style="margin-top: 4px; margin-bottom: 0;">
+            Escolha <strong>onde</strong> e <strong>qual o tamanho</strong> da marca d'água que protege as fotos nas galerias e na visão dos clientes.
+          </p>
+        </div>
+        <span class="preview-pill-tag" style="background: #8C5F35; color: #FAF5EE; font-weight: 700;">Proteção Visual</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; align-items: start;" class="watermark-grid-responsive">
+        
+        <!-- Coluna Esquerda: Controles -->
+        <div>
+          <!-- 1. Posição da Marca d'Água -->
+          <div style="margin-bottom: 1.5rem;">
+            <label class="field-label" style="font-weight: 700; display: block; margin-bottom: 0.5rem;">
+              1. Aonde posicionar a marca d'água:
+            </label>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; max-width: 440px;" id="gridBotoesPosicao">
+              <button type="button" class="btn-pos-watermark" data-pos="top-left" onclick="selecionarPosicaoMarca('top-left')">
+                ↖ Superior Esq.
+              </button>
+              <button type="button" class="btn-pos-watermark active" data-pos="center" onclick="selecionarPosicaoMarca('center')">
+                ⏺ Centralizado
+              </button>
+              <button type="button" class="btn-pos-watermark" data-pos="top-right" onclick="selecionarPosicaoMarca('top-right')">
+                ↗ Superior Dir.
+              </button>
+              <button type="button" class="btn-pos-watermark" data-pos="bottom-left" onclick="selecionarPosicaoMarca('bottom-left')">
+                ↙ Inferior Esq.
+              </button>
+              <button type="button" class="btn-pos-watermark" data-pos="repeat" onclick="selecionarPosicaoMarca('repeat')">
+                ▦ Mosaico (Repetir)
+              </button>
+              <button type="button" class="btn-pos-watermark" data-pos="bottom-right" onclick="selecionarPosicaoMarca('bottom-right')">
+                ↘ Inferior Dir.
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. Tamanho da Marca d'Água -->
+          <div style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+              <label class="field-label" style="font-weight: 700; margin: 0;">2. Tamanho da marca d'água:</label>
+              <span id="labelTamanhoVal" style="font-size: 0.9rem; font-weight: 800; color: #8C5F35;">55% (Médio)</span>
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; flex-wrap: wrap;" id="presetsTamanho">
+              <button type="button" class="btn-preset-size" data-tam="30" onclick="ajustarTamanhoPreset(30, '30% (Pequeno)')">Pequeno (30%)</button>
+              <button type="button" class="btn-preset-size active" data-tam="55" onclick="ajustarTamanhoPreset(55, '55% (Médio)')">Médio (55%)</button>
+              <button type="button" class="btn-preset-size" data-tam="75" onclick="ajustarTamanhoPreset(75, '75% (Grande)')">Grande (75%)</button>
+              <button type="button" class="btn-preset-size" data-tam="90" onclick="ajustarTamanhoPreset(90, '90% (Extra Grande)')">Extra Grande (90%)</button>
+            </div>
+
+            <input type="range" id="rangeTamanhoMarca" min="15" max="95" value="55" step="5" class="custom-slider" style="width: 100%;" oninput="atualizarTamanhoSlider(this.value)">
+          </div>
+
+          <!-- 3. Opacidade / Visibilidade -->
+          <div style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+              <label class="field-label" style="font-weight: 700; margin: 0;">3. Opacidade / Visibilidade:</label>
+              <span id="labelOpacidadeVal" style="font-size: 0.9rem; font-weight: 800; color: #8C5F35;">35% (Padrão)</span>
+            </div>
+            <input type="range" id="rangeOpacidadeMarca" min="10" max="90" value="35" step="5" class="custom-slider" style="width: 100%;" oninput="atualizarOpacidadeSlider(this.value)">
+          </div>
+
+          <button type="button" onclick="salvarConfigMarcaDagua();" class="btn-salvar-admin" id="btnSalvarMarcaDagua" style="padding: 0.75rem 1.6rem; font-size: 0.92rem;">
+            💾 Salvar Configurações da Marca d'Água
+          </button>
+        </div>
+
+        <!-- Coluna Direita: Live Preview -->
+        <div>
+          <label class="field-label" style="font-weight: 700; display: block; margin-bottom: 0.5rem;">
+            👁️ Pré-visualização em Tempo Real na Foto:
+          </label>
+          <div style="position: relative; width: 100%; max-width: 380px; height: 260px; border-radius: 14px; overflow: hidden; border: 2px solid #C4A482; box-shadow: 0 4px 16px rgba(45, 29, 20, 0.12); margin: 0 auto; background: #2D1D14;">
+            <img src="uploads/login_hero.jpg" id="previewWatermarkBg" alt="Exemplo de ensaio fotográfico" style="width: 100%; height: 100%; object-fit: cover; display: block;" onerror="this.src='assets/logo/logo.png'">
+            <div id="previewWatermarkOverlay" style="position: absolute; inset: 0; pointer-events: none; background-image: url('assets/logo/logo.png'); background-repeat: no-repeat; background-position: center center; background-size: 55% auto; opacity: 0.35; transition: all 0.2s ease;"></div>
+          </div>
+          <span style="font-size: 0.74rem; color: #7A6A5E; text-align: center; display: block; margin-top: 0.5rem;">
+            Como o cliente verá a foto protegida na galeria e na seleção
+          </span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==============================================================
          BLOCO 0.5: FOTO DAS TELAS DE LOGIN
          ============================================================== -->
     <div class="admin-card-panel" style="margin-bottom: 2rem; background: #FAF5EE; border: 1.5px solid #D8CAB9;">
@@ -566,6 +659,7 @@
     async function carregarTudo() {
       await Promise.all([
         carregarLogoAdmin(),
+        carregarConfigMarcaDagua(),
         carregarFotoLoginAdmin(),
         carregarCategorias(),
         carregarFotos(),
@@ -1013,6 +1107,8 @@
           if (img) img.src = data.url;
           const headerLogo = document.getElementById('headerLogoImg');
           if (headerLogo) headerLogo.src = data.url;
+          const prevW = document.getElementById('previewWatermarkOverlay');
+          if (prevW) prevW.style.backgroundImage = `url('${data.url}')`;
           novaLogoBase64 = null;
           const inp = document.getElementById('inputUploadLogo');
           if (inp) inp.value = '';
@@ -1034,9 +1130,135 @@
         if (d && d.url) {
           const img = document.getElementById('imgLogoAdminPreview');
           if (img) img.src = d.url;
+          const prevW = document.getElementById('previewWatermarkOverlay');
+          if (prevW) prevW.style.backgroundImage = `url('${d.url}')`;
         }
       } catch (e) {
         console.error('Erro ao carregar logo admin:', e);
+      }
+    }
+
+    // ── GESTÃO DE POSIÇÃO E TAMANHO DA MARCA D'ÁGUA ──
+    let configMarcaAtual = {
+      posicao: 'center',
+      tamanho: 55,
+      opacidade: 35
+    };
+
+    function atualizarPreviewMarcaAoVivo() {
+      const prev = document.getElementById('previewWatermarkOverlay');
+      if (!prev) return;
+      const posMap = {
+        'center': 'center center',
+        'bottom-right': 'calc(100% - 14px) calc(100% - 14px)',
+        'bottom-left': '14px calc(100% - 14px)',
+        'top-right': 'calc(100% - 14px) 14px',
+        'top-left': '14px 14px',
+        'repeat': 'center center'
+      };
+      const isRepeat = configMarcaAtual.posicao === 'repeat';
+      prev.style.backgroundRepeat = isRepeat ? 'repeat' : 'no-repeat';
+      prev.style.backgroundPosition = posMap[configMarcaAtual.posicao] || 'center center';
+      prev.style.backgroundSize = isRepeat ? '24% auto' : (configMarcaAtual.tamanho + '% auto');
+      prev.style.opacity = (configMarcaAtual.opacidade / 100).toFixed(2);
+    }
+
+    function selecionarPosicaoMarca(pos) {
+      configMarcaAtual.posicao = pos;
+      document.querySelectorAll('#gridBotoesPosicao .btn-pos-watermark').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-pos') === pos);
+      });
+      atualizarPreviewMarcaAoVivo();
+    }
+
+    function ajustarTamanhoPreset(val, label) {
+      configMarcaAtual.tamanho = parseInt(val);
+      const range = document.getElementById('rangeTamanhoMarca');
+      if (range) range.value = val;
+      const lbl = document.getElementById('labelTamanhoVal');
+      if (lbl) lbl.textContent = label || `${val}%`;
+      document.querySelectorAll('#presetsTamanho .btn-preset-size').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.getAttribute('data-tam')) === parseInt(val));
+      });
+      atualizarPreviewMarcaAoVivo();
+    }
+
+    function atualizarTamanhoSlider(val) {
+      configMarcaAtual.tamanho = parseInt(val);
+      const lbl = document.getElementById('labelTamanhoVal');
+      let desc = '';
+      if (val <= 35) desc = ' (Pequeno)';
+      else if (val <= 65) desc = ' (Médio)';
+      else if (val <= 80) desc = ' (Grande)';
+      else desc = ' (Extra Grande)';
+      if (lbl) lbl.textContent = `${val}%${desc}`;
+      document.querySelectorAll('#presetsTamanho .btn-preset-size').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.getAttribute('data-tam')) === parseInt(val));
+      });
+      atualizarPreviewMarcaAoVivo();
+    }
+
+    function atualizarOpacidadeSlider(val) {
+      configMarcaAtual.opacidade = parseInt(val);
+      const lbl = document.getElementById('labelOpacidadeVal');
+      let desc = '';
+      if (val <= 25) desc = ' (Suave)';
+      else if (val <= 45) desc = ' (Padrão)';
+      else desc = ' (Marcante)';
+      if (lbl) lbl.textContent = `${val}%${desc}`;
+      atualizarPreviewMarcaAoVivo();
+    }
+
+    async function carregarConfigMarcaDagua() {
+      try {
+        const res = await fetch('/api/site/marca-dagua');
+        const data = await res.json();
+        if (data) {
+          configMarcaAtual.posicao = data.posicao || 'center';
+          configMarcaAtual.tamanho = parseInt(data.tamanho || 55);
+          configMarcaAtual.opacidade = parseInt(data.opacidade || 35);
+
+          selecionarPosicaoMarca(configMarcaAtual.posicao);
+          const rangeTam = document.getElementById('rangeTamanhoMarca');
+          if (rangeTam) rangeTam.value = configMarcaAtual.tamanho;
+          atualizarTamanhoSlider(configMarcaAtual.tamanho);
+
+          const rangeOpac = document.getElementById('rangeOpacidadeMarca');
+          if (rangeOpac) rangeOpac.value = configMarcaAtual.opacidade;
+          atualizarOpacidadeSlider(configMarcaAtual.opacidade);
+
+          atualizarPreviewMarcaAoVivo();
+        }
+      } catch (err) {
+        console.error('Erro ao carregar configurações da marca d\'água:', err);
+      }
+    }
+
+    async function salvarConfigMarcaDagua() {
+      const btn = document.getElementById('btnSalvarMarcaDagua');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = 'Salvando configurações...';
+      try {
+        const res = await fetch('/api/site/marca-dagua', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(configMarcaAtual)
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('✓ Configurações da marca d\'água salvas com sucesso!');
+          if (data.posicao_css) document.documentElement.style.setProperty('--watermark-position', data.posicao_css);
+          if (data.tamanho_css) document.documentElement.style.setProperty('--watermark-size', data.tamanho_css);
+          if (data.opacidade_css) document.documentElement.style.setProperty('--watermark-opacity', data.opacidade_css);
+        } else {
+          showToast(data.error || 'Erro ao salvar marca d\'água.', 'error');
+        }
+      } catch (err) {
+        showToast('Erro de conexão ao salvar configurações.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
       }
     }
 
