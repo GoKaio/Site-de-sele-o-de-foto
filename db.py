@@ -84,9 +84,18 @@ class PostgresCursorWrapper:
         
         # 2. Converte 'INSERT OR IGNORE INTO' para 'INSERT INTO ... ON CONFLICT DO NOTHING'
         if 'INSERT OR IGNORE INTO' in converted_sql.upper():
-            converted_sql = converted_sql.replace('INSERT OR IGNORE INTO', 'INSERT INTO')
+            import re
+            converted_sql = re.sub(r'INSERT\s+OR\s+IGNORE\s+INTO', 'INSERT INTO', converted_sql, flags=re.IGNORECASE)
             if 'ON CONFLICT' not in converted_sql.upper():
                 converted_sql = converted_sql.rstrip('; ') + ' ON CONFLICT DO NOTHING'
+
+        # 2.1 Converte 'INSERT OR REPLACE INTO' para PostgreSQL upsert
+        if 'INSERT OR REPLACE INTO' in converted_sql.upper():
+            import re
+            converted_sql = re.sub(r'INSERT\s+OR\s+REPLACE\s+INTO', 'INSERT INTO', converted_sql, flags=re.IGNORECASE)
+            if 'ON CONFLICT' not in converted_sql.upper():
+                if 'SITE_TEXTOS' in converted_sql.upper():
+                    converted_sql = converted_sql.rstrip('; ') + ' ON CONFLICT (chave) DO UPDATE SET valor = EXCLUDED.valor'
 
         # 3. Tratamento para cur.lastrowid em comandos INSERT
         is_insert = converted_sql.strip().upper().startswith('INSERT INTO')

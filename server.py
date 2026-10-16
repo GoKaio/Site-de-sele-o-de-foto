@@ -1756,10 +1756,7 @@ def api_update_site_logo():
             url += f"?v={int(time.time())}"
 
         # 3. Salva a URL no banco de dados site_textos
-        conn = get_connection()
-        conn.execute("INSERT OR REPLACE INTO site_textos (chave, valor) VALUES ('logo_url', ?)", (url,))
-        conn.commit()
-        conn.close()
+        update_site_textos({'logo_url': url})
 
         return json_response({'success': True, 'url': url})
     except Exception as e:
@@ -1816,10 +1813,7 @@ def api_update_site_login_foto():
             url += f"?v={int(time.time())}"
         
         # Salva no banco de dados site_textos
-        conn = get_connection()
-        conn.execute("INSERT OR REPLACE INTO site_textos (chave, valor) VALUES ('foto_login', ?)", (url,))
-        conn.commit()
-        conn.close()
+        update_site_textos({'foto_login': url})
 
         return json_response({'success': True, 'url': url})
     except Exception as e:
