@@ -1245,17 +1245,29 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(configMarcaAtual)
         });
-        const data = await res.json();
-        if (data.success) {
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (_) {
+          data = { error: 'Falha na resposta do servidor (HTTP ' + res.status + ')' };
+        }
+        if (res.ok && data.success) {
           showToast('✓ Configurações da marca d\'água salvas com sucesso!');
           if (data.posicao_css) document.documentElement.style.setProperty('--watermark-position', data.posicao_css);
           if (data.tamanho_css) document.documentElement.style.setProperty('--watermark-size', data.tamanho_css);
           if (data.opacidade_css) document.documentElement.style.setProperty('--watermark-opacity', data.opacidade_css);
+          // Atualiza o painel de diagnóstico
+          if (typeof carregarLogsDiagnostico === 'function') {
+            carregarLogsDiagnostico();
+          }
         } else {
           showToast(data.error || 'Erro ao salvar marca d\'água.', 'error');
+          if (typeof carregarLogsDiagnostico === 'function') {
+            carregarLogsDiagnostico();
+          }
         }
       } catch (err) {
-        showToast('Erro de conexão ao salvar configurações.', 'error');
+        showToast('Erro de conexão ao salvar configurações: ' + (err.message || ''), 'error');
       } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;

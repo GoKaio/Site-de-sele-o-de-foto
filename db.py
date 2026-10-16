@@ -99,7 +99,9 @@ class PostgresCursorWrapper:
 
         # 3. Tratamento para cur.lastrowid em comandos INSERT
         is_insert = converted_sql.strip().upper().startswith('INSERT INTO')
-        if is_insert and 'RETURNING' not in converted_sql.upper() and 'DO NOTHING' not in converted_sql.upper():
+        # Tabelas que não possuem coluna 'id' (ex: site_textos usa chave primária 'chave')
+        tabela_sem_id = 'SITE_TEXTOS' in converted_sql.upper()
+        if is_insert and 'RETURNING' not in converted_sql.upper() and 'DO NOTHING' not in converted_sql.upper() and not tabela_sem_id:
             converted_sql = converted_sql.rstrip('; ') + ' RETURNING id;'
             self._cur.execute(converted_sql, params or ())
             try:
@@ -652,32 +654,35 @@ def init_db(conn=None):
     conn.commit()
     if should_close:
         conn.close()
+    print("Banco de dados inicializado com sucesso em:", DB_FILE)
 
 def get_site_textos() -> dict:
     """Retorna todos os textos configuráveis do site como um dicionário chave -> valor."""
     conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT chave, valor FROM site_textos")
-    rows = cur.fetchall()
-    conn.close()
-    return {r['chave']: r['valor'] for r in rows}
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT chave, valor FROM site_textos")
+        rows = cur.fetchall()
+        return {r['chave']: r['valor'] for r in rows}
+    finally:
+        conn.close()
 
 def update_site_textos(novos_textos: dict) -> bool:
     """Atualiza ou insere textos no banco de dados com segurança."""
     conn = get_connection()
-    cur = conn.cursor()
-    for chave, valor in novos_textos.items():
-        if isinstance(chave, str) and isinstance(valor, str):
-            cur.execute("""
-            INSERT INTO site_textos (chave, valor)
-            VALUES (?, ?)
-            ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor
-            """, (chave.strip(), valor.strip()))
-    conn.commit()
-    conn.close()
-    return True
-
-    print("Banco de dados SQLite inicializado com sucesso em:", DB_FILE)
+    try:
+        cur = conn.cursor()
+        for chave, valor in novos_textos.items():
+            if isinstance(chave, str) and isinstance(valor, str):
+                cur.execute("""
+                INSERT INTO site_textos (chave, valor)
+                VALUES (?, ?)
+                ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor
+                """, (chave.strip(), valor.strip()))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
 
 if __name__ == "__main__":
     init_db()

@@ -1838,10 +1838,14 @@ def api_get_site_login_foto():
 def api_get_site_marca_dagua():
     """Retorna as configurações atuais de posição, tamanho e opacidade da marca d'água."""
     conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT chave, valor FROM site_textos WHERE chave IN ('marca_posicao', 'marca_tamanho', 'marca_opacidade')")
-    rows = dict(cur.fetchall())
-    conn.close()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT chave, valor FROM site_textos WHERE chave IN ('marca_posicao', 'marca_tamanho', 'marca_opacidade')")
+        rows = dict(cur.fetchall())
+    except Exception:
+        rows = {}
+    finally:
+        conn.close()
     
     pos = rows.get('marca_posicao') or 'center'
     try:
@@ -1882,32 +1886,56 @@ def api_get_site_marca_dagua():
 @rate_limit(30)
 def api_update_site_marca_dagua():
     """Salva a posição, tamanho e opacidade da marca d'água no banco."""
-    data = get_body()
-    pos = sanitize_str(data.get('posicao', 'center'), 50)
     try:
-        tam = max(15, min(95, int(data.get('tamanho', 55))))
-    except Exception:
-        tam = 55
-    try:
-        opac = max(5, min(95, int(data.get('opacidade', 35))))
-    except Exception:
-        opac = 35
+        data = get_body()
+        pos = sanitize_str(data.get('posicao', 'center'), 50)
+        try:
+            tam = max(15, min(95, int(data.get('tamanho', 55))))
+        except Exception:
+            tam = 55
+        try:
+            opac = max(5, min(95, int(data.get('opacidade', 35))))
+        except Exception:
+            opac = 35
 
-    if pos not in ['center', 'bottom-right', 'bottom-left', 'top-right', 'top-left', 'repeat']:
-        pos = 'center'
+        if pos not in ['center', 'bottom-right', 'bottom-left', 'top-right', 'top-left', 'repeat']:
+            pos = 'center'
 
-    update_site_textos({
-        'marca_posicao': pos,
-        'marca_tamanho': str(tam),
-        'marca_opacidade': str(opac)
-    })
+        update_site_textos({
+            'marca_posicao': pos,
+            'marca_tamanho': str(tam),
+            'marca_opacidade': str(opac)
+        })
 
-    return json_response({
-        'success': True,
-        'posicao': pos,
-        'tamanho': tam,
-        'opacidade': opac
-    })
+        pos_map = {
+            'center': 'center center',
+            'bottom-right': 'calc(100% - 18px) calc(100% - 18px)',
+            'bottom-left': '18px calc(100% - 18px)',
+            'top-right': 'calc(100% - 18px) 18px',
+            'top-left': '18px 18px',
+            'repeat': 'center center'
+        }
+        repeat_val = 'repeat' if pos == 'repeat' else 'no-repeat'
+        pos_css = pos_map.get(pos, 'center center')
+        size_css = f"{tam}% auto" if pos != 'repeat' else "28% auto"
+        size_large_css = f"{int(tam * 0.8)}% auto" if pos != 'repeat' else "22% auto"
+        opac_css = str(round(opac / 100.0, 2))
+
+        return json_response({
+            'success': True,
+            'posicao': pos,
+            'tamanho': tam,
+            'opacidade': opac,
+            'posicao_css': pos_css,
+            'tamanho_css': size_css,
+            'tamanho_large_css': size_large_css,
+            'opacidade_css': opac_css,
+            'repeat': repeat_val
+        })
+    except Exception as e:
+        import traceback
+        log_error('backend', f"Erro ao atualizar marca d'água: {str(e)}", detalhe=traceback.format_exc(), rota='/api/site/marca-dagua')
+        return json_response({'error': f"Erro ao salvar configurações da marca d'água: {str(e)}"}, 500)
 
 
 @app.get('/api/site/pacotes')
@@ -1993,9 +2021,14 @@ def api_update_site_textos():
         if isinstance(k, str) and isinstance(v, str):
             sanitizado[sanitize_str(k, 50)] = sanitize_str(v, 3000)
 
-    update_site_textos(sanitizado)
-    audit(ip, '/api/site/textos', 'POST', None, 'TEXTOS_SITE_UPDATE', f"{len(sanitizado)} campos atualizados", 200)
-    return json_response({'success': True, 'mensagem': 'Textos da página inicial atualizados com sucesso!', 'textos': get_site_textos()})
+    try:
+        update_site_textos(sanitizado)
+        audit(ip, '/api/site/textos', 'POST', None, 'TEXTOS_SITE_UPDATE', f"{len(sanitizado)} campos atualizados", 200)
+        return json_response({'success': True, 'mensagem': 'Textos da página inicial atualizados com sucesso!', 'textos': get_site_textos()})
+    except Exception as e:
+        import traceback
+        log_error('backend', f"Erro ao atualizar textos do site: {str(e)}", detalhe=traceback.format_exc(), rota='/api/site/textos')
+        return json_response({'error': f"Erro ao atualizar textos do site: {str(e)}"}, 500)
 
 
 # ==============================================================================
@@ -2114,21 +2147,32 @@ def api_get_error_log():
     """Lista erros capturados do sistema (frontend e backend)."""
     limite = min(int(request.query.get('limit', 50)), 200)
     conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM error_log ORDER BY id DESC LIMIT ?", (limite,))
-    rows = [dict(r) for r in cur.fetchall()]
-    conn.close()
-    return json_response(rows)
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM error_log ORDER BY id DESC LIMIT ?", (limite,))
+        rows = [dict(r) for r in cur.fetchall()]
+        return json_response(rows)
+    finally:
+        conn.close()
 
 @app.delete('/api/admin/error-log')
 @rate_limit()
 def api_clear_error_log():
     """Limpa a tabela de logs de erro."""
     conn = get_connection()
-    conn.execute("DELETE FROM error_log")
-    conn.commit()
-    conn.close()
-    return json_response({'success': True, 'mensagem': 'Log de erros limpo com sucesso.'})
+    try:
+        conn.execute("DELETE FROM error_log")
+        conn.commit()
+        return json_response({'success': True, 'mensagem': 'Log de erros limpo com sucesso.'})
+    finally:
+        conn.close()
+
+@app.post('/api/admin/error-log/test')
+@rate_limit()
+def api_test_error_log():
+    """Endpoint de teste para validar se o sistema de log de erros está ativo."""
+    log_error('backend', 'Teste de verificação do sistema de diagnóstico', detalhe='Validação de integridade do error_log executada com sucesso.', rota='/api/admin/error-log/test')
+    return json_response({'success': True, 'mensagem': 'Erro de teste registrado no error_log com sucesso.'})
 
 # ==============================================================================
 # 9. ARQUIVOS ESTÁTICOS (com proteções de segurança)
