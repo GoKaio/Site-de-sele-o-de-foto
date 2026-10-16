@@ -448,39 +448,51 @@ def api_login_cliente():
 # 2. ROTAS DE PROJETOS (KANBAN)
 # ==============================================================================
 
-def semear_projetos_iniciais(conn):
-    """Semeia projetos e galerias de demonstração caso o banco esteja vazio."""
+def semear_projetos_iniciais(conn, forcar=False):
+    """Semeia projetos e galerias de demonstração com links de entrega e mensagens personalizadas."""
     try:
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM projetos")
         count = cur.fetchone()[0]
-        if count > 0:
+        if count > 0 and not forcar:
             return
 
         projetos_demo = [
-            ('Camila & Pedro', 'Ensaio Gestante', 'Gestante', 'novos', 1, 'sem prazo', 'assets/logo/logo.png'),
-            ('Família Silva', 'Ensaio Família', 'Família', 'andamento', 2, '15 nov', 'assets/logo/logo.png'),
-            ('Nicoly', '15 anos', 'Retrato', 'revisao', 1, '22 nov', 'assets/logo/logo.png'),
-            ('Helena (Primeiro Aninho)', 'Ensaio Bebê', 'Bebê', 'entrega', 1, '30 nov', 'assets/logo/logo.png'),
-            ('Mariana & João', 'Bodas de Prata', 'Família', 'finalizados', 1, 'Concluído', 'assets/logo/logo.png')
+            ('Camila & Pedro', 'Ensaio Gestante', 'Gestante', 'novos', 1, 'sem prazo', 'assets/logo/logo.png', 'https://drive.google.com/drive/folders/pastaCamilaPedro?usp=sharing'),
+            ('Família Silva', 'Ensaio Família', 'Família', 'andamento', 2, '15 nov', 'assets/logo/logo.png', 'https://drive.google.com/drive/folders/pastaFamiliaSilva?usp=sharing'),
+            ('Nicoly', '15 anos', 'Retrato', 'revisao', 1, '22 nov', 'assets/logo/logo.png', 'https://drive.google.com/drive/folders/pastaNicoly15Anos?usp=sharing'),
+            ('Helena (Primeiro Aninho)', 'Ensaio Bebê', 'Bebê', 'entrega', 1, '30 nov', 'assets/logo/logo.png', 'https://drive.google.com/drive/folders/pastaHelenaBebe?usp=sharing'),
+            ('Mariana & João', 'Bodas de Prata', 'Família', 'finalizados', 1, 'Concluído', 'assets/logo/logo.png', 'https://drive.google.com/drive/folders/pastaMarianaJoao?usp=sharing')
         ]
         
-        link_drive_demo = 'https://drive.google.com/drive/folders/pastaEntregaE2E?usp=sharing'
-        msg_template = "Olá {nome}! ✨📸 Suas fotos do {ensaio} ficaram maravilhosas e já estão preparadas com todo carinho pela Casa da Foto Studio! Acesse o link oficial para baixar todos os arquivos em alta resolução no Google Drive."
+        msg_template = "Olá {nome}! ✨📸 É com imensa alegria que entregamos as fotos oficiais do seu {ensaio}! Preparamos cada detalhe com todo carinho da Casa da Foto Studio para eternizar os seus melhores momentos. Acesse sua página exclusiva para baixar todos os arquivos em alta resolução diretamente pelo Google Drive."
 
-        for nome, tipo, tag, st, sessoes, prazo, avatar in projetos_demo:
-            cur.execute("""
-            INSERT INTO projetos (nome_cliente, tipo_ensaio, categoria_tag, status, sessoes, prazo, avatar_img)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (nome, tipo, tag, st, sessoes, prazo, avatar))
-            proj_id = cur.lastrowid
-            
-            drive_link = link_drive_demo if st in ('entrega', 'finalizados') else ''
+        for nome, tipo, tag, st, sessoes, prazo, avatar, drive_link in projetos_demo:
+            cur.execute("SELECT id FROM projetos WHERE nome_cliente = ?", (nome,))
+            proj_existente = cur.fetchone()
+            if not proj_existente:
+                cur.execute("""
+                INSERT INTO projetos (nome_cliente, tipo_ensaio, categoria_tag, status, sessoes, prazo, avatar_img)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (nome, tipo, tag, st, sessoes, prazo, avatar))
+                proj_id = cur.lastrowid
+            else:
+                proj_id = proj_existente['id']
+
             msg_personalizada = msg_template.format(nome=nome, ensaio=tipo)
-            cur.execute("""
-            INSERT INTO galerias (projeto_id, nome, categoria, data_trabalho, prazo_selecao, limite_pacote, valor_foto_extra, foto_capa, link_drive, mensagem_acesso, status_galeria)
-            VALUES (?, ?, ?, '15/10/2026', '30/10/2026', 15, 25.00, 'assets/logo/logo.png', ?, ?, ?)
-            """, (proj_id, f"Galeria - {nome}", tipo, drive_link, msg_personalizada, 'Seleção aprovada' if st in ('entrega', 'finalizados') else 'Aguardando seleção'))
+            
+            # Verifica se já existe galeria associada
+            cur.execute("SELECT id FROM galerias WHERE projeto_id = ? OR nome = ?", (proj_id, f"Galeria - {nome}"))
+            gal_existente = cur.fetchone()
+            if not gal_existente:
+                cur.execute("""
+                INSERT INTO galerias (projeto_id, nome, categoria, data_trabalho, prazo_selecao, limite_pacote, valor_foto_extra, foto_capa, link_drive, mensagem_acesso, status_galeria)
+                VALUES (?, ?, ?, '15/10/2026', '30/10/2026', 15, 25.00, 'assets/logo/logo.png', ?, ?, ?)
+                """, (proj_id, f"Galeria - {nome}", tipo, drive_link, msg_personalizada, 'Seleção aprovada' if st in ('entrega', 'finalizados') else 'Aguardando seleção'))
+                gal_id = cur.lastrowid
+            else:
+                gal_id = gal_existente['id']
+                cur.execute("UPDATE galerias SET link_drive = ?, mensagem_acesso = ?, projeto_id = ? WHERE id = ?", (drive_link, msg_personalizada, proj_id, gal_id))
 
         conn.commit()
     except Exception as e:
@@ -505,7 +517,7 @@ def api_get_projetos():
         rows = [dict(row) for row in cur.fetchall()]
         
         if len(rows) == 0:
-            semear_projetos_iniciais(conn)
+            semear_projetos_iniciais(conn, forcar=True)
             cur.execute("""
             SELECT p.*, COALESCE(g.id, p.id) as galeria_id,
                    COALESCE(g.status_galeria, 'Aguardando seleção') as status_galeria,
@@ -527,8 +539,8 @@ def api_get_projetos():
 def api_restaurar_projetos_exemplos():
     conn = get_connection()
     try:
-        semear_projetos_iniciais(conn)
-        return json_response({'success': True, 'mensagem': 'Galerias demonstrativas restauradas com sucesso!'})
+        semear_projetos_iniciais(conn, forcar=True)
+        return json_response({'success': True, 'mensagem': '5 Galerias demonstrativas com links do Google Drive restauradas com sucesso!'})
     finally:
         conn.close()
 
@@ -773,6 +785,35 @@ def api_update_link_drive(galeria_id):
     finally:
         conn.close()
 
+@app.get('/api/entrega/lista')
+@rate_limit()
+def api_get_lista_entregas():
+    """Retorna a lista de todas as entregas disponíveis para o seletor da página de entrega."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+        SELECT 
+            COALESCE(g.id, p.id) as galeria_id,
+            p.id as projeto_id,
+            p.nome_cliente,
+            p.tipo_ensaio,
+            p.status as status_projeto,
+            COALESCE(g.status_galeria, 'Aguardando seleção') as status_galeria,
+            COALESCE(g.link_drive, '') as link_drive,
+            COALESCE(g.mensagem_acesso, '') as mensagem_acesso,
+            COALESCE(g.data_trabalho, 'Outubro 2026') as data_trabalho
+        FROM projetos p
+        LEFT JOIN galerias g ON g.projeto_id = p.id
+        ORDER BY 
+            CASE WHEN COALESCE(g.link_drive, '') != '' THEN 0 ELSE 1 END,
+            p.id ASC
+        """)
+        rows = [dict(r) for r in cur.fetchall()]
+        return json_response({'success': True, 'entregas': rows})
+    finally:
+        conn.close()
+
 @app.get('/api/entrega/<galeria_id:int>')
 @rate_limit()
 def api_get_entrega(galeria_id):
@@ -783,10 +824,26 @@ def api_get_entrega(galeria_id):
         cur = conn.cursor()
         cur.execute("SELECT * FROM galerias WHERE id = ?", (real_gal_id,))
         galeria_row = cur.fetchone()
+        
+        # Se não achou por ID de galeria, busca pelo ID do projeto
+        if not galeria_row:
+            cur.execute("SELECT * FROM galerias WHERE projeto_id = ? ORDER BY id ASC LIMIT 1", (galeria_id,))
+            galeria_row = cur.fetchone()
+
+        if not galeria_row:
+            # Fallback para primeira galeria que tenha link do Drive
+            cur.execute("SELECT * FROM galerias WHERE link_drive != '' ORDER BY id ASC LIMIT 1")
+            galeria_row = cur.fetchone()
+
+        if not galeria_row:
+            cur.execute("SELECT * FROM galerias ORDER BY id ASC LIMIT 1")
+            galeria_row = cur.fetchone()
+
         if not galeria_row:
             return json_response({'error': 'Entrega não encontrada.'}, 404)
 
         galeria = dict(galeria_row)
+        real_gal_id = galeria['id']
 
         # Busca dados do projeto associado
         projeto = None
@@ -796,12 +853,11 @@ def api_get_entrega(galeria_id):
             if proj_row:
                 projeto = dict(proj_row)
 
-        # Fotos da galeria: prioriza fotos aprovadas (pacote / extra) ou todas disponíveis
-        cur.execute("SELECT id, numero, titulo, arquivo, status FROM fotos WHERE galeria_id = ? ORDER BY ordem ASC, id ASC", (real_gal_id,))
-        todas_fotos = [dict(f) for f in cur.fetchall()]
-
-        fotos_aprovadas = [f for f in todas_fotos if f.get('status') in ('pacote', 'extra')]
-        fotos_exibir = fotos_aprovadas if fotos_aprovadas else todas_fotos
+        if not projeto:
+            cur.execute("SELECT id, nome_cliente, tipo_ensaio, status, prazo, avatar_img FROM projetos WHERE id = ?", (galeria['id'],))
+            proj_row = cur.fetchone()
+            if proj_row:
+                projeto = dict(proj_row)
 
         # Informações de contato do estúdio
         textos = get_site_textos()
@@ -812,13 +868,30 @@ def api_get_entrega(galeria_id):
             'email': textos.get('contato_email', 'contato@casadafoto.com')
         }
 
-        # Mensagem personalizada de entrega
-        nome_cli = (projeto.get('nome_cliente') if projeto else None) or galeria.get('nome', 'Cliente')
-        tipo_ens = (projeto.get('tipo_ensaio') if projeto else None) or galeria.get('categoria', 'Ensaio Fotográfico')
+        # Fotos da galeria
+        cur.execute("SELECT id, numero, titulo, arquivo, status FROM fotos WHERE galeria_id = ? ORDER BY ordem ASC, id ASC", (real_gal_id,))
+        todas_fotos = [dict(f) for f in cur.fetchall()]
+        fotos_aprovadas = [f for f in todas_fotos if f.get('status') in ('pacote', 'extra')]
+        fotos_exibir = fotos_aprovadas if fotos_aprovadas else todas_fotos
+
+        # Identificação garantida do cliente e do ensaio
+        nome_cli = (projeto.get('nome_cliente') if projeto else None)
+        if not nome_cli:
+            gal_nome = galeria.get('nome', '')
+            if 'Galeria - ' in gal_nome:
+                nome_cli = gal_nome.replace('Galeria - ', '').strip()
+            elif gal_nome and gal_nome != 'Galeria demonstrativa':
+                nome_cli = gal_nome.strip()
+            else:
+                nome_cli = 'Cliente Especial'
+
+        tipo_ens = (projeto.get('tipo_ensaio') if projeto else None) or galeria.get('categoria') or 'Ensaio Fotográfico'
+
+        # Mensagem personalizada
         msg_entrega = galeria.get('mensagem_acesso')
-        if not msg_entrega:
+        if not msg_entrega or len(msg_entrega.strip()) < 10:
             msg_entrega = (
-                f"Olá {nome_cli}! ✨📸 É com imensa alegria que entregamos as fotos do seu {tipo_ens}! "
+                f"Olá {nome_cli}! ✨📸 É com imensa alegria que entregamos as fotos oficiais do seu {tipo_ens}! "
                 f"Cada imagem foi preparada e tratada com todo o cuidado, carinho e dedicação da equipe Casa da Foto Studio para eternizar os seus melhores momentos. "
                 f"Aproveite para visualizar e baixar todos os arquivos em alta resolução diretamente pelo Google Drive!"
             )
@@ -827,6 +900,8 @@ def api_get_entrega(galeria_id):
             'success': True,
             'galeria': galeria,
             'projeto': projeto,
+            'nome_cliente': nome_cli,
+            'tipo_ensaio': tipo_ens,
             'fotos': fotos_exibir,
             'total_fotos': len(fotos_exibir),
             'total_aprovadas': len(fotos_aprovadas),

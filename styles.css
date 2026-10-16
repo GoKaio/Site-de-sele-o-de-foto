@@ -2848,6 +2848,22 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
   color: #FFFFFF !important;
 }
 
+.seletor-cliente-bar {
+  position: relative;
+  z-index: 50;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+@media (max-width: 768px) {
+  .seletor-cliente-bar .content-wrap {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.6rem !important;
+  }
+  .seletor-cliente-bar select {
+    width: 100% !important;
+  }
+}
+
 .card-mover-bottom-row {
   display: flex;
   align-items: center;

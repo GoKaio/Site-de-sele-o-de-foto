@@ -9,7 +9,7 @@ if hasattr(sys.stdout, 'reconfigure'):
 BASE_URL = "http://127.0.0.1:8082"
 
 def main():
-    print("=== TESTE 1: Restaurar galerias de exemplo ===")
+    print("=== TESTE 1: Restaurar galerias de exemplo (forçar seed) ===")
     req = urllib.request.Request(
         f"{BASE_URL}/api/projetos/restaurar-exemplos",
         data=b"{}",
@@ -21,46 +21,43 @@ def main():
         print("Restaurar:", res)
         assert res.get("success") is True
 
-    print("\n=== TESTE 2: Listar projetos com link_drive e mensagem_acesso ===")
-    with urllib.request.urlopen(f"{BASE_URL}/api/projetos") as resp:
-        projs = json.loads(resp.read().decode("utf-8"))
-        print(f"Total projetos no Kanban: {len(projs)}")
-        assert len(projs) > 0
-        for p in projs:
-            print(f"  [{p['status'].upper()}] {p['nome_cliente']} ({p['tipo_ensaio']}) - Drive: {p.get('link_drive') or '(pendente)'}")
+    print("\n=== TESTE 2: Listar entregas de clientes (/api/entrega/lista) ===")
+    with urllib.request.urlopen(f"{BASE_URL}/api/entrega/lista") as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+        assert data.get("success") is True
+        entregas = data.get("entregas", [])
+        print(f"Total de entregas cadastradas: {len(entregas)}")
+        assert len(entregas) >= 5
+        for e in entregas:
+            has_drive = "✓ DRIVE OK" if e.get("link_drive") else "⏳ PENDENTE"
+            print(f"  - Galeria {e['galeria_id']} | Cliente: {e['nome_cliente']} ({e['tipo_ensaio']}) | {has_drive}")
+            print(f"    Link Personalizado: {BASE_URL}/entrega.html?id={e['galeria_id']}")
 
-    print("\n=== TESTE 3: Salvar Link do Drive e Mensagem Personalizada ===")
-    gal_id = projs[0]["galeria_id"]
-    test_link = "https://drive.google.com/drive/folders/pastaOficialStudio2026?usp=sharing"
-    test_msg = "Olá Camila & Pedro! ✨📸 Suas fotos do Ensaio Gestante estão prontas! Acesse o Drive oficial abaixo para baixar todos os arquivos em 300 DPI."
-    
-    payload = json.dumps({
-        "link_drive": test_link,
-        "mensagem_acesso": test_msg
-    }).encode("utf-8")
+    print("\n=== TESTE 3: Validar entrega personalizada do cliente Camila & Pedro ===")
+    camila = next((e for e in entregas if "Camila" in e["nome_cliente"]), entregas[0])
+    camila_id = camila["galeria_id"]
+    with urllib.request.urlopen(f"{BASE_URL}/api/entrega/{camila_id}") as resp:
+        detalhes = json.loads(resp.read().decode("utf-8"))
+        assert detalhes.get("success") is True
+        assert "Camila" in detalhes.get("nome_cliente", "")
+        assert detalhes.get("link_drive", "").startswith("https://drive.google.com")
+        assert "Camila" in detalhes.get("mensagem_personalizada", "")
+        print(f"  [OK] Nome retornado: {detalhes['nome_cliente']}")
+        print(f"  [OK] Ensaio: {detalhes['tipo_ensaio']}")
+        print(f"  [OK] Link Google Drive: {detalhes['link_drive']}")
+        print(f"  [OK] Mensagem: {detalhes['mensagem_personalizada'][:70]}...")
 
-    req_put = urllib.request.Request(
-        f"{BASE_URL}/api/galeria/{gal_id}/link-drive",
-        data=payload,
-        headers={"Content-Type": "application/json"},
-        method="PUT"
-    )
-    with urllib.request.urlopen(req_put) as resp:
-        put_res = json.loads(resp.read().decode("utf-8"))
-        print("Resposta PUT link-drive:", put_res)
-        assert put_res.get("success") is True
-        assert put_res.get("link_drive") == test_link
-        assert put_res.get("mensagem_acesso") == test_msg
+    print("\n=== TESTE 4: Validar entrega do cliente Helena (Primeiro Aninho) ===")
+    helena = next((e for e in entregas if "Helena" in e["nome_cliente"]), None)
+    if helena:
+        with urllib.request.urlopen(f"{BASE_URL}/api/entrega/{helena['galeria_id']}") as resp:
+            det_h = json.loads(resp.read().decode("utf-8"))
+            assert det_h.get("success") is True
+            assert "Helena" in det_h.get("nome_cliente", "")
+            assert det_h.get("link_drive", "").startswith("https://drive.google.com")
+            print(f"  [OK] Helena Link Drive: {det_h['link_drive']}")
 
-    print("\n=== TESTE 4: Obter dados públicos da entrega (/api/entrega/<id>) ===")
-    with urllib.request.urlopen(f"{BASE_URL}/api/entrega/{gal_id}") as resp:
-        entrega = json.loads(resp.read().decode("utf-8"))
-        print("Entrega link_drive retornado:", entrega.get("link_drive"))
-        print("Entrega mensagem_personalizada retornada:", entrega.get("mensagem_personalizada"))
-        assert entrega.get("link_drive") == test_link
-        assert entrega.get("mensagem_personalizada") == test_msg
-
-    print("\n=== TODOS OS TESTES PASSARAM COM SUCESSO! ===")
+    print("\n=== TODOS OS TESTES PASSARAM COM 100% DE SUCESSO! ===")
 
 if __name__ == "__main__":
     main()

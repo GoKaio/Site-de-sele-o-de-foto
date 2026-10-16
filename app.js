@@ -4113,15 +4113,15 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
 
     return `Olá, ${nome}! ✨📸
 
-É com imensa alegria que entregamos as fotos oficiais do seu ${ensaio}! Cada imagem foi tratada com todo o carinho, afeto e excelência da equipe Casa da Foto Studio para eternizar os seus momentos mais especiais.
+É com imensa alegria que entregamos as fotos oficiais do seu ${ensaio}! Preparamos uma página exclusiva com todo o carinho e dedicação da Casa da Foto Studio para você visualizar sua coleção e baixar todos os arquivos em alta resolução diretamente pelo Google Drive.
 
-Acesse sua pasta exclusiva no Google Drive para visualizar e baixar todos os arquivos em alta resolução:
-🔗 ${drive || '[Link do Google Drive pendente]'}
+🎁 Acesse seu Link Exclusivo de Entrega:
+${linkWeb}
 
-Ou confira a sua página oficial de entrega:
-🎁 ${linkWeb}
+(Dentro da sua página você encontrará a dedicatória especial do estúdio e o botão oficial "Baixar Fotos no Google Drive" para fazer o download completo em 1 clique!)
 
-Esperamos de coração que você se apaixone pelo resultado tanto quanto nós nos apaixonamos em fotografar! Qualquer dúvida sobre como baixar ou imprimir, conte sempre conosco.
+${drive ? `\n🔗 Link direto alternativo do Google Drive:\n${drive}\n` : ''}
+Esperamos de coração que você se apaixone pelo resultado! Qualquer dúvida sobre download ou impressões, conte sempre conosco.
 
 Com muito carinho,
 Equipe Casa da Foto Studio 💛
@@ -4154,15 +4154,15 @@ Momentos que ficam`;
 
     modal.style.display = 'flex';
     modal.innerHTML = `
-      <div class="alboom-modal-card" style="max-width: 640px; width: 95%;">
+      <div class="alboom-modal-card" style="max-width: 660px; width: 95%;">
         <div class="alboom-modal-header" style="border-bottom: 1.5px solid #EFE5D9; padding-bottom: 1rem;">
           <div style="display: flex; align-items: center; gap: 0.75rem;">
             <div style="width: 44px; height: 44px; border-radius: 12px; background: #FAF5EE; border: 1.5px solid #C59B6D; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
-              🔗
+              🎁
             </div>
             <div>
-              <span style="font-size: 0.74rem; font-weight: 700; color: #8C5F35; letter-spacing: 0.08em; text-transform: uppercase; display: block;">ENTREGA DE FOTOS · GOOGLE DRIVE</span>
-              <h3 style="font-size: 1.35rem; color: #2D1D14; font-weight: 800; margin: 0; line-height: 1.2;">Link do Drive & Mensagem Personalizada</h3>
+              <span style="font-size: 0.74rem; font-weight: 700; color: #8C5F35; letter-spacing: 0.08em; text-transform: uppercase; display: block;">ENTREGA DE FOTOS · LINK PERSONALIZADO</span>
+              <h3 style="font-size: 1.35rem; color: #2D1D14; font-weight: 800; margin: 0; line-height: 1.2;">Página de Entrega & Google Drive</h3>
             </div>
           </div>
           <button class="alboom-modal-close-btn" onclick="document.getElementById('modalLinkDriveMsgGlobal').style.display='none'">&times;</button>
@@ -4171,21 +4171,45 @@ Momentos que ficam`;
         <div class="alboom-modal-body" style="padding-top: 1.25rem;">
           
           <!-- Chip com Identificação do Cliente -->
-          <div style="background: #FAF6F0; border: 1px solid #E5D7C6; border-radius: 10px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div style="background: #FAF6F0; border: 1px solid #E5D7C6; border-radius: 10px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
             <div>
               <span style="font-size: 0.72rem; color: #7A6A5E; display: block;">Cliente & Ensaio:</span>
               <strong style="color: #2D1D14; font-size: 0.95rem;">👤 ${nomeCli} · 📷 ${tipoEns}</strong>
             </div>
             <a href="${linkPaginaEntrega}" target="_blank" style="font-size: 0.78rem; font-weight: 700; color: #8C5F35; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; background: #FFFFFF; border: 1px solid #D8CAB9; padding: 0.35rem 0.85rem; border-radius: 9999px;">
-              <span>🎁 Abrir Página de Entrega ↗</span>
+              <span>🎁 Ver Página de Entrega ↗</span>
             </a>
+          </div>
+
+          <!-- CARD DE DESTAQUE: LINK PERSONALIZADO DESTA PÁGINA (COM O DRIVE DO CLIENTE) -->
+          <div style="background: linear-gradient(135deg, #FFFDF9 0%, #F7EFE4 100%); border: 2px solid #C59B6D; border-radius: 14px; padding: 1.15rem; margin-bottom: 1.25rem; box-shadow: 0 4px 15px rgba(197, 155, 109, 0.15);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
+              <span style="font-size: 0.84rem; font-weight: 800; color: #2D1D14; display: flex; align-items: center; gap: 0.4rem;">
+                <span>🌟</span> Link Personalizado deste Cliente (Leva para a página com o Drive dele):
+              </span>
+              <span style="background: #2D5A27; color: #FFF; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px;">
+                ✓ Exclusivo deste Cliente
+              </span>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.4rem;">
+              <input type="text" readonly id="modalInputLinkPaginaCliente" value="${linkPaginaEntrega}" style="flex: 1; padding: 0.7rem 0.9rem; border-radius: 8px; border: 1.5px solid #C59B6D; font-size: 0.86rem; background: #FFFFFF; font-weight: 700; color: #8C5F35;">
+              <button type="button" onclick="navigator.clipboard.writeText('${linkPaginaEntrega}').then(() => showToast('✓ Link personalizado da página do cliente copiado!'))" style="background: #8C5F35; color: #FFF; border: none; border-radius: 8px; padding: 0.7rem 1.1rem; font-size: 0.82rem; font-weight: 700; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 6px rgba(140,95,53,0.3);">
+                📋 Copiar Link
+              </button>
+              <a href="${linkPaginaEntrega}" target="_blank" style="background: #352319; color: #FFF; text-decoration: none; border-radius: 8px; padding: 0.7rem 1.1rem; font-size: 0.82rem; font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.3rem;">
+                ↗ Abrir
+              </a>
+            </div>
+            <span style="display: block; font-size: 0.74rem; color: #6B5546; line-height: 1.45;">
+              ✨ Ao abrir este link, o cliente <strong>${nomeCli}</strong> verá o nome dele no topo, a dedicatória especial do estúdio e o botão oficial para baixar os arquivos no <strong>Google Drive dele</strong>!
+            </span>
           </div>
 
           <!-- CAMPO 1: LINK DO GOOGLE DRIVE -->
           <div style="margin-bottom: 1.25rem;">
             <label style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; color: #352319; margin-bottom: 0.4rem;">
               <span>🔗 Link da Pasta no Google Drive:</span>
-              <span style="font-size: 0.74rem; color: #8C5F35; font-weight: 600;">(Visível no botão de download da Entrega)</span>
+              <span style="font-size: 0.74rem; color: #8C5F35; font-weight: 600;">(Alimenta o botão de download na página)</span>
             </label>
             <input type="url" id="modalInputDriveLink" value="${driveLink}" placeholder="https://drive.google.com/drive/folders/1a2b3c4d5e...usp=sharing" style="width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1.5px solid #D8CAB9; font-size: 0.88rem; box-sizing: border-box; background: #FFFDF9; font-family: monospace;">
             <span style="display: block; font-size: 0.72rem; color: #7A6A5E; margin-top: 0.35rem;">

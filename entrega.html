@@ -627,6 +627,26 @@
 
     <main>
       
+      <!-- 1.1 BARRA SUPERIOR DE SELEÇÃO DE CLIENTE & LINK PERSONALIZADO (PARA FOTÓGRAFO E DEMONSTRAÇÃO) -->
+      <section class="seletor-cliente-bar" id="seletorClienteBar" style="background: #190E08; border-bottom: 1px solid rgba(197, 155, 109, 0.35); padding: 0.65rem 1rem;">
+        <div class="content-wrap" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+          <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+            <span style="font-size: 0.76rem; font-weight: 700; color: #C59B6D; text-transform: uppercase; letter-spacing: 0.06em;">👤 Cliente da Entrega:</span>
+            <select id="selectClienteEntrega" onchange="trocarClienteEntrega(this.value)" style="background: #FFFDF9; color: #2D1D14; border: 1.5px solid #C59B6D; border-radius: 9999px; padding: 0.35rem 1rem; font-size: 0.84rem; font-weight: 700; cursor: pointer; outline: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+              <option value="">Carregando clientes...</option>
+            </select>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <button type="button" onclick="copiarLinkPersonalizadoEntrega()" style="background: linear-gradient(135deg, #8C5F35 0%, #684221 100%); color: #FFFFFF; border: 1px solid #C59B6D; border-radius: 9999px; padding: 0.4rem 1.1rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; box-shadow: 0 2px 8px rgba(140,95,53,0.3); transition: all 0.2s;" title="Copiar o link personalizado exclusivo deste cliente para enviar no WhatsApp ou E-mail">
+              <span>🔗 Copiar Link Deste Cliente</span>
+            </button>
+            <a href="projetos.html" style="background: rgba(255,255,255,0.08); color: #FAF5EE; border: 1px solid rgba(255,255,255,0.2); border-radius: 9999px; padding: 0.4rem 0.85rem; font-size: 0.78rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;">
+              <span>← Painel de Projetos</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
       <!-- 2. HERO DA ENTREGA -->
       <section class="entrega-hero-section">
         <div class="content-wrap">
@@ -868,14 +888,82 @@
   <script>
     // Lógica da Página de Entrega
     let entregaData = null;
+    let currentGalId = null;
 
     function getParametroUrl(nome) {
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(nome) || '';
     }
 
-    async function carregarDadosEntrega() {
-      const galId = getParametroUrl('id') || getParametroUrl('galeria') || getParametroUrl('projeto_id') || '1';
+    async function carregarSeletorClientes(idSelecionado) {
+      try {
+        const res = await fetch('/api/entrega/lista');
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.entregas)) {
+          window.listaEntregasDisponiveis = data.entregas;
+          const select = document.getElementById('selectClienteEntrega');
+          if (select) {
+            select.innerHTML = data.entregas.map(e => {
+              const hasDrive = (e.link_drive && e.link_drive.length > 5) ? '🔗 Drive Pronto' : '⏳ Sem Drive';
+              const isSel = (String(e.galeria_id) === String(idSelecionado) || String(e.projeto_id) === String(idSelecionado)) ? 'selected' : '';
+              return `<option value="${e.galeria_id}" ${isSel}>${e.nome_cliente} (${e.tipo_ensaio}) · ${hasDrive}</option>`;
+            }).join('');
+          }
+        }
+      } catch (e) {
+        console.warn('Erro ao carregar seletor de entregas:', e);
+      }
+    }
+
+    function trocarClienteEntrega(novoId) {
+      if (!novoId) return;
+      const url = new URL(window.location.href);
+      url.searchParams.set('id', novoId);
+      window.history.pushState({}, '', url.toString());
+      carregarDadosEntrega(novoId);
+    }
+
+    function copiarLinkPersonalizadoEntrega() {
+      const idAlvo = currentGalId || getParametroUrl('id') || '1';
+      const linkCompleto = `${window.location.origin}${window.location.pathname}?id=${idAlvo}`;
+      navigator.clipboard.writeText(linkCompleto).then(() => {
+        showToast('✓ Link personalizado desta entrega copiado com sucesso! Pode enviar ao cliente.');
+      }).catch(() => {
+        prompt('Copie o link personalizado abaixo:', linkCompleto);
+      });
+    }
+
+    async function carregarDadosEntrega(idOverride) {
+      let galId = idOverride || getParametroUrl('id') || getParametroUrl('galeria') || getParametroUrl('projeto_id');
+      
+      // Se não veio na URL, verifica se há galeria salva na sessão do cliente
+      if (!galId) {
+        galId = sessionStorage.getItem('cliente_galeria_id') || localStorage.getItem('cliente_galeria_id');
+      }
+
+      // Se ainda não temos galId, busca lista de entregas e seleciona a primeira pronta
+      if (!galId) {
+        try {
+          const resL = await fetch('/api/entrega/lista');
+          const dL = await resL.json();
+          if (dL && dL.success && Array.isArray(dL.entregas) && dL.entregas.length > 0) {
+            window.listaEntregasDisponiveis = dL.entregas;
+            const comDrive = dL.entregas.find(e => e.link_drive && e.link_drive.length > 5);
+            galId = (comDrive || dL.entregas[0]).galeria_id;
+            
+            // Atualiza a URL suavemente
+            const u = new URL(window.location.href);
+            u.searchParams.set('id', galId);
+            window.history.replaceState({}, '', u.toString());
+          }
+        } catch (e) {}
+      }
+
+      if (!galId) galId = '1';
+      currentGalId = galId;
+
+      // Carrega o seletor no topo da página
+      carregarSeletorClientes(galId);
       
       try {
         const res = await fetch(`/api/entrega/${galId}`);
@@ -937,13 +1025,15 @@
       const proj = data.projeto || {};
       const linkDrive = (data.link_drive || gal.link_drive || '').trim();
 
-      // Metadados do Cliente e Ensaio
-      const nomeCliente = proj.nome_cliente || 'Cliente Especial';
+      // Metadados do Cliente e Ensaio com garantia de nome real
+      const nomeCliente = (data.nome_cliente || (proj && proj.nome_cliente) || (gal && gal.nome) || 'Cliente').replace(/^Galeria\s*-\s*/i, '');
+      const tipoEnsaio = data.tipo_ensaio || (proj && proj.tipo_ensaio) || (gal && gal.categoria) || 'Ensaio Fotográfico';
+      
       document.getElementById('metaNomeCliente').textContent = nomeCliente;
-      document.getElementById('metaTipoEnsaio').textContent = proj.tipo_ensaio || gal.categoria || 'Ensaio Fotográfico';
+      document.getElementById('metaTipoEnsaio').textContent = tipoEnsaio;
       document.getElementById('metaDataTrabalho').textContent = gal.data_trabalho || 'Outubro 2026';
 
-      // Título personalizado
+      // Título personalizado com nome do cliente
       document.getElementById('heroTituloEntrega').innerHTML = `Entrega de Fotos · <span>${nomeCliente}</span>`;
 
       // Mensagem personalizada / Dedicatória do Estúdio
