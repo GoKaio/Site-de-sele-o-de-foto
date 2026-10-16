@@ -17,6 +17,10 @@
 
   <link rel="stylesheet" href="styles.css?v=luxo4">
   <script>
+    if (!sessionStorage.getItem('admin_autenticado') && localStorage.getItem('admin_autenticado') === 'true') {
+      sessionStorage.setItem('admin_autenticado', 'true');
+      sessionStorage.setItem('admin_nome', localStorage.getItem('admin_nome') || 'Administrador');
+    }
     if (!sessionStorage.getItem('admin_autenticado')) {
       window.location.replace('admin-login.html');
     }

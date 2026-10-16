@@ -196,7 +196,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 3.5rem;
+  gap: 2.5rem;
   padding-left: 1.5rem;
 }
 
@@ -204,7 +204,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 3.5rem;
+  gap: 1.8rem;
   padding-right: 1.5rem;
 }
 
@@ -248,6 +248,57 @@ html, body {
 
 .nav-item.active-nav::after {
   width: 100%;
+}
+
+/* Botão de Destaque Administrativo no Header */
+.nav-admin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 1.15rem;
+  border-radius: 9999px;
+  background: rgba(197, 155, 109, 0.16);
+  border: 1px solid rgba(197, 155, 109, 0.45);
+  color: #FAF5EE !important;
+  font-family: var(--font-body);
+  font-size: 0.96rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-admin-btn:hover {
+  background: var(--gold-gradient);
+  color: #1A110B !important;
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(197, 155, 109, 0.45);
+}
+
+.nav-admin-btn::after {
+  display: none !important;
+}
+
+.nav-admin-btn .nav-admin-icon {
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.nav-admin-btn:hover .nav-admin-icon {
+  transform: rotate(90deg);
+}
+
+.nav-admin-btn.active-admin {
+  background: rgba(197, 155, 109, 0.28);
+  border-color: var(--header-gold);
+  color: var(--header-gold-bright) !important;
 }
 
 .header-logo-card {
@@ -749,6 +800,89 @@ html, body {
   transform: translateY(-2px);
   box-shadow: 0 8px 22px rgba(140, 95, 53, 0.42);
   filter: brightness(1.06);
+}
+
+/* ==========================================================================
+   RODAPÉ DO SITE INSTITUCIONAL (index.html, pacotes.html)
+   ========================================================================== */
+.site-footer {
+  background: #1A110B;
+  color: #C5B5A5;
+  border-top: 1px solid rgba(197, 155, 109, 0.25);
+  padding: 3rem 0 2.5rem;
+  margin-top: 2rem;
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.footer-brand-side {
+  max-width: 480px;
+}
+
+.footer-brand-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #FAF5EE;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.35rem;
+}
+
+.footer-brand-desc {
+  font-size: 0.88rem;
+  color: #A89585;
+  line-height: 1.5;
+  margin-bottom: 0.65rem;
+}
+
+.footer-copyright {
+  font-size: 0.78rem;
+  color: #7A695C;
+}
+
+.footer-nav-side {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.footer-link {
+  color: #FAF5EE;
+  text-decoration: none;
+  font-size: 0.88rem;
+  transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+  color: var(--header-gold);
+}
+
+.footer-admin-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.95rem;
+  border-radius: 9999px;
+  background: rgba(197, 155, 109, 0.12);
+  border: 1px solid rgba(197, 155, 109, 0.35);
+  color: #E2C499;
+  font-weight: 600;
+  font-size: 0.84rem;
+  transition: all 0.25s ease;
+}
+
+.footer-admin-link:hover {
+  background: var(--gold-gradient);
+  color: #1A110B;
+  border-color: transparent;
+  transform: translateY(-1px);
 }
 
 /* ==========================================================================
@@ -4366,6 +4500,14 @@ html, body {
     padding: 6px 12px !important;
     border-radius: 9999px !important;
     background: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .nav-admin-btn {
+    font-size: 0.88rem !important;
+    padding: 6px 14px !important;
+    background: rgba(197, 155, 109, 0.22) !important;
+    border: 1px solid rgba(197, 155, 109, 0.5) !important;
+    color: #F8EFE4 !important;
   }
 
   /* Cabeçalho Admin / Painel do Fotógrafo */

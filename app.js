@@ -184,6 +184,13 @@ document.addEventListener('DOMContentLoaded', () => {
   let isAdmin = (sessionStorage.getItem('admin_autenticado') === 'true') || (localStorage.getItem('admin_autenticado') === 'true');
   let isClient = (sessionStorage.getItem('cliente_autenticado') === 'true') || (localStorage.getItem('cliente_autenticado') === 'true');
 
+  const uNomeCheck = (sessionStorage.getItem('usuario_nome') || localStorage.getItem('usuario_nome') || sessionStorage.getItem('admin_nome') || localStorage.getItem('admin_nome') || '').toLowerCase();
+  if (uNomeCheck.includes('admin') || uNomeCheck.includes('administrador')) {
+    isAdmin = true;
+    sessionStorage.setItem('admin_autenticado', 'true');
+    localStorage.setItem('admin_autenticado', 'true');
+  }
+
   if (isFoto) {
     sessionStorage.setItem('fotografo_autenticado', 'true');
     localStorage.setItem('fotografo_autenticado', 'true');
@@ -327,20 +334,20 @@ document.addEventListener('DOMContentLoaded', () => {
         <a href="escolha-fotos.html?id=${gId}" class="nav-item ${currentPage === 'escolha-fotos.html' ? 'active-nav' : ''}">Minhas Fotos (${nome})</a>
         <a href="javascript:void(0)" onclick="logoutUsuario()" class="nav-item" style="color:#C59B6D;">Sair ↗</a>
       `;
-    } else if (isFoto) {
-      const nome = sessionStorage.getItem('usuario_nome') || 'Fotógrafo';
+    } else if (isAdmin) {
       const gId = localStorage.getItem('ultima_galeria_id') || '1';
       navRight.innerHTML = `
         <a href="escolha-fotos.html?id=${gId}&previa=true" class="nav-item ${currentPage === 'escolha-fotos.html' ? 'active-nav' : ''}">👁️ Seleção de fotos</a>
         <a href="projetos.html" class="nav-item ${currentPage === 'projetos.html' ? 'active-nav' : ''}">Projetos</a>
-        <a href="galeria-config.html?id=${gId}" class="nav-item ${currentPage.startsWith('galeria-') ? 'active-nav' : ''}">Galeria (${nome})</a>
+        <a href="admin.html" class="nav-item nav-admin-btn ${currentPage === 'admin.html' ? 'active-admin' : ''}" title="Painel de Administração">
+          <span class="nav-admin-icon" aria-hidden="true">⚙️</span>
+          <span>Painel Admin</span>
+        </a>
         <a href="javascript:void(0)" onclick="logoutUsuario()" class="nav-item" style="color:#C59B6D;">Sair ↗</a>
       `;
-    } else if (isAdmin) {
-      const nome = sessionStorage.getItem('admin_nome') || 'Admin';
+    } else if (isFoto) {
       const gId = localStorage.getItem('ultima_galeria_id') || '1';
       navRight.innerHTML = `
-        <a href="admin.html" class="nav-item ${currentPage === 'admin.html' ? 'active-nav' : ''}" style="color:#C59B6D; font-weight:700;">⚙️ Painel Admin</a>
         <a href="escolha-fotos.html?id=${gId}&previa=true" class="nav-item ${currentPage === 'escolha-fotos.html' ? 'active-nav' : ''}">👁️ Seleção de fotos</a>
         <a href="projetos.html" class="nav-item ${currentPage === 'projetos.html' ? 'active-nav' : ''}">Projetos</a>
         <a href="javascript:void(0)" onclick="logoutUsuario()" class="nav-item" style="color:#C59B6D;">Sair ↗</a>
