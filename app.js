@@ -4246,6 +4246,31 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
     }
   };
 
+  // ── LIMPAR TODOS OS PROJETOS E GALERIAS (QUADRO LIMPO) ──
+  window.limparTodosProjetos = async function() {
+    if (!confirm('Deseja realmente apagar TODOS os projetos e galerias de teste do estúdio?\nEsta ação deixará o quadro Kanban totalmente limpo.')) {
+      return;
+    }
+    try {
+      showToast('Apagando todos os projetos e galerias...');
+      const res = await fetch('/api/projetos/limpar-todos', { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        showToast('✓ Todas as galerias e projetos foram excluídos!');
+        if (typeof window.carregarProjetosGlobal === 'function') {
+          await window.carregarProjetosGlobal();
+        }
+        if (typeof window.carregarGaleriasAdmin === 'function') {
+          await window.carregarGaleriasAdmin();
+        }
+      } else {
+        showToast(data.error || 'Erro ao limpar projetos.', 'error');
+      }
+    } catch (e) {
+      showToast('Erro de conexão ao limpar projetos.', 'error');
+    }
+  };
+
   // ── GERADOR DE MENSAGEM PERSONALIZADA DE ENTREGA (ALTA CONVERSÃO & AFETO) ──
   window.gerarMensagemEntregaPadrao = function(nomeCliente, tipoEnsaio, linkDrive, galId) {
     const nome = (nomeCliente || 'Cliente Especial').trim();

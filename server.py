@@ -516,22 +516,6 @@ def api_get_projetos():
         conn = get_connection()
         try:
             cur = conn.cursor()
-            # Sincroniza qualquer galeria que não tenha projeto_id vinculado
-            cur.execute("SELECT id, nome, categoria, foto_capa FROM galerias WHERE projeto_id IS NULL")
-            orfans = [dict(r) for r in cur.fetchall()]
-            for o in orfans:
-                nome_cli = o.get('nome', '').replace('Galeria - ', '').strip() or 'Cliente'
-                cat = o.get('categoria') or 'Família'
-                tag = cat.split(' ')[-1] if ' ' in cat else cat
-                cur.execute("""
-                INSERT INTO projetos (nome_cliente, tipo_ensaio, categoria_tag, status, sessoes, prazo, avatar_img)
-                VALUES (?, ?, ?, 'novos', 1, 'sem prazo', ?)
-                """, (nome_cli, cat, tag, o.get('foto_capa') or 'assets/logo/logo.png'))
-                novo_proj_id = cur.lastrowid
-                cur.execute("UPDATE galerias SET projeto_id = ? WHERE id = ?", (novo_proj_id, o['id']))
-            if orfans:
-                conn.commit()
-
             cur.execute("""
             SELECT p.*, COALESCE(g.id, p.id) as galeria_id,
                    COALESCE(g.status_galeria, 'Aguardando seleção') as status_galeria,
@@ -545,23 +529,6 @@ def api_get_projetos():
             ORDER BY p.id ASC
             """)
             rows = [dict(row) for row in cur.fetchall()]
-            
-            if len(rows) == 0:
-                semear_projetos_iniciais(conn, forcar=True)
-                cur.execute("""
-                SELECT p.*, COALESCE(g.id, p.id) as galeria_id,
-                       COALESCE(g.status_galeria, 'Aguardando seleção') as status_galeria,
-                       COALESCE(g.selecao_bloqueada, 0) as selecao_bloqueada,
-                       COALESCE(g.link_drive, '') as link_drive,
-                       COALESCE(g.mensagem_acesso, '') as mensagem_acesso,
-                       COALESCE(g.foto_capa, p.avatar_img, 'assets/logo/logo.png') as foto_capa,
-                       (SELECT COUNT(*) FROM fotos f WHERE f.galeria_id = COALESCE(g.id, p.id)) as total_fotos
-                FROM projetos p
-                LEFT JOIN galerias g ON g.projeto_id = p.id
-                ORDER BY p.id ASC
-                """)
-                rows = [dict(row) for row in cur.fetchall()]
-
             return json_response(rows)
         finally:
             conn.close()
@@ -739,9 +706,10 @@ def api_delete_galeria(galeria_id):
     conn = get_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT projeto_id FROM galerias WHERE id = ?", (galeria_id,))
+        cur.execute("SELECT projeto_id, nome FROM galerias WHERE id = ?", (galeria_id,))
         row = cur.fetchone()
         proj_id = row['projeto_id'] if row else None
+        gal_nome = row['nome'] if row else ''
         
         cur.execute("DELETE FROM fotos WHERE galeria_id = ?", (galeria_id,))
         cur.execute("DELETE FROM destinatarios WHERE galeria_id = ?", (galeria_id,))
@@ -750,6 +718,10 @@ def api_delete_galeria(galeria_id):
         
         if proj_id:
             cur.execute("DELETE FROM projetos WHERE id = ?", (proj_id,))
+        elif gal_nome:
+            nome_cli = gal_nome.replace('Galeria - ', '').strip()
+            if nome_cli:
+                cur.execute("DELETE FROM projetos WHERE nome_cliente = ?", (nome_cli,))
             
         conn.commit()
         return json_response({'success': True, 'deleted': galeria_id})
@@ -775,13 +747,38 @@ def api_update_projeto(proj_id):
 def api_update_projeto_status(proj_id):
     return api_update_projeto(proj_id)
 
+@app.delete('/api/projetos/limpar-todos')
+@rate_limit()
+def api_limpar_todos_projetos():
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM fotos")
+        cur.execute("DELETE FROM destinatarios")
+        cur.execute("DELETE FROM atividades")
+        cur.execute("DELETE FROM galerias")
+        cur.execute("DELETE FROM projetos")
+        conn.commit()
+        return json_response({'success': True, 'mensagem': 'Todos os projetos e galerias foram excluídos com sucesso.'})
+    finally:
+        conn.close()
+
 @app.delete('/api/projetos/<proj_id:int>')
 @rate_limit()
 def api_delete_projeto(proj_id):
     conn = get_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT id FROM galerias WHERE projeto_id = ?", (proj_id,))
+        cur.execute("SELECT nome_cliente FROM projetos WHERE id = ?", (proj_id,))
+        p_row = cur.fetchone()
+        nome_cli = p_row['nome_cliente'] if p_row else ''
+
+        # Deleta fotos, destinatarios, atividades e galerias associadas pelo ID do projeto ou nome
+        if nome_cli:
+            cur.execute("SELECT id FROM galerias WHERE projeto_id = ? OR nome = ? OR nome = ?", 
+                        (proj_id, f"Galeria - {nome_cli}", nome_cli))
+        else:
+            cur.execute("SELECT id FROM galerias WHERE projeto_id = ?", (proj_id,))
         gal_rows = cur.fetchall()
         for g in gal_rows:
             gid = g['id']
@@ -789,6 +786,12 @@ def api_delete_projeto(proj_id):
             cur.execute("DELETE FROM destinatarios WHERE galeria_id = ?", (gid,))
             cur.execute("DELETE FROM atividades WHERE galeria_id = ?", (gid,))
             cur.execute("DELETE FROM galerias WHERE id = ?", (gid,))
+
+        # Limpeza defensiva caso existam registros vinculados pelo mesmo ID numérico
+        cur.execute("DELETE FROM fotos WHERE galeria_id = ?", (proj_id,))
+        cur.execute("DELETE FROM destinatarios WHERE galeria_id = ?", (proj_id,))
+        cur.execute("DELETE FROM atividades WHERE galeria_id = ?", (proj_id,))
+        cur.execute("DELETE FROM galerias WHERE id = ?", (proj_id,))
 
         cur.execute("DELETE FROM projetos WHERE id = ?", (proj_id,))
         conn.commit()
