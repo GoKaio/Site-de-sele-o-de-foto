@@ -304,6 +304,46 @@
       </div>
     </div>
 
+    <!-- ==============================================================
+         BLOCO 0.8: GESTÃO DE GALERIAS & ENSAIOS DO ESTÚDIO
+         ============================================================== -->
+    <div class="admin-card-panel" style="margin-bottom: 2rem; background: #FAF5EE; border: 1.5px solid #D8CAB9;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+        <div>
+          <h2 class="panel-title" style="margin: 0;">👑 Galerias & Ensaios de Clientes</h2>
+          <p class="panel-desc" style="margin-top: 4px; margin-bottom: 0;">
+            Gerencie todas as galerias de seleção e entrega de fotos dos seus clientes. Clique em <strong>Configurar</strong> para gerenciar fotos, limites e preferências.
+          </p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+          <span class="preview-pill-tag" id="countGaleriasAdmin" style="background: #2D1D14; color: #FAF5EE; font-weight: 700; margin: 0;">Carregando...</span>
+          <button type="button" onclick="window.abrirModalNovoProjeto()" class="btn-salvar-admin" style="padding: 0.55rem 1.2rem; font-size: 0.84rem; display: inline-flex; align-items: center; gap: 5px;">
+            <span>+ Cadastrar Nova Galeria</span>
+          </button>
+          <a href="projetos.html" class="btn-salvar-admin" style="background: #FAF5EE; color: #8C5F35; border: 1.5px solid #C59B6D; text-decoration: none; padding: 0.55rem 1.2rem; font-size: 0.84rem; display: inline-flex; align-items: center; gap: 5px;" title="Ver quadro Kanban com etapas dos ensaios">
+            <span>📋 Quadro Kanban ↗</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Barra de Busca Rápida -->
+      <div style="margin-bottom: 1rem;">
+        <input 
+          type="text" 
+          id="inputBuscaGaleriaAdmin" 
+          class="field-input" 
+          placeholder="🔍 Buscar galeria por nome do cliente ou ensaio..." 
+          oninput="renderizarGaleriasAdmin()"
+          style="width: 100%; max-width: 420px; background: #FFF;"
+        >
+      </div>
+
+      <!-- Lista de Galerias -->
+      <div id="listaGaleriasAdmin" style="max-height: 480px; overflow-y: auto; padding-right: 4px;">
+        <div style="text-align: center; color: #999; padding: 2rem;">Carregando galerias cadastradas...</div>
+      </div>
+    </div>
+
     <!-- Grade: Categorias e Fotos -->
     <div class="admin-section-grid">
 
@@ -673,6 +713,7 @@
         carregarLogoAdmin(),
         carregarConfigMarcaDagua(),
         carregarFotoLoginAdmin(),
+        carregarGaleriasAdmin(),
         carregarCategorias(),
         carregarFotos(),
         carregarPacotesAdmin(),
@@ -682,6 +723,131 @@
         carregarLogsDiagnostico()
       ]);
     }
+
+    // ── GESTÃO DE GALERIAS DO ESTÚDIO ──
+    let listaGaleriasAdminCache = [];
+
+    async function carregarGaleriasAdmin() {
+      const container = document.getElementById('listaGaleriasAdmin');
+      const countEl = document.getElementById('countGaleriasAdmin');
+      if (!container) return;
+
+      try {
+        const res = await fetch('/api/galerias');
+        listaGaleriasAdminCache = await res.json();
+        window.listaGaleriasAdminCache = listaGaleriasAdminCache;
+        renderizarGaleriasAdmin();
+      } catch (err) {
+        console.error('Erro ao carregar galerias admin:', err);
+      }
+    }
+    window.carregarGaleriasAdmin = carregarGaleriasAdmin;
+
+    function renderizarGaleriasAdmin() {
+      const container = document.getElementById('listaGaleriasAdmin');
+      const countEl = document.getElementById('countGaleriasAdmin');
+      const termo = (document.getElementById('inputBuscaGaleriaAdmin')?.value || '').toLowerCase().trim();
+      if (!container) return;
+
+      let filtradas = listaGaleriasAdminCache || [];
+      if (termo) {
+        filtradas = filtradas.filter(g => {
+          const texto = `${g.nome || ''} ${g.nome_cliente || ''} ${g.categoria || ''} ${g.tipo_ensaio || ''} ${g.status_galeria || ''}`.toLowerCase();
+          return texto.includes(termo);
+        });
+      }
+
+      if (countEl) countEl.textContent = `${(listaGaleriasAdminCache || []).length} cadastrada(s)`;
+
+      if (filtradas.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; color: #7A6A5E; padding: 2.5rem 1.5rem; background: #FFF; border: 1.5px dashed #D8CAB9; border-radius: 14px;">
+            <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">📷</span>
+            <strong style="color: #2D1D14; font-size: 0.95rem; display: block; margin-bottom: 0.35rem;">Nenhuma galeria encontrada</strong>
+            <span style="font-size: 0.82rem; display: block; margin-bottom: 1rem;">Cadastre uma nova galeria para começar o atendimento do cliente.</span>
+            <button type="button" onclick="window.abrirModalNovoProjeto()" style="background: linear-gradient(135deg, #8C5F35 0%, #684221 100%); color: #FFF; border: none; padding: 0.6rem 1.25rem; border-radius: 9999px; font-weight: 700; cursor: pointer; font-size: 0.84rem;">
+              + Cadastrar Nova Galeria
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtradas.map(g => {
+        const capa = g.foto_capa || g.capa_exibicao || 'assets/logo/logo.png';
+        const nomeCli = g.nome_cliente || (g.nome || '').replace('Galeria - ', '') || 'Cliente';
+        const tipo = g.tipo_ensaio || g.categoria || 'Ensaio';
+        const status = g.status_galeria || 'Aguardando seleção';
+        const totalFotos = g.total_fotos != null ? g.total_fotos : 0;
+        
+        let statusBg = '#FAF5EE';
+        let statusColor = '#8C5F35';
+        if (status === 'Seleção enviada' || status === 'Pronta para entrega' || status === 'Finalizada') {
+          statusBg = '#E8F5E9';
+          statusColor = '#2E7D32';
+        } else if (status === 'Seleção em andamento') {
+          statusBg = '#E3F2FD';
+          statusColor = '#1565C0';
+        }
+
+        return `
+          <div class="item-row-card" style="background: #FFF; border: 1px solid #E5D9CC; box-shadow: 0 2px 6px rgba(45,29,20,0.04); padding: 0.9rem 1.15rem; border-radius: 12px; margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 1rem; min-width: 260px;">
+              <img src="${capa}" alt="${nomeCli}" onerror="this.src='assets/logo/logo.png'" style="width: 58px; height: 58px; object-fit: cover; border-radius: 10px; border: 1px solid #D8CAB9; flex-shrink: 0;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                  <strong style="color: #2D1D14; font-size: 1rem;">${nomeCli}</strong>
+                  <span style="background: ${statusBg}; color: ${statusColor}; border-radius: 9999px; padding: 2px 10px; font-size: 0.72rem; font-weight: 700;">
+                    ${status}
+                  </span>
+                </div>
+                <div style="font-size: 0.8rem; color: #7A6A5E; margin-top: 2px;">
+                  <span>📸 ${tipo}</span>
+                  <span style="margin: 0 4px;">·</span>
+                  <span>🖼️ ${totalFotos} foto(s)</span>
+                  ${g.link_drive ? '<span style="margin: 0 4px;">·</span><span style="color:#2E7D32; font-weight:600;">✓ Drive vinculado</span>' : ''}
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <a href="galeria-config.html?id=${g.id}&projeto_id=${g.projeto_id || g.id}" class="card-action-pill" style="background: #5C4638; color: #FFF; text-decoration: none; padding: 0.45rem 0.85rem; border-radius: 8px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                ⚙️ Configurar
+              </a>
+              <a href="escolha-fotos.html?id=${g.id}&previa=true" target="_blank" class="card-action-pill" style="background: #FAF5EE; color: #8C5F35; border: 1px solid #C59B6D; text-decoration: none; padding: 0.45rem 0.85rem; border-radius: 8px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                👁️ Seleção
+              </a>
+              <a href="entrega.html?id=${g.id}" target="_blank" class="card-action-pill" style="background: linear-gradient(135deg, #1E3A2F 0%, #152720 100%); color: #FFF; border: 1px solid #2D5A47; text-decoration: none; padding: 0.45rem 0.85rem; border-radius: 8px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                🎁 Entrega Drive
+              </a>
+              <button type="button" onclick="excluirGaleriaAdmin(${g.id}, '${(nomeCli).replace(/'/g, "\\'")}')" class="btn-delete-item" style="padding: 0.45rem 0.75rem; border-radius: 8px;" title="Excluir galeria">
+                🗑️
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    window.renderizarGaleriasAdmin = renderizarGaleriasAdmin;
+
+    async function excluirGaleriaAdmin(id, nome) {
+      if (!confirm(`Tem certeza que deseja excluir permanentemente a galeria de "${nome}"?\nTodas as fotos, seleções e configurações vinculadas serão removidas.`)) {
+        return;
+      }
+      try {
+        const res = await fetch(`/api/galerias/${id}`, { method: 'DELETE' });
+        const d = await res.json();
+        if (d.success) {
+          showToast(`✓ Galeria de "${nome}" excluída com sucesso!`);
+          carregarGaleriasAdmin();
+        } else {
+          showToast('Erro ao excluir galeria.', 'error');
+        }
+      } catch (e) {
+        showToast('Erro de conexão ao excluir galeria.', 'error');
+      }
+    }
+    window.excluirGaleriaAdmin = excluirGaleriaAdmin;
 
     // ── GESTÃO DE FOTÓGRAFOS DO ESTÚDIO ──
     async function carregarFotografosAdmin() {

@@ -68,8 +68,23 @@
 
           <div class="sidebar-project-header">
             <span class="sidebar-project-tag">CONFIGURAÇÕES DA GALERIA</span>
-            <h2 class="sidebar-project-title">Exemplo de seleção</h2>
-            <span class="badge-status-andamento">Escolha em andamento</span>
+            <h2 class="sidebar-project-title" id="sidebarProjectTitle">Exemplo de seleção</h2>
+            <span class="badge-status-andamento" id="sidebarBadgeStatusGaleria">Escolha em andamento</span>
+          </div>
+
+          <!-- Seletor Rápido de Galeria / Nova Galeria -->
+          <div class="sidebar-gallery-switcher" style="padding: 0 0.5rem; margin-top: 0.65rem; margin-bottom: 0.85rem;">
+            <label for="selectGaleriaAtivaConfig" style="display: block; font-size: 0.72rem; font-weight: 700; color: #8C5F35; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">
+              📁 Galeria Selecionada
+            </label>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <select id="selectGaleriaAtivaConfig" onchange="window.trocarGaleriaConfigAtiva(this.value)" style="flex: 1; min-width: 0; background: #FFFFFF; border: 1.5px solid #D8CAB9; border-radius: 8px; padding: 6px 8px; font-size: 0.8rem; font-weight: 600; color: #352319; cursor: pointer; outline: none; transition: all 0.2s;">
+                <option value="">Carregando galerias...</option>
+              </select>
+              <button type="button" onclick="window.abrirModalNovoProjeto ? window.abrirModalNovoProjeto() : window.location.href='projetos.html?novo=1'" title="Cadastrar Nova Galeria" style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #8C5F35; color: #FFFFFF; border: none; border-radius: 8px; font-size: 1.2rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#6B4423'" onmouseout="this.style.background='#8C5F35'">
+                +
+              </button>
+            </div>
           </div>
         </div>
 
@@ -150,7 +165,7 @@
         <!-- Barra Superior: Breadcrumbs, Badge e Botão Prévia -->
         <div class="admin-top-meta-row">
           <div class="admin-breadcrumb">
-            Projetos &nbsp;/&nbsp; Exemplo de seleção &nbsp;/&nbsp; <strong id="breadcrumbTabName">Configurações</strong>
+            <a href="projetos.html" style="color: inherit; text-decoration: none;">Projetos</a> &nbsp;/&nbsp; <span id="breadcrumbGaleriaNome">Exemplo de seleção</span> &nbsp;/&nbsp; <strong id="breadcrumbTabName">Configurações</strong>
           </div>
           <span class="admin-badge-demo">Demonstração · sem valores comerciais</span>
         </div>

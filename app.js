@@ -1295,12 +1295,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Carrega inicialmente
     window.carregarProjetosGlobal();
+
+    // Abre modal automaticamente se vier de link externo com ?novo=1
+    if (new URLSearchParams(window.location.search).get('novo') === '1') {
+      setTimeout(() => {
+        if (typeof window.abrirModalNovoProjeto === 'function') {
+          window.abrirModalNovoProjeto();
+        }
+      }, 350);
+    }
   }
 
   // ============================================================================
   // 5. TELA: CONFIGURAÇÕES DA GALERIA (galeria-config.html)
   // ============================================================================
-  const galConfigId = new URLSearchParams(window.location.search).get('id') || new URLSearchParams(window.location.search).get('projeto_id') || '1';
+  let galConfigId = new URLSearchParams(window.location.search).get('id') || new URLSearchParams(window.location.search).get('projeto_id') || '1';
+  window.galConfigId = galConfigId;
 
   window.uploadNovaCapaGaleria = function(event) {
     const file = event.target.files && event.target.files[0];
@@ -1488,9 +1498,17 @@ document.addEventListener('DOMContentLoaded', () => {
           if (chkExtras && data.permitir_extras != null) {
             chkExtras.checked = !!data.permitir_extras;
           }
-          const spanTitle = document.querySelector('.sidebar-project-title');
+          const spanTitle = document.getElementById('sidebarProjectTitle') || document.querySelector('.sidebar-project-title');
           if (spanTitle && data.nome) {
             spanTitle.textContent = data.nome;
+          }
+          const breadcrumbNome = document.getElementById('breadcrumbGaleriaNome');
+          if (breadcrumbNome && data.nome) {
+            breadcrumbNome.textContent = data.nome;
+          }
+          const selGal = document.getElementById('selectGaleriaAtivaConfig');
+          if (selGal && data.id) {
+            selGal.value = String(data.id);
           }
           const inpDrive = document.getElementById('inputLinkGoogleDrive');
           if (inpDrive && data.link_drive) {
@@ -1532,6 +1550,74 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
+    // ── GESTÃO E TROCA RÁPIDA DE GALERIA NO PAINEL DE CONFIGURAÇÕES ──
+    window.carregarListaGaleriasConfig = async function(ativoId) {
+      const select = document.getElementById('selectGaleriaAtivaConfig');
+      if (!select) return;
+
+      try {
+        const res = await fetch('/api/galerias');
+        const galerias = await res.json();
+        if (Array.isArray(galerias) && galerias.length > 0) {
+          select.innerHTML = galerias.map(g => {
+            const cliente = g.nome_cliente ? ` · ${g.nome_cliente}` : '';
+            const fotos = ` (${g.total_fotos || 0} fotos)`;
+            return `<option value="${g.id}">${g.nome}${cliente}${fotos}</option>`;
+          }).join('');
+
+          const idDesejado = String(ativoId || galConfigId);
+          const galeriaExiste = galerias.some(g => String(g.id) === idDesejado);
+
+          if (galeriaExiste) {
+            select.value = idDesejado;
+          } else {
+            select.value = String(galerias[0].id);
+            galConfigId = String(galerias[0].id);
+            window.galConfigId = galConfigId;
+            const url = new URL(window.location.href);
+            url.searchParams.set('id', galConfigId);
+            window.history.replaceState({}, '', url.toString());
+          }
+
+          const gAtual = galerias.find(g => String(g.id) === String(select.value));
+          if (gAtual) {
+            const spanTitle = document.getElementById('sidebarProjectTitle') || document.querySelector('.sidebar-project-title');
+            if (spanTitle) spanTitle.textContent = gAtual.nome;
+            const breadcrumbNome = document.getElementById('breadcrumbGaleriaNome');
+            if (breadcrumbNome) breadcrumbNome.textContent = gAtual.nome;
+          }
+        } else {
+          select.innerHTML = '<option value="">Nenhuma galeria cadastrada</option>';
+        }
+      } catch (err) {
+        console.warn('Erro ao carregar lista de galerias:', err);
+      }
+    };
+
+    window.trocarGaleriaConfigAtiva = async function(novoId) {
+      if (!novoId) return;
+      galConfigId = String(novoId);
+      window.galConfigId = galConfigId;
+
+      const url = new URL(window.location.href);
+      url.searchParams.set('id', novoId);
+      window.history.pushState({}, '', url.toString());
+
+      const btnSidebarEntrega = document.getElementById('btnSidebarVerEntrega');
+      if (btnSidebarEntrega) {
+        btnSidebarEntrega.href = `entrega.html?id=${galConfigId}`;
+      }
+
+      if (typeof window.carregarDadosGaleria === 'function') await window.carregarDadosGaleria();
+      if (typeof window.carregarFotosGaleriaConfig === 'function') await window.carregarFotosGaleriaConfig();
+      if (typeof window.carregarDestinatariosConfig === 'function') await window.carregarDestinatariosConfig();
+      if (typeof window.carregarAtividadesClienteConfig === 'function') await window.carregarAtividadesClienteConfig();
+      if (typeof window.carregarResumoDesignConfig === 'function') await window.carregarResumoDesignConfig();
+      if (typeof window.carregarHistoricoGaleriaConfig === 'function') await window.carregarHistoricoGaleriaConfig();
+
+      showToast('✓ Galeria carregada com sucesso!');
+    };
+
     window.salvarStatusGaleriaDireto = async function(novoStatus) {
       try {
         const res = await fetch(`/api/galeria/${galConfigId}/status`, {
@@ -1558,6 +1644,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.carregarDadosGaleria();
+    window.carregarListaGaleriasConfig(galConfigId);
 
     // Função de alta eficiência para compactar fotos antes do envio (permanece muito abaixo do limite de 4.5MB da Vercel)
     async function otimizarFotoParaUpload(file, maxDimension = 1600, quality = 0.78) {
@@ -3596,13 +3683,24 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
     }
 
     try {
+      let categoriaTag = tipo;
+      if (tipo.includes('Retrato')) categoriaTag = 'Retrato';
+      else if (tipo.includes('Casamento')) categoriaTag = 'Casamento';
+      else if (tipo.includes('Família') || tipo.includes('Familia')) categoriaTag = 'Família';
+      else if (tipo.includes('Parto')) categoriaTag = 'Parto';
+      else if (tipo.includes('Gestante')) categoriaTag = 'Gestante';
+      else if (tipo.includes('Newborn')) categoriaTag = 'Newborn';
+      else if (tipo.includes('Corporativo')) categoriaTag = 'Corporativo';
+      else if (tipo.includes('Eventos') || tipo.includes('Evento')) categoriaTag = 'Eventos';
+      else categoriaTag = tipo.split(' ')[0];
+
       const res = await fetch('/api/projetos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nome_cliente: nome,
           tipo_ensaio: tipo,
-          categoria_tag: tipo.split(' ').pop(),
+          categoria_tag: categoriaTag,
           status: 'novos',
           sessoes: sessoes,
           prazo: prazo,
@@ -3614,15 +3712,60 @@ Qualquer dúvida estamos à sua total disposição! 🤍`;
       });
       const d = await res.json();
       if (d.success) {
-        showToast(`✓ Projeto e Galeria de "${nome}" cadastrados com capa definida!`);
-        document.getElementById('appModalNovoProjeto').style.display = 'none';
+        showToast(`✓ Projeto e Galeria de "${nome}" cadastrados com sucesso!`);
+        const modal = document.getElementById('appModalNovoProjeto');
+        if (modal) modal.style.display = 'none';
         window.capaBase64Temp = null;
+
+        // Reset dos filtros de busca e abas do Kanban para garantir visibilidade imediata
+        const selTab = document.querySelector('.kanban-tab-item[data-tab="todos"], .kanban-tab-item[data-tab="novos"]');
+        if (selTab) {
+          document.querySelectorAll('.kanban-tab-item').forEach(b => b.classList.remove('active'));
+          selTab.classList.add('active');
+        }
+        const searchInp = document.getElementById('kanbanSearchInput') || document.querySelector('.kanban-search-input');
+        if (searchInp) searchInp.value = '';
+        const selCliente = document.getElementById('filtroCliente');
+        if (selCliente) selCliente.value = 'todos';
+        const selEtapa = document.getElementById('filtroEtapa');
+        if (selEtapa) selEtapa.value = 'todas';
+
+        // Atualiza a listagem de projetos global se estiver em projetos.html
         if (typeof window.carregarProjetosGlobal === 'function') {
-          window.carregarProjetosGlobal();
+          await window.carregarProjetosGlobal();
         } else if (typeof carregarProjetos === 'function') {
-          carregarProjetos();
-        } else {
-          window.location.reload();
+          await carregarProjetos();
+        }
+
+        // Se estiver no admin.html, atualiza a tabela de galerias
+        if (typeof window.carregarGaleriasAdmin === 'function') {
+          await window.carregarGaleriasAdmin();
+        }
+
+        // Se estiver em galeria-config.html, atualiza o seletor e troca para a nova galeria
+        if (document.getElementById('selectGaleriaAtivaConfig')) {
+          if (typeof window.carregarListaGaleriasConfig === 'function') {
+            await window.carregarListaGaleriasConfig(d.galeria_id || d.projeto_id);
+            if (typeof window.trocarGaleriaConfigAtiva === 'function') {
+              window.trocarGaleriaConfigAtiva(d.galeria_id || d.projeto_id);
+            }
+          }
+        }
+
+        // Rola até o novo card criado para destacar visualmente com brilho dourado
+        if (d.projeto_id) {
+          setTimeout(() => {
+            const novoCard = document.querySelector(`[data-projeto-id="${d.projeto_id}"]`) || document.getElementById(`card-proj-${d.projeto_id}`);
+            if (novoCard) {
+              novoCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              novoCard.style.outline = '2px solid #C59B6D';
+              novoCard.style.boxShadow = '0 0 16px rgba(197, 155, 109, 0.6)';
+              setTimeout(() => {
+                novoCard.style.outline = '';
+                novoCard.style.boxShadow = '';
+              }, 3500);
+            }
+          }, 350);
         }
       }
     } catch (err) {
