@@ -501,40 +501,26 @@ def semear_projetos_iniciais(conn, forcar=False):
 @app.get('/api/projetos')
 @rate_limit()
 def api_get_projetos():
-    conn = get_connection()
     try:
-        cur = conn.cursor()
-        # Sincroniza qualquer galeria que não tenha projeto_id vinculado
-        cur.execute("SELECT id, nome, categoria, foto_capa FROM galerias WHERE projeto_id IS NULL")
-        orfans = [dict(r) for r in cur.fetchall()]
-        for o in orfans:
-            nome_cli = o['nome'].replace('Galeria - ', '').strip() or 'Cliente'
-            cat = o['categoria'] or 'Família'
-            cur.execute("""
-            INSERT INTO projetos (nome_cliente, tipo_ensaio, categoria_tag, status, sessoes, prazo, avatar_img)
-            VALUES (?, ?, ?, 'novos', 1, 'sem prazo', ?)
-            """, (nome_cli, cat, cat.split(' ')[-1] if ' ' in cat else cat, o['foto_capa'] or 'assets/logo/logo.png'))
-            novo_proj_id = cur.lastrowid
-            cur.execute("UPDATE galerias SET projeto_id = ? WHERE id = ?", (novo_proj_id, o['id']))
-        if orfans:
-            conn.commit()
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            # Sincroniza qualquer galeria que não tenha projeto_id vinculado
+            cur.execute("SELECT id, nome, categoria, foto_capa FROM galerias WHERE projeto_id IS NULL")
+            orfans = [dict(r) for r in cur.fetchall()]
+            for o in orfans:
+                nome_cli = o.get('nome', '').replace('Galeria - ', '').strip() or 'Cliente'
+                cat = o.get('categoria') or 'Família'
+                tag = cat.split(' ')[-1] if ' ' in cat else cat
+                cur.execute("""
+                INSERT INTO projetos (nome_cliente, tipo_ensaio, categoria_tag, status, sessoes, prazo, avatar_img)
+                VALUES (?, ?, ?, 'novos', 1, 'sem prazo', ?)
+                """, (nome_cli, cat, tag, o.get('foto_capa') or 'assets/logo/logo.png'))
+                novo_proj_id = cur.lastrowid
+                cur.execute("UPDATE galerias SET projeto_id = ? WHERE id = ?", (novo_proj_id, o['id']))
+            if orfans:
+                conn.commit()
 
-        cur.execute("""
-        SELECT p.*, COALESCE(g.id, p.id) as galeria_id,
-               COALESCE(g.status_galeria, 'Aguardando seleção') as status_galeria,
-               COALESCE(g.selecao_bloqueada, 0) as selecao_bloqueada,
-               COALESCE(g.link_drive, '') as link_drive,
-               COALESCE(g.mensagem_acesso, '') as mensagem_acesso,
-               COALESCE(g.foto_capa, p.avatar_img, 'assets/logo/logo.png') as foto_capa,
-               (SELECT COUNT(*) FROM fotos f WHERE f.galeria_id = COALESCE(g.id, p.id)) as total_fotos
-        FROM projetos p
-        LEFT JOIN galerias g ON g.projeto_id = p.id
-        ORDER BY p.id ASC
-        """)
-        rows = [dict(row) for row in cur.fetchall()]
-        
-        if len(rows) == 0:
-            semear_projetos_iniciais(conn, forcar=True)
             cur.execute("""
             SELECT p.*, COALESCE(g.id, p.id) as galeria_id,
                    COALESCE(g.status_galeria, 'Aguardando seleção') as status_galeria,
@@ -548,10 +534,31 @@ def api_get_projetos():
             ORDER BY p.id ASC
             """)
             rows = [dict(row) for row in cur.fetchall()]
+            
+            if len(rows) == 0:
+                semear_projetos_iniciais(conn, forcar=True)
+                cur.execute("""
+                SELECT p.*, COALESCE(g.id, p.id) as galeria_id,
+                       COALESCE(g.status_galeria, 'Aguardando seleção') as status_galeria,
+                       COALESCE(g.selecao_bloqueada, 0) as selecao_bloqueada,
+                       COALESCE(g.link_drive, '') as link_drive,
+                       COALESCE(g.mensagem_acesso, '') as mensagem_acesso,
+                       COALESCE(g.foto_capa, p.avatar_img, 'assets/logo/logo.png') as foto_capa,
+                       (SELECT COUNT(*) FROM fotos f WHERE f.galeria_id = COALESCE(g.id, p.id)) as total_fotos
+                FROM projetos p
+                LEFT JOIN galerias g ON g.projeto_id = p.id
+                ORDER BY p.id ASC
+                """)
+                rows = [dict(row) for row in cur.fetchall()]
 
-        return json_response(rows)
-    finally:
-        conn.close()
+            return json_response(rows)
+        finally:
+            conn.close()
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        print(f"[API_PROJETOS_EX] {e}\n{tb}")
+        return json_response({'error': str(e), 'traceback': tb, 'status': 500}, 500)
 
 @app.post('/api/projetos/restaurar-exemplos')
 @rate_limit()
@@ -2532,7 +2539,7 @@ def error_handler_500(err):
     detalhe = str(err.traceback) if hasattr(err, 'traceback') and err.traceback else ''
     log_error(origem, mensagem, detalhe, request.path if hasattr(request, 'path') else '')
     response.content_type = 'application/json; charset=utf-8'
-    return json.dumps({'error': 'Ocorreu um erro interno no servidor', 'status': 500})
+    return json.dumps({'error': 'Ocorreu um erro interno no servidor', 'mensagem': mensagem, 'status': 500})
 
 # ==============================================================================
 # 10. INICIALIZAÇÃO
