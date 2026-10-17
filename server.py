@@ -451,6 +451,12 @@ def api_login_cliente():
 def semear_projetos_iniciais(conn, forcar=False):
     """Semeia projetos e galerias de demonstração com links de entrega e mensagens personalizadas."""
     try:
+        from db import assegurar_schema_postgres
+        assegurar_schema_postgres(conn)
+    except Exception:
+        pass
+
+    try:
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM projetos")
         count = cur.fetchone()[0]
@@ -497,6 +503,11 @@ def semear_projetos_iniciais(conn, forcar=False):
         conn.commit()
     except Exception as e:
         print(f"[Seed Projetos] Erro ao semear projetos padrão: {e}")
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        raise e
 
 @app.get('/api/projetos')
 @rate_limit()
@@ -567,6 +578,11 @@ def api_restaurar_projetos_exemplos():
     try:
         semear_projetos_iniciais(conn, forcar=True)
         return json_response({'success': True, 'mensagem': '5 Galerias demonstrativas com links do Google Drive restauradas com sucesso!'})
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        print(f"[Restaurar Erro]: {e}\n{tb}")
+        return json_response({'error': f'Falha ao semear projetos: {str(e)}', 'traceback': tb}, 500)
     finally:
         conn.close()
 

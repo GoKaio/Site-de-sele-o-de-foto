@@ -170,13 +170,62 @@ class PostgresConnectionWrapper:
         except Exception:
             pass
 
+_postgres_migrated = False
+
+def assegurar_schema_postgres(conn):
+    global _postgres_migrated
+    if not is_postgres():
+        return
+    try:
+        cur = conn.cursor()
+        migracoes = [
+            "ALTER TABLE galerias ADD COLUMN IF NOT EXISTS status_galeria VARCHAR(100) DEFAULT 'Aguardando seleção'",
+            "ALTER TABLE galerias ADD COLUMN IF NOT EXISTS selecao_bloqueada SMALLINT DEFAULT 0",
+            "ALTER TABLE galerias ADD COLUMN IF NOT EXISTS link_drive TEXT DEFAULT ''",
+            "ALTER TABLE galerias ADD COLUMN IF NOT EXISTS mensagem_acesso TEXT DEFAULT ''",
+            "ALTER TABLE galerias ADD COLUMN IF NOT EXISTS foto_capa TEXT DEFAULT 'assets/logo/logo.png'",
+            "ALTER TABLE galerias ADD COLUMN IF NOT EXISTS limite_pacote INTEGER DEFAULT 10",
+            "ALTER TABLE galerias ADD COLUMN IF NOT EXISTS valor_foto_extra NUMERIC(10,2) DEFAULT 25.00",
+            "ALTER TABLE projetos ADD COLUMN IF NOT EXISTS avatar_img TEXT DEFAULT 'assets/logo/logo.png'",
+            "ALTER TABLE projetos ADD COLUMN IF NOT EXISTS categoria_tag VARCHAR(100) DEFAULT 'Família'",
+            "ALTER TABLE projetos ADD COLUMN IF NOT EXISTS sessoes INTEGER DEFAULT 1",
+            "ALTER TABLE projetos ADD COLUMN IF NOT EXISTS prazo VARCHAR(50) DEFAULT 'sem prazo'",
+            """
+            CREATE TABLE IF NOT EXISTS error_log (
+                id SERIAL PRIMARY KEY,
+                origem VARCHAR(20) DEFAULT 'frontend',
+                mensagem TEXT NOT NULL,
+                detalhe TEXT,
+                rota VARCHAR(250),
+                ip VARCHAR(50),
+                user_agent VARCHAR(250),
+                criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        ]
+        for mig in migracoes:
+            try:
+                cur.execute(mig)
+                conn.commit()
+            except Exception:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+        _postgres_migrated = True
+    except Exception as e:
+        print(f"[Supabase Schema] Erro ao assegurar schema: {e}")
+
 def get_connection(skip_init: bool = False):
     if is_postgres():
         try:
             import psycopg2
             # Supavisor pooler (porta 6543) com timeout de conexão
             conn = psycopg2.connect(DATABASE_URL, connect_timeout=10)
-            return PostgresConnectionWrapper(conn)
+            wrapped = PostgresConnectionWrapper(conn)
+            if not _postgres_migrated and not skip_init:
+                assegurar_schema_postgres(wrapped)
+            return wrapped
         except Exception as e:
             print(f"[Supabase Postgres] Erro ao conectar ao Postgres: {e}. Usando fallback SQLite.")
     
@@ -246,11 +295,7 @@ def init_db(conn=None):
                     cur.execute("INSERT INTO categorias (nome) VALUES (%s) ON CONFLICT (nome) DO NOTHING", (c_nome,))
             c.commit()
 
-            try:
-                cur.execute("ALTER TABLE galerias ADD COLUMN IF NOT EXISTS link_drive TEXT DEFAULT ''")
-                c.commit()
-            except Exception:
-                pass
+            assegurar_schema_postgres(c)
 
             cur.execute("SELECT 1 FROM information_schema.tables WHERE table_name = 'usuarios'")
             row = cur.fetchone()
