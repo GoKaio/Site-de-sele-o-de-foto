@@ -121,6 +121,25 @@
                   <div id="uploadProgressFill" style="background:#8C5F35;height:100%;width:0%;transition:width 0.3s;"></div>
                 </div>
                 <span id="uploadProgressLabel" style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;display:block;"></span>
+                <!-- Relatório detalhado de erros por arquivo -->
+                <div id="uploadErrosDetalhe" style="display:none;margin-top:0.75rem;background:#FFF8F0;border:1px solid #E8B88A;border-radius:8px;padding:0.75rem 1rem;">
+                  <strong style="font-size:0.78rem;color:#8C5F35;display:block;margin-bottom:0.4rem;">⚠ Arquivos com falha neste lote:</strong>
+                  <ul id="uploadErrosLista" style="margin:0;padding-left:1.2rem;font-size:0.74rem;color:#6B3F1E;line-height:1.6;"></ul>
+                </div>
+              </div>
+
+              <!-- Painel de verificação de integridade -->
+              <div id="painelIntegridade" style="display:none;margin-bottom:1rem;padding:0.9rem 1.1rem;background:#F5FFF7;border:1px solid #82C98E;border-radius:10px;font-size:0.8rem;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <span style="font-size:1.4rem;">🔍</span>
+                    <div>
+                      <strong style="color:#1B5E20;display:block;">Verificação de integridade</strong>
+                      <span id="integridadeMsg" style="color:#2E7D32;">Consultando banco...</span>
+                    </div>
+                  </div>
+                  <button type="button" onclick="verificarIntegridade()" style="background:#2E7D32;color:#FFF;border:none;border-radius:6px;padding:5px 12px;font-size:0.74rem;font-weight:700;cursor:pointer;">🔄 Verificar agora</button>
+                </div>
               </div>
 
               <!-- Grade de fotos -->
@@ -264,21 +283,25 @@
 
     // ── Upload multipart ──────────────────────────────────────────────
     async function uploadFotos(files) {
-      const bar   = document.getElementById('uploadProgressBar');
-      const fill  = document.getElementById('uploadProgressFill');
-      const label = document.getElementById('uploadProgressLabel');
-      const btn   = document.getElementById('btnAdicionarFotos');
+      const bar          = document.getElementById('uploadProgressBar');
+      const fill         = document.getElementById('uploadProgressFill');
+      const label        = document.getElementById('uploadProgressLabel');
+      const btn          = document.getElementById('btnAdicionarFotos');
+      const errosDetalhe = document.getElementById('uploadErrosDetalhe');
+      const errosLista   = document.getElementById('uploadErrosLista');
 
-      bar.style.display   = 'block';
-      fill.style.width    = '10%';
-      label.textContent   = `Enviando ${files.length} arquivo(s)...`;
-      btn.disabled        = true;
+      bar.style.display = 'block';
+      fill.style.width  = '10%';
+      label.style.color = '';
+      label.textContent = `Enviando ${files.length} arquivo(s) em lotes...`;
+      btn.disabled      = true;
+      if (errosDetalhe) errosDetalhe.style.display = 'none';
 
       const formData = new FormData();
       for (const file of files) formData.append('fotos', file);
 
       try {
-        fill.style.width = '50%';
+        fill.style.width = '60%';
         const res  = await fetch(`/api/galeria/${galId}/upload-fotos`, {
           method: 'POST',
           body: formData
@@ -287,19 +310,74 @@
         const data = await res.json();
         fill.style.width = '100%';
 
-        if (data.success) {
-          label.textContent = `✓ ${data.count} foto(s) enviada(s) com sucesso.`;
-          if (data.erros && data.erros.length > 0)
-            label.textContent += `  ⚠ ${data.erros.length} erro(s): ${data.erros.join('; ')}`;
+        if (data.success || data.count > 0) {
+          const totalRecebidos = data.total_recebidos || files.length;
+          const totalSalvos    = data.count || 0;
+          const totalErros     = data.total_erros || 0;
+
+          if (totalErros === 0) {
+            label.style.color = '#2E7D32';
+            label.textContent = `✓ ${totalSalvos} de ${totalRecebidos} foto(s) salva(s) com sucesso!`;
+          } else {
+            label.style.color = '#8C5F35';
+            label.textContent = `⚠ ${totalSalvos} de ${totalRecebidos} salva(s). ${totalErros} falha(s) — veja detalhes abaixo.`;
+
+            // Lista detalhada de erros por arquivo
+            if (errosDetalhe && errosLista && data.erros && data.erros.length > 0) {
+              errosLista.innerHTML = data.erros
+                .map(e => typeof e === 'object'
+                  ? `<li><strong>${e.arquivo || '?'}</strong>: ${e.motivo || 'erro desconhecido'}</li>`
+                  : `<li>${e}</li>`)
+                .join('');
+              errosDetalhe.style.display = 'block';
+            }
+          }
+
+          // Ativa painel de integridade automático após upload
+          const painelInt = document.getElementById('painelIntegridade');
+          if (painelInt) {
+            painelInt.style.display = 'block';
+            verificarIntegridade(totalSalvos);
+          }
+
           await carregarFotos();
         } else {
+          label.style.color = '#c0392b';
           label.textContent = `✗ Falha: ${data.error || 'Erro desconhecido'}`;
         }
       } catch (err) {
+        label.style.color = '#c0392b';
         label.textContent = `✗ Erro de conexão: ${err.message}`;
       } finally {
         btn.disabled = false;
-        setTimeout(() => { bar.style.display = 'none'; }, 5000);
+        setTimeout(() => {
+          bar.style.display = 'none';
+          if (errosDetalhe) errosDetalhe.style.display = 'none';
+        }, 15000);
+      }
+    }
+
+    // ── Verifica integridade: banco vs arquivos enviados ──────────────
+    async function verificarIntegridade(totalEnviado) {
+      const msg = document.getElementById('integridadeMsg');
+      if (msg) { msg.textContent = 'Consultando banco de dados...'; msg.style.color = '#2E7D32'; }
+      try {
+        const res  = await fetch(`/api/galeria/${galId}/fotos/integridade`);
+        const data = await res.json();
+        if (!msg) return;
+        const banco = data.total_fotos_banco || 0;
+        if (totalEnviado !== undefined) {
+          const ok = banco >= totalEnviado;
+          msg.style.color = ok ? '#1B5E20' : '#8C5F35';
+          msg.textContent = ok
+            ? `✅ ${banco} foto(s) gravada(s) no banco. Upload íntegro!`
+            : `⚠ ${banco} foto(s) no banco (esperado: ≥ ${totalEnviado}). Verifique falhas acima.`;
+        } else {
+          msg.style.color = '#1B5E20';
+          msg.textContent = `✅ ${banco} foto(s) gravada(s) com sucesso nesta galeria.`;
+        }
+      } catch (e) {
+        if (msg) msg.textContent = 'Não foi possível verificar a integridade agora.';
       }
     }
 

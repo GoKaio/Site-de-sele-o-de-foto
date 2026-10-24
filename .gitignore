@@ -122,4 +122,8 @@ iniciar_servidor.bat
 # ── VERCEL ──
 .vercel/
 
+# ── WRANGLER ──
+.wrangler/
+
+
 

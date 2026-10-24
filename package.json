@@ -1,0 +1,30 @@
+{
+  "name": "casa-da-foto-backend",
+  "version": "2.0.0",
+  "description": "Sistema de Gestão, Portal Multi-Galeria e Seleção de Fotos - Casa da Foto Studio",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "db:init": "node scripts/initDb.js"
+  },
+  "keywords": [
+    "photography",
+    "gallery",
+    "r2",
+    "mysql",
+    "express",
+    "sharp"
+  ],
+  "author": "Casa da Foto Studio",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.565.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.9.7",
+    "sharp": "^0.33.3"
+  }
+}

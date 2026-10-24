@@ -1,0 +1,686 @@
+/* ==============================================================================
+   CASA DA FOTO STUDIO - PORTAL MULTI-GALERIA & CAMADAS DE PROTEÇÃO (MÓDULOS 2 & 3)
+   ============================================================================== */
+
+:root {
+  --bg-primary: #FAF7F2;
+  --bg-card: #FFFFFF;
+  --text-primary: #1C1917;
+  --text-secondary: #78716C;
+  --accent-gold: #B88E4F;
+  --accent-gold-hover: #9E7438;
+  --border-light: #E7E0D8;
+  --status-pending-bg: #FEF3C7;
+  --status-pending-text: #92400E;
+  --status-done-bg: #D1FAE5;
+  --status-done-text: #065F46;
+  --danger-bg: #FEE2E2;
+  --danger-text: #991B1B;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.09);
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ── MÓDULO 3: REQUISITO 2 - ESCUDO TRANSPARENTE (SHIELD LAYER) ───────────── */
+.photo-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background-color: #EFE9E0;
+}
+
+/* Tag img com pointer-events: none e seleção bloqueada */
+.photo-wrapper img,
+.protected-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -webkit-user-drag: none !important;
+  transition: transform 0.3s ease;
+}
+
+/* Div escudo transparente com z-index superior cobrindo a foto */
+.photo-shield {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* ── MÓDULO 3: REQUISITO 4 - MARCA D'ÁGUA (WATERMARK OVERLAY) ─────────────── */
+.photo-watermark {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    -35deg,
+    rgba(255, 255, 255, 0.22) 0px,
+    rgba(255, 255, 255, 0.22) 2px,
+    transparent 2px,
+    transparent 80px
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-watermark::after {
+  content: "CASA DA FOTO • PROVA";
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  color: rgba(255, 255, 255, 0.35);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transform: rotate(-25deg);
+  user-select: none;
+}
+
+/* ── MÓDULO 3: REQUISITO 3 - DISSUASÃO DE CAPTURA (BLUR 25px) ─────────────── */
+.protection-blur-active,
+.window-unfocused-blur {
+  filter: blur(25px) !important;
+  transition: filter 0.15s ease-out;
+}
+
+/* Toast de Alerta de Proteção */
+.anti-print-toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: rgba(28, 25, 23, 0.94);
+  color: #FFFFFF;
+  padding: 0.85rem 1.75rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  z-index: 99999;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  backdrop-filter: blur(8px);
+}
+
+.anti-print-toast.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* Ocultação total na impressão */
+@media print {
+  body {
+    display: none !important;
+  }
+}
+
+/* ── MÓDULO 2: LAYOUT DO PORTAL & HEADER ──────────────────────────────────── */
+.portal-header {
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--border-light);
+  padding: 1.25rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.portal-header-content {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-logo {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+}
+
+.brand-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-name {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+
+.brand-subtitle {
+  font-size: 0.72rem;
+  letter-spacing: 1.2px;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+}
+
+.portal-container {
+  max-width: 1240px;
+  margin: 2.5rem auto;
+  padding: 0 1.5rem;
+}
+
+/* ── CARDS DO PORTAL (TELA DE ENTRADA /portal/:token) ─────────────────────── */
+.welcome-hero {
+  margin-bottom: 2.5rem;
+}
+
+.client-greeting {
+  font-family: var(--font-serif);
+  font-size: 2.6rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.client-instruction {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+}
+
+.albums-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+.album-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  overflow: hidden;
+  box-shadow: var(--shadow-subtle);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.album-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.album-card-cover {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: #EFE9E0;
+  overflow: hidden;
+}
+
+.album-card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.album-status-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  backdrop-filter: blur(6px);
+}
+
+.status-em_selecao {
+  background-color: var(--status-pending-bg);
+  color: var(--status-pending-text);
+  border: 1px solid #FCD34D;
+}
+
+.status-concluido {
+  background-color: var(--status-done-bg);
+  color: var(--status-done-text);
+  border: 1px solid #6EE7B7;
+}
+
+.album-card-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: space-between;
+}
+
+.album-card-title {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.album-card-meta {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.album-card-footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border-light);
+  padding-top: 1.25rem;
+}
+
+.album-counter {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.album-counter strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.btn-primary {
+  background: var(--text-primary);
+  color: #FFFFFF;
+  padding: 0.65rem 1.4rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background 0.2s ease, transform 0.15s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: var(--accent-gold);
+  transform: translateY(-1px);
+}
+
+/* ── TELA DA GALERIA DO ENSAIO (/portal/:token/album/:albumId) ─────────────── */
+.gallery-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.btn-back-portal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+}
+
+.btn-back-portal:hover {
+  color: var(--accent-gold);
+}
+
+/* Seletor Rápido de Ensaios (Dropdown / Tabs) */
+.album-switcher {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.switcher-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.album-select-dropdown {
+  padding: 0.55rem 1.25rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  background: #FFFFFF;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.album-select-dropdown:focus {
+  border-color: var(--accent-gold);
+}
+
+/* Barra de Progresso de Fotos Selecionadas vs Limite */
+.selection-progress-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.75rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  box-shadow: var(--shadow-subtle);
+  flex-wrap: wrap;
+}
+
+.progress-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 250px;
+}
+
+.progress-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.progress-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.progress-bar-container {
+  flex-grow: 1;
+  max-width: 450px;
+  min-width: 200px;
+}
+
+.progress-track {
+  width: 100%;
+  height: 10px;
+  background: #EDE6DC;
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent-gold);
+  border-radius: 9999px;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s ease;
+}
+
+.progress-fill.over-limit {
+  background: #EF4444;
+}
+
+.btn-finalize-selection {
+  background: var(--accent-gold);
+  color: #FFFFFF;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.btn-finalize-selection:hover {
+  background: var(--accent-gold-hover);
+  transform: translateY(-1px);
+}
+
+/* ── GRADE DE FOTOS DO ENSAIO ─────────────────────────────────────────────── */
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.photo-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+
+.photo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-subtle);
+}
+
+.photo-card.selected {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 2px var(--accent-gold);
+}
+
+.photo-card-actions {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 10;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-heart-select {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.15rem;
+  color: #9CA3AF;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(4px);
+}
+
+.btn-heart-select:hover {
+  transform: scale(1.1);
+  background: #FFFFFF;
+  color: #EF4444;
+}
+
+.btn-heart-select.active {
+  background: #EF4444;
+  color: #FFFFFF;
+  border-color: #DC2626;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.btn-zoom-trigger {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.btn-zoom-trigger:hover {
+  transform: scale(1.1);
+  background: #FFFFFF;
+}
+
+.photo-card-caption {
+  padding: 0.75rem 1rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ── MODAL DE ZOOM PROTEGIDO COM SHIELD E MARCA D'ÁGUA ─────────────────────── */
+.zoom-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 13, 11, 0.95);
+  backdrop-filter: blur(12px);
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.zoom-modal.active {
+  display: flex;
+}
+
+.zoom-content-wrapper {
+  position: relative;
+  max-width: 90vw;
+  max-height: 88vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zoom-content-wrapper img {
+  max-width: 100%;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  pointer-events: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+.zoom-shield-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  cursor: default;
+}
+
+.zoom-watermark {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    -35deg,
+    rgba(255, 255, 255, 0.22) 0px,
+    rgba(255, 255, 255, 0.22) 2px,
+    transparent 2px,
+    transparent 100px
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zoom-watermark span {
+  font-family: var(--font-sans);
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: rgba(255, 255, 255, 0.35);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  transform: rotate(-25deg);
+}
+
+.btn-close-zoom {
+  position: absolute;
+  top: 1.5rem;
+  right: 2rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: #FFFFFF;
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  transition: background 0.2s ease;
+}
+
+.btn-close-zoom:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .client-greeting {
+    font-size: 2rem;
+  }
+  .portal-header {
+    padding: 1rem;
+  }
+  .selection-progress-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .progress-bar-container {
+    max-width: 100%;
+  }
+  .photos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+  }
+}

@@ -8,6 +8,10 @@
     {
       "source": "/uploads/(.*)",
       "destination": "/api/index.py"
+    },
+    {
+      "source": "/portal/(.*)",
+      "destination": "/api/index.py"
     }
   ],
   "headers": [

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galeria de Seleção de Fotos | Casa da Foto Studio</title>
+  
+  <link rel="icon" type="image/png" href="/assets/logo/logo.png">
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+  <!-- Fontes de Luxo e Editorial -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/public/css/portal.css">
+</head>
+<body>
+
+  <!-- Header Fixo da Galeria -->
+  <header class="portal-header">
+    <div class="portal-header-content">
+      <div class="brand-section">
+        <img src="/assets/logo/logo.png" alt="Casa da Foto Logo" class="brand-logo" onerror="this.style.display='none'">
+        <div class="brand-titles">
+          <span class="brand-name">CASA DA FOTO</span>
+          <span class="brand-subtitle">Galeria de Escolha • Prova Protegida</span>
+        </div>
+      </div>
+      <div id="headerClientInfo" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);"></div>
+    </div>
+  </header>
+
+  <main class="portal-container" id="galleryContainer">
+
+    <!-- 1. Barra de Navegação Superior e Seletor Rápido de Ensaios -->
+    <div class="gallery-nav-bar">
+      <a href="#" id="btnBackToPortal" class="btn-back-portal">
+        ← Voltar aos meus ensaios
+      </a>
+
+      <!-- Seletor Rápido (Dropdown / Tabs) para alternar entre os ensaios do cliente -->
+      <div class="album-switcher">
+        <label for="albumSelectDropdown" class="switcher-label">Alternar Ensaio:</label>
+        <select id="albumSelectDropdown" class="album-select-dropdown">
+          <option value="">Carregando ensaios...</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Título do Ensaio Ativo -->
+    <div style="margin-bottom: 1.5rem;">
+      <h1 class="client-greeting" id="albumTitleText" style="font-size: 2.2rem; margin-bottom: 0.25rem;">Carregando ensaio...</h1>
+      <p id="albumSubtitleText" style="color: var(--text-secondary); font-size: 0.95rem;">Clique no coração para marcar suas fotos prediletas.</p>
+    </div>
+
+    <!-- 2. Barra de Progresso com Contador (Selecionadas vs Limite Contratado) -->
+    <div class="selection-progress-card" id="progressCard">
+      <div class="progress-info">
+        <span class="progress-title" id="progressTitle">Progresso da Seleção</span>
+        <span class="progress-subtitle" id="progressCounterText">0 de 0 fotos selecionadas</span>
+      </div>
+
+      <div class="progress-bar-container">
+        <div class="progress-track">
+          <div class="progress-fill" id="progressBarFill" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <div>
+        <button id="btnFinalizar" class="btn-finalize-selection" onclick="finalizarSelecao()">
+          Concluir Seleção ✓
+        </button>
+      </div>
+    </div>
+
+    <!-- Feedback de Carregamento -->
+    <div id="loadingGalleryState" style="text-align: center; padding: 4rem 1rem; color: var(--text-secondary);">
+      <p style="font-size: 1.1rem; font-weight: 500;">Carregando fotos do ensaio...</p>
+    </div>
+
+    <!-- 3. Grade de Fotos com Escudo Transparente (Shield Layer) e Marca d'Água -->
+    <div class="photos-grid" id="photosGrid" style="display: none;"></div>
+
+  </main>
+
+  <!-- 4. Modal de Zoom em Alta Definição com Camadas de Proteção -->
+  <div class="zoom-modal" id="zoomModal">
+    <button class="btn-close-zoom" onclick="closeZoomModal()" aria-label="Fechar">&times;</button>
+    <div class="zoom-content-wrapper">
+      <img id="zoomImage" src="" alt="Foto ampliada protegida" class="protected-img">
+      <!-- Escudo transparente sobreposto no modal de zoom -->
+      <div class="zoom-shield-layer" onclick="closeZoomModal()"></div>
+      <!-- Marca d'água no modal -->
+      <div class="zoom-watermark">
+        <span>CASA DA FOTO • PROVA</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/public/js/anti-print.js"></script>
+  <script>
+    // Inicializa MÓDULO 3: Camadas de Dissuasão Anti-Print
+    AntiPrintProtection.init({
+      gallerySelector: '#galleryContainer',
+      modalSelector: '#zoomModal'
+    });
+
+    let currentToken = '';
+    let currentAlbumId = '';
+    let albumData = null;
+    let photosList = [];
+    let maxIncluded = 20;
+
+    function parseUrlParams() {
+      const parts = window.location.pathname.split('/').filter(Boolean);
+      const portalIdx = parts.indexOf('portal');
+      if (portalIdx !== -1) {
+        currentToken = parts[portalIdx + 1] || '';
+        const albumIdx = parts.indexOf('album');
+        if (albumIdx !== -1) {
+          currentAlbumId = parts[albumIdx + 1] || '';
+        }
+      }
+      if (!currentToken) {
+        const urlParams = new URLSearchParams(window.location.search);
+        currentToken = urlParams.get('token') || '';
+        currentAlbumId = urlParams.get('albumId') || '';
+      }
+    }
+
+    async function loadAlbumGallery() {
+      parseUrlParams();
+
+      if (!currentToken || !currentAlbumId) {
+        alert('Parâmetros inválidos na URL.');
+        return;
+      }
+
+      document.getElementById('btnBackToPortal').href = `/portal/${encodeURIComponent(currentToken)}`;
+
+      try {
+        const response = await fetch(`/api/portal/${encodeURIComponent(currentToken)}/album/${encodeURIComponent(currentAlbumId)}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Erro ao carregar fotos do ensaio.');
+        }
+
+        albumData = data.album;
+        photosList = data.photos || [];
+        maxIncluded = albumData.max_photos_included || 20;
+
+        document.getElementById('headerClientInfo').textContent = `Cliente: ${data.client.name}`;
+        document.getElementById('albumTitleText').textContent = albumData.title;
+        
+        const eventDateStr = albumData.event_date ? new Date(albumData.event_date + 'T00:00:00').toLocaleDateString('pt-BR') : '';
+        document.getElementById('albumSubtitleText').textContent = `${eventDateStr ? 'Realizado em: ' + eventDateStr + ' • ' : ''}${photosList.length} fotos disponíveis`;
+
+        // Preenche o Seletor Rápido (Dropdown) com os outros ensaios do cliente
+        renderAlbumSwitcher(data.other_albums);
+
+        // Atualiza a Barra de Progresso
+        updateProgressDisplay();
+
+        // Renderiza a Grade de Fotos com Escudo Transparente e Marca d'Água
+        renderPhotosGrid();
+
+        document.getElementById('loadingGalleryState').style.display = 'none';
+        document.getElementById('photosGrid').style.display = 'grid';
+
+      } catch (err) {
+        console.error('Erro:', err);
+        document.getElementById('loadingGalleryState').innerHTML = `
+          <p style="color: var(--danger-text); font-weight: 600;">${err.message}</p>
+          <a href="/portal/${encodeURIComponent(currentToken)}" class="btn-back-portal" style="margin-top: 1rem; display: inline-block;">Voltar aos Ensaios</a>
+        `;
+      }
+    }
+
+    function renderAlbumSwitcher(otherAlbums) {
+      const select = document.getElementById('albumSelectDropdown');
+      if (!otherAlbums || otherAlbums.length === 0) {
+        select.style.display = 'none';
+        return;
+      }
+
+      select.innerHTML = otherAlbums.map(a => {
+        const isCurrent = parseInt(a.id, 10) === parseInt(currentAlbumId, 10);
+        return `<option value="${a.id}" ${isCurrent ? 'selected' : ''}>${a.title} (${a.status === 'concluido' ? 'Concluído' : 'Em Seleção'})</option>`;
+      }).join('');
+
+      select.onchange = (e) => {
+        const newAlbumId = e.target.value;
+        if (newAlbumId && newAlbumId !== currentAlbumId) {
+          window.location.href = `/portal/${encodeURIComponent(currentToken)}/album/${encodeURIComponent(newAlbumId)}`;
+        }
+      };
+    }
+
+    function updateProgressDisplay() {
+      const selectedCount = photosList.filter(p => Boolean(p.is_selected)).length;
+      const percent = Math.min(100, Math.round((selectedCount / maxIncluded) * 100));
+
+      const counterText = document.getElementById('progressCounterText');
+      const fillBar = document.getElementById('progressBarFill');
+
+      fillBar.style.width = `${percent}%`;
+
+      if (selectedCount > maxIncluded) {
+        const extras = selectedCount - maxIncluded;
+        counterText.innerHTML = `<strong>${selectedCount}</strong> de <strong>${maxIncluded}</strong> inclusas no pacote (<span style="color:#EF4444;font-weight:700;">+${extras} fotos extras</span>)`;
+        fillBar.classList.add('over-limit');
+      } else {
+        counterText.innerHTML = `<strong>${selectedCount}</strong> de <strong>${maxIncluded}</strong> fotos selecionadas`;
+        fillBar.classList.remove('over-limit');
+      }
+    }
+
+    function renderPhotosGrid() {
+      const grid = document.getElementById('photosGrid');
+
+      if (photosList.length === 0) {
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 4rem;">Nenhuma foto foi adicionada a este ensaio ainda.</p>';
+        return;
+      }
+
+      grid.innerHTML = photosList.map(photo => {
+        const isSelected = Boolean(photo.is_selected);
+        const cardClass = isSelected ? 'photo-card selected' : 'photo-card';
+        const heartClass = isSelected ? 'btn-heart-select active' : 'btn-heart-select';
+
+        return `
+          <div class="${cardClass}" id="card-photo-${photo.id}">
+            <!-- Ações: Botão de Selecionar (Coração) e Botão de Zoom -->
+            <div class="photo-card-actions">
+              <button class="${heartClass}" onclick="togglePhotoSelect(${photo.id})" title="Favoritar/Selecionar foto" aria-label="Favoritar">
+                ♥
+              </button>
+              <button class="btn-zoom-trigger" onclick="openZoomModal('${photo.preview_url}')" title="Ampliar imagem" aria-label="Ampliar">
+                🔍
+              </button>
+            </div>
+
+            <!-- Camada de Imagem com Escudo Transparente (Shield Layer) & Marca d'Água -->
+            <div class="photo-wrapper" onclick="togglePhotoSelect(${photo.id})">
+              <img src="${photo.thumb_url}" alt="${photo.original_name}" class="protected-img" loading="lazy">
+              <!-- MÓDULO 3: Div transparente de escudo superior cobrindo a tag img -->
+              <div class="photo-shield" title="Clique para selecionar"></div>
+              <!-- MÓDULO 3: Sobreposição de marca d'água semi-transparente -->
+              <div class="photo-watermark"></div>
+            </div>
+
+            <div class="photo-card-caption">
+              <span>${photo.original_name}</span>
+              <span>#${photo.display_order || photo.id}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // MÓDULO 2 - Requisito 2: Salva a seleção instantaneamente via POST /api/portal/:token/album/:albumId/select
+    async function togglePhotoSelect(photoId) {
+      const photo = photosList.find(p => p.id === photoId);
+      if (!photo) return;
+
+      const newStatus = !photo.is_selected;
+      photo.is_selected = newStatus;
+
+      // Feedback visual imediato (Otimista)
+      const card = document.getElementById(`card-photo-${photoId}`);
+      if (card) {
+        card.classList.toggle('selected', newStatus);
+        const heartBtn = card.querySelector('.btn-heart-select');
+        if (heartBtn) heartBtn.classList.toggle('active', newStatus);
+      }
+      updateProgressDisplay();
+
+      try {
+        const res = await fetch(`/api/portal/${encodeURIComponent(currentToken)}/album/${encodeURIComponent(currentAlbumId)}/select`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            photo_id: photoId,
+            is_selected: newStatus
+          })
+        });
+
+        const result = await res.json();
+        if (!res.ok) {
+          throw new Error(result.error || 'Erro ao salvar no servidor.');
+        }
+
+        AntiPrintProtection.showToastNotice(newStatus ? '❤️ Foto adicionada à sua seleção!' : 'Foto removida da seleção.');
+
+      } catch (error) {
+        console.error('Erro ao salvar seleção:', error);
+        // Rollback se falhar
+        photo.is_selected = !newStatus;
+        if (card) {
+          card.classList.toggle('selected', !newStatus);
+          const heartBtn = card.querySelector('.btn-heart-select');
+          if (heartBtn) heartBtn.classList.toggle('active', !newStatus);
+        }
+        updateProgressDisplay();
+        alert('Não foi possível salvar a seleção: ' + error.message);
+      }
+    }
+
+    async function finalizarSelecao() {
+      const selectedCount = photosList.filter(p => Boolean(p.is_selected)).length;
+      if (selectedCount === 0) {
+        alert('Selecione pelo menos uma foto antes de concluir.');
+        return;
+      }
+
+      let confirmMsg = `Deseja concluir a seleção de ${selectedCount} foto(s) para este ensaio?`;
+      if (selectedCount > maxIncluded) {
+        confirmMsg += `\n\nAtenção: Você selecionou ${selectedCount - maxIncluded} foto(s) além do pacote contratado. O estúdio entrará em contato para confirmação.`;
+      }
+
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const res = await fetch(`/api/portal/${encodeURIComponent(currentToken)}/album/${encodeURIComponent(currentAlbumId)}/select`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            selected_ids: photosList.filter(p => Boolean(p.is_selected)).map(p => p.id),
+            finalize: true
+          })
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+          alert('🎉 Seleção concluída e enviada com sucesso ao estúdio!');
+          window.location.href = `/portal/${encodeURIComponent(currentToken)}`;
+        } else {
+          throw new Error(result.error || 'Falha ao finalizar seleção.');
+        }
+      } catch (err) {
+        alert('Erro ao concluir seleção: ' + err.message);
+      }
+    }
+
+    // Controle do Modal de Zoom com Escudo
+    function openZoomModal(previewUrl) {
+      const modal = document.getElementById('zoomModal');
+      const img = document.getElementById('zoomImage');
+      img.src = previewUrl;
+      modal.classList.add('active');
+    }
+
+    function closeZoomModal() {
+      const modal = document.getElementById('zoomModal');
+      modal.classList.remove('active');
+      document.getElementById('zoomImage').src = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', loadAlbumGallery);
+  </script>
+</body>
+</html>

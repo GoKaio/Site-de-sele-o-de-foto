@@ -580,11 +580,7 @@ def api_upload():
             return json_response({'error': 'Arquivo excede 15MB'}, 400)
 
         filename = f"capa_{uuid.uuid4().hex[:12]}{ext}"
-        filepath = os.path.join(UPLOAD_DIR, filename)
-        with open(filepath, 'wb') as f:
-            f.write(file_bytes)
-
-        rel_url = f"uploads/{filename}"
+        rel_url = salvar_imagem_upload(file_bytes, filename)
         return json_response({'success': True, 'url': rel_url, 'filename': filename})
     except Exception as e:
         return json_response({'error': f'Falha ao processar upload: {str(e)}'}, 500)
@@ -1109,10 +1105,20 @@ def api_delete_categoria(cat_id):
 @app.get('/api/galeria/<galeria_id:int>/fotos')
 @rate_limit()
 def api_get_fotos(galeria_id):
+    """
+    Retorna TODAS as fotos da galeria sem LIMIT arbitrário.
+    Ordenação determinística: ordem ASC, id ASC — garante que as últimas fotos
+    enviadas sempre apareçam, mesmo em ensaios com centenas de arquivos.
+    """
     conn = get_connection()
     galeria_id = get_galeria_real_id(conn, galeria_id)
     cur = conn.cursor()
-    cur.execute("SELECT * FROM fotos WHERE galeria_id = ? ORDER BY ordem ASC", (galeria_id,))
+    # Dupla ordenação: coluna 'ordem' (posição manual) e 'id' (ordem de inserção).
+    # Isso evita que fotos do final de lotes grandes sejam truncadas ou reordenadas.
+    cur.execute(
+        "SELECT * FROM fotos WHERE galeria_id = ? ORDER BY ordem ASC, id ASC",
+        (galeria_id,)
+    )
     rows = [dict(r) for r in cur.fetchall()]
 
     # Busca limite do pacote da galeria
@@ -1130,6 +1136,33 @@ def api_get_fotos(galeria_id):
         'extra': extra_count, 'nao_selecionada': nao_count,
         'limite_pacote': limite
     }})
+
+@app.get('/api/galeria/<galeria_id:int>/fotos/integridade')
+@rate_limit()
+def api_check_fotos_integridade(galeria_id):
+    """
+    Endpoint de verificação de integridade: retorna a contagem real de fotos
+    gravadas no banco para o álbum, permitindo ao admin comparar com o total enviado.
+    Útil para detectar uploads parcialmente completos.
+    """
+    conn = get_connection()
+    real_id = get_galeria_real_id(conn, galeria_id)
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id = ?", (real_id,))
+    row = cur.fetchone()
+    total_banco = (row[0] if row else 0)
+    cur.execute(
+        "SELECT id, numero, titulo, arquivo, status, ordem FROM fotos WHERE galeria_id = ? ORDER BY id DESC LIMIT 10",
+        (real_id,)
+    )
+    ultimas = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return json_response({
+        'galeria_id': real_id,
+        'total_fotos_banco': total_banco,
+        'ultimas_10_inseridas': ultimas,
+        'mensagem': f'{total_banco} foto(s) gravada(s) com sucesso no banco para esta galeria.'
+    })
 
 @app.post('/api/galeria/<galeria_id:int>/fotos')
 @rate_limit(60)
@@ -1198,81 +1231,146 @@ def api_add_fotos_galeria(galeria_id):
 @app.post('/api/galeria/<galeria_id:int>/upload-fotos')
 @rate_limit(30)
 def api_upload_fotos_multipart(galeria_id):
-    """Recebe upload de fotos via multipart/form-data e insere na galeria."""
-    conn = get_connection()
-    real_id = get_galeria_real_id(conn, galeria_id)
-    cur = conn.cursor()
-    cur.execute("SELECT id FROM galerias WHERE id = ?", (real_id,))
-    if not cur.fetchone():
-        conn.close()
-        return json_response({'error': 'Galeria não encontrada'}, 404)
-
-    cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id = ?", (real_id,))
-    cnt_row = cur.fetchone()
-    total_atual = (cnt_row[0] if cnt_row else 0) if cnt_row is not None else 0
-    if isinstance(cnt_row, dict) and 'count' in cnt_row:
-        total_atual = cnt_row['count']
-
+    """
+    Recebe upload de fotos via multipart/form-data e insere na galeria com:
+      - Processamento sequencial em lotes de BATCH_SIZE (evita OOM com muitos arquivos).
+      - Tratamento granular de erros: falha em uma foto não interrompe as demais.
+      - Confirmação de escrita no storage ANTES do INSERT no banco (integridade).
+      - Relatório final com total enviado, salvos com sucesso e lista de falhas.
+    """
+    BATCH_SIZE = 4          # Máximo de arquivos processados por vez
     EXTENSOES_PERMITIDAS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
     TAMANHO_MAX = 20 * 1024 * 1024  # 20 MB por arquivo
 
-    arquivos = request.files.getall('fotos') or []
-    if not arquivos:
+    conn = get_connection()
+    try:
+        real_id = get_galeria_real_id(conn, galeria_id)
+        cur = conn.cursor()
+        cur.execute("SELECT id FROM galerias WHERE id = ?", (real_id,))
+        if not cur.fetchone():
+            return json_response({'error': 'Galeria não encontrada'}, 404)
+
+        # Captura contagem atual ANTES do loop para numerar sequencialmente
+        cur.execute("SELECT COUNT(*) FROM fotos WHERE galeria_id = ?", (real_id,))
+        cnt_row = cur.fetchone()
+        total_atual = 0
+        if cnt_row is not None:
+            total_atual = cnt_row['count'] if isinstance(cnt_row, dict) and 'count' in cnt_row else cnt_row[0]
+
+        arquivos = request.files.getall('fotos') or []
+        if not arquivos:
+            return json_response({'error': 'Nenhum arquivo recebido. Use o campo "fotos" no FormData.'}, 400)
+
+        total_recebidos = len(arquivos)
+        inseridas = []   # Fotos salvas com sucesso no storage E no banco
+        erros = []       # Falhas por arquivo (com motivo)
+
+        # ── Processa em lotes de BATCH_SIZE ────────────────────────────────
+        for lote_inicio in range(0, total_recebidos, BATCH_SIZE):
+            lote = arquivos[lote_inicio : lote_inicio + BATCH_SIZE]
+
+            for upload_file in lote:
+                nome_original = upload_file.filename or f'foto_sem_nome_{lote_inicio}'
+                ext = os.path.splitext(nome_original)[1].lower()
+
+                # ── Validação de extensão ───────────────────────────────────
+                if ext not in EXTENSOES_PERMITIDAS:
+                    erros.append({'arquivo': nome_original, 'motivo': f'Extensão não permitida: {ext}'})
+                    print(f'[Upload] SKIP {nome_original}: extensão inválida ({ext})')
+                    continue
+
+                # ── Leitura dos bytes ───────────────────────────────────────
+                try:
+                    raw_bytes = upload_file.file.read()
+                except Exception as read_err:
+                    erros.append({'arquivo': nome_original, 'motivo': f'Erro ao ler arquivo: {read_err}'})
+                    print(f'[Upload] ERRO leitura {nome_original}: {read_err}')
+                    continue
+
+                if len(raw_bytes) > TAMANHO_MAX:
+                    erros.append({'arquivo': nome_original, 'motivo': 'Arquivo excede 20 MB'})
+                    print(f'[Upload] SKIP {nome_original}: excede 20 MB')
+                    continue
+
+                if len(raw_bytes) == 0:
+                    erros.append({'arquivo': nome_original, 'motivo': 'Arquivo vazio (0 bytes)'})
+                    print(f'[Upload] SKIP {nome_original}: arquivo vazio')
+                    continue
+
+                # ── Geração do nome único no storage ───────────────────────
+                idx = total_atual + len(inseridas) + 1
+                base_clean = re.sub(r'[^a-zA-Z0-9_\-]', '_', os.path.splitext(nome_original)[0]) or f'foto_{idx}'
+                fname = f"gal_{real_id}_{base_clean}_{uuid.uuid4().hex[:8]}{ext}"
+
+                # ── ESCRITA NO STORAGE (Supabase / disco local) ─────────────
+                # O INSERT no banco SÓ ocorre após confirmação desta etapa.
+                try:
+                    arquivo_url = salvar_imagem_upload(raw_bytes, fname)
+                    if not arquivo_url:
+                        raise ValueError('salvar_imagem_upload retornou vazio')
+                except Exception as save_err:
+                    erros.append({'arquivo': nome_original, 'motivo': f'Erro ao salvar no storage: {save_err}'})
+                    print(f'[Upload] ERRO storage {nome_original}: {save_err}')
+                    continue  # Não insere no banco — integridade garantida
+
+                # ── INSERT NO BANCO (apenas após confirmação do storage) ────
+                numero = f"Foto {idx:03d}"
+                titulo = os.path.splitext(nome_original)[0]
+                try:
+                    cur.execute("""
+                    INSERT INTO fotos (galeria_id, numero, titulo, arquivo, status, ordem)
+                    VALUES (?, ?, ?, ?, 'nao_selecionada', ?)
+                    """, (real_id, numero, titulo, arquivo_url, idx))
+                    foto_id = cur.lastrowid
+                    inseridas.append({
+                        'id': foto_id,
+                        'numero': numero,
+                        'titulo': titulo,
+                        'arquivo': arquivo_url
+                    })
+                    print(f'[Upload] OK {nome_original} → id={foto_id}, url={arquivo_url[:60]}')
+                except Exception as db_err:
+                    erros.append({'arquivo': nome_original, 'motivo': f'Erro ao registrar no banco: {db_err}'})
+                    print(f'[Upload] ERRO banco {nome_original}: {db_err}')
+                    continue
+
+            # Commit parcial a cada lote: reduz risco de perda por timeout
+            conn.commit()
+
+        # ── Atualiza capa da galeria se ainda não tinha ────────────────────
+        if inseridas:
+            cur.execute("SELECT foto_capa FROM galerias WHERE id = ?", (real_id,))
+            gal_row = cur.fetchone()
+            if gal_row and (not gal_row['foto_capa'] or gal_row['foto_capa'] in ('assets/logo/logo.png', 'Foto 001')):
+                cur.execute("UPDATE galerias SET foto_capa = ? WHERE id = ?", (inseridas[0]['arquivo'], real_id))
+
+        # ── Registro de atividade ──────────────────────────────────────────
+        agora = datetime.now().strftime("%d %b %Y %H:%M")
+        if inseridas:
+            desc = (f'Upload via painel: {len(inseridas)} de {total_recebidos} foto(s) processada(s).'
+                    + (f' {len(erros)} falha(s).' if erros else ''))
+            conn.execute("""
+            INSERT INTO atividades (galeria_id, data_hora, autor_tipo, titulo, descricao, dispositivo, tipo_badge)
+            VALUES (?, ?, 'Fotógrafo', ?, ?, 'Computador', 'Fotógrafo')
+            """, (real_id, agora, f'{len(inseridas)} foto(s) adicionadas', desc))
+        conn.commit()
+
+        # ── Relatório final ────────────────────────────────────────────────
+        resultado = {
+            'success': len(inseridas) > 0,
+            'total_recebidos': total_recebidos,
+            'count': len(inseridas),
+            'inseridas': inseridas,
+            'total_erros': len(erros),
+        }
+        if erros:
+            resultado['erros'] = erros
+            # Simplifica erros para exibição frontend (lista de strings)
+            resultado['erros_resumo'] = [f"{e['arquivo']}: {e['motivo']}" for e in erros]
+        return json_response(resultado)
+
+    finally:
         conn.close()
-        return json_response({'error': 'Nenhum arquivo recebido. Use o campo "fotos" no FormData.'}, 400)
-
-    inseridas = []
-    erros = []
-    for i, upload_file in enumerate(arquivos):
-        nome_original = upload_file.filename or f'foto_{i+1}'
-        ext = os.path.splitext(nome_original)[1].lower()
-        if ext not in EXTENSOES_PERMITIDAS:
-            erros.append(f'{nome_original}: extensão não permitida ({ext})')
-            continue
-
-        raw_bytes = upload_file.file.read()
-        if len(raw_bytes) > TAMANHO_MAX:
-            erros.append(f'{nome_original}: arquivo excede 20 MB')
-            continue
-
-        idx = total_atual + len(inseridas) + 1
-        base_clean = re.sub(r'[^a-zA-Z0-9_\-]', '_', os.path.splitext(nome_original)[0]) or f'foto_{idx}'
-        fname = f"gal_{real_id}_{base_clean}_{uuid.uuid4().hex[:8]}{ext}"
-        arquivo_url = salvar_imagem_upload(raw_bytes, fname)
-
-        numero = f"Foto {idx:03d}"
-        cur.execute("""
-        INSERT INTO fotos (galeria_id, numero, titulo, arquivo, status, ordem)
-        VALUES (?, ?, ?, ?, 'nao_selecionada', ?)
-        """, (real_id, numero, os.path.splitext(nome_original)[0], arquivo_url, idx))
-        inseridas.append({
-            'id': cur.lastrowid,
-            'numero': numero,
-            'titulo': os.path.splitext(nome_original)[0],
-            'arquivo': arquivo_url
-        })
-
-    # Atualiza capa da galeria com a primeira foto se ainda não tinha
-    if inseridas:
-        cur.execute("SELECT foto_capa FROM galerias WHERE id = ?", (real_id,))
-        gal_row = cur.fetchone()
-        if gal_row and (not gal_row['foto_capa'] or gal_row['foto_capa'] in ('assets/logo/logo.png', 'Foto 001')):
-            cur.execute("UPDATE galerias SET foto_capa = ? WHERE id = ?", (inseridas[0]['arquivo'], real_id))
-
-    agora = datetime.now().strftime("%d %b %Y %H:%M")
-    if inseridas:
-        conn.execute("""
-        INSERT INTO atividades (galeria_id, data_hora, autor_tipo, titulo, descricao, dispositivo, tipo_badge)
-        VALUES (?, ?, 'Fotógrafo', ?, ?, 'Computador', 'Fotógrafo')
-        """, (real_id, agora, f'{len(inseridas)} foto(s) adicionadas', f'Upload via painel do fotógrafo.'))
-
-    conn.commit()
-    conn.close()
-
-    resultado = {'success': True, 'inseridas': inseridas, 'count': len(inseridas)}
-    if erros:
-        resultado['erros'] = erros
-    return json_response(resultado)
 
 @app.delete('/api/galeria/<galeria_id:int>/fotos/<foto_id:int>')
 @rate_limit()
@@ -2435,6 +2533,192 @@ def api_test_error_log():
     """Endpoint de teste para validar se o sistema de log de erros está ativo."""
     log_error('backend', 'Teste de verificação do sistema de diagnóstico', detalhe='Validação de integridade do error_log executada com sucesso.', rota='/api/admin/error-log/test')
     return json_response({'success': True, 'mensagem': 'Erro de teste registrado no error_log com sucesso.'})
+
+# ==============================================================================
+# 8.5 MÓDULO 2: PORTAL MULTI-GALERIA (VERCEL / SUPABASE / SQLITE)
+# ==============================================================================
+
+@app.get('/api/portal/<token>')
+@rate_limit()
+def api_get_portal_client(token):
+    """Retorna dados do cliente e todos os seus álbuns disponíveis para seleção."""
+    token = token.strip()
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        # Busca destinatário pelo e-mail ou nome
+        cur.execute("SELECT id, galeria_id, nome, email FROM destinatarios WHERE email = ? OR id = ? LIMIT 1", (token, int(token) if token.isdigit() else -1))
+        dest = cur.fetchone()
+
+        if dest:
+            dest_dict = dict(dest)
+            client_name = dest_dict.get('nome') or 'Cliente'
+            client_email = dest_dict.get('email') or token
+            # Busca todas as galerias onde este cliente é destinatário
+            cur.execute("""
+                SELECT g.id, g.nome AS title, g.foto_capa AS cover_image_url, g.data_trabalho AS event_date,
+                       g.status_galeria, g.limite_pacote AS max_photos_included, g.criado_em
+                FROM galerias g
+                JOIN destinatarios d ON d.galeria_id = g.id
+                WHERE d.email = ? OR d.nome = ?
+                ORDER BY g.id DESC
+            """, (client_email, client_name))
+            gals = [dict(r) for r in cur.fetchall()]
+        else:
+            # Fallback demonstrativo: retorna as galerias ativas
+            client_name = "Cliente"
+            client_email = token
+            cur.execute("""
+                SELECT id, nome AS title, foto_capa AS cover_image_url, data_trabalho AS event_date,
+                       status_galeria, limite_pacote AS max_photos_included, criado_em
+                FROM galerias
+                ORDER BY id DESC LIMIT 10
+            """)
+            gals = [dict(r) for r in cur.fetchall()]
+
+        # Para cada galeria, calcula total de fotos e fotos selecionadas
+        albums = []
+        for g in gals:
+            gid = g['id']
+            cur.execute("SELECT COUNT(*) AS total FROM fotos WHERE galeria_id = ?", (gid,))
+            total_f = cur.fetchone()['total']
+            cur.execute("SELECT COUNT(*) AS sel FROM fotos WHERE galeria_id = ? AND status IN ('pacote', 'extra')", (gid,))
+            sel_f = cur.fetchone()['sel']
+
+            status_clean = 'concluido' if g.get('status_galeria') == 'Concluído' else 'em_selecao'
+
+            albums.append({
+                'id': gid,
+                'title': g.get('title') or f"Ensaio #{gid}",
+                'cover_image_url': g.get('cover_image_url') or 'assets/logo/logo.png',
+                'event_date': g.get('event_date') or '',
+                'status': status_clean,
+                'max_photos_included': g.get('max_photos_included') or 20,
+                'total_photos': total_f,
+                'selected_photos': sel_f
+            })
+
+        return json_response({
+            'client': {
+                'id': 1,
+                'name': client_name,
+                'email': client_email,
+                'access_token': token
+            },
+            'albums': albums
+        })
+    finally:
+        conn.close()
+
+@app.get('/api/portal/<token>/album/<album_id:int>')
+@rate_limit()
+def api_get_portal_album_photos(token, album_id):
+    """Retorna fotos completas da galeria para o portal do cliente."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM galerias WHERE id = ?", (album_id,))
+        gal = cur.fetchone()
+        if not gal:
+            response.status = 404
+            return json_response({'error': 'Ensaio não encontrado.'})
+
+        gal_dict = dict(gal)
+
+        # Busca outras galerias para o switcher rápido
+        cur.execute("SELECT id, nome AS title, status_galeria FROM galerias ORDER BY id DESC LIMIT 8")
+        other_raw = [dict(r) for r in cur.fetchall()]
+        other_albums = [{
+            'id': r['id'],
+            'title': r.get('title') or f"Ensaio #{r['id']}",
+            'status': 'concluido' if r.get('status_galeria') == 'Concluído' else 'em_selecao'
+        } for r in other_raw]
+
+        # Busca todas as fotos da galeria ordenadas deterministamente sem LIMIT
+        cur.execute("""
+            SELECT id, galeria_id, numero, titulo AS original_name, arquivo, status, ordem
+            FROM fotos
+            WHERE galeria_id = ?
+            ORDER BY ordem ASC, id ASC
+        """, (album_id,))
+        rows = [dict(r) for r in cur.fetchall()]
+
+        photos = []
+        for r in rows:
+            is_sel = r.get('status') in ('pacote', 'extra')
+            img_url = r.get('arquivo', '')
+            photos.append({
+                'id': r['id'],
+                'album_id': r['galeria_id'],
+                'original_name': r.get('original_name') or r.get('numero') or f"Foto {r['id']}",
+                'thumb_url': img_url,
+                'preview_url': img_url,
+                'is_selected': is_sel,
+                'display_order': r.get('ordem') or r['id']
+            })
+
+        return json_response({
+            'client': {'id': 1, 'name': 'Cliente', 'email': token},
+            'album': {
+                'id': gal_dict['id'],
+                'title': gal_dict.get('nome') or 'Ensaio',
+                'cover_image_url': gal_dict.get('foto_capa'),
+                'event_date': gal_dict.get('data_trabalho'),
+                'max_photos_included': gal_dict.get('limite_pacote') or 20,
+                'status': 'concluido' if gal_dict.get('status_galeria') == 'Concluído' else 'em_selecao'
+            },
+            'other_albums': other_albums,
+            'photos': photos
+        })
+    finally:
+        conn.close()
+
+@app.post('/api/portal/<token>/album/<album_id:int>/select')
+@rate_limit()
+def api_post_portal_select(token, album_id):
+    """Salva a seleção de fotos do cliente na galeria."""
+    data = get_body()
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        photo_id = data.get('photo_id')
+        is_sel = data.get('is_selected')
+
+        if photo_id is not None:
+            new_status = 'pacote' if is_sel else 'nao_selecionada'
+            cur.execute("UPDATE fotos SET status = ? WHERE id = ? AND galeria_id = ?", (new_status, int(photo_id), album_id))
+            conn.commit()
+        elif 'selected_ids' in data:
+            sel_ids = set(data.get('selected_ids', []))
+            cur.execute("UPDATE fotos SET status = 'nao_selecionada' WHERE galeria_id = ?", (album_id,))
+            for pid in sel_ids:
+                cur.execute("UPDATE fotos SET status = 'pacote' WHERE id = ? AND galeria_id = ?", (int(pid), album_id))
+            conn.commit()
+
+        if data.get('finalize'):
+            cur.execute("UPDATE galerias SET status_galeria = 'Concluído' WHERE id = ?", (album_id,))
+            conn.commit()
+
+        cur.execute("SELECT COUNT(*) AS sel FROM fotos WHERE galeria_id = ? AND status IN ('pacote', 'extra')", (album_id,))
+        count = cur.fetchone()['sel']
+
+        return json_response({'success': True, 'selected_photos': count})
+    finally:
+        conn.close()
+
+# ── Rotas do Portal de Clientes (HTML) ──
+@app.route('/portal/<token>')
+@app.route('/portal/<token>/')
+def serve_portal_entry(token):
+    return static_file('portal.html', root=os.path.join(BASE_DIR, 'public'))
+
+@app.route('/portal/<token>/album/<album_id:int>')
+def serve_portal_album(token, album_id):
+    return static_file('portal-album.html', root=os.path.join(BASE_DIR, 'public'))
+
+@app.route('/public/<filepath:path>')
+def serve_public_assets(filepath):
+    return static_file(filepath, root=os.path.join(BASE_DIR, 'public'))
 
 # ==============================================================================
 # 9. ARQUIVOS ESTÁTICOS (com proteções de segurança)

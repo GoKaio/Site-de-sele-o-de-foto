@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal do Cliente | Casa da Foto Studio</title>
+  
+  <link rel="icon" type="image/png" href="/assets/logo/logo.png">
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+  <!-- Fontes de Luxo e Editorial -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/public/css/portal.css">
+</head>
+<body>
+
+  <!-- Header Institucional -->
+  <header class="portal-header">
+    <div class="portal-header-content">
+      <div class="brand-section">
+        <img src="/assets/logo/logo.png" alt="Casa da Foto Logo" class="brand-logo" onerror="this.style.display='none'">
+        <div class="brand-titles">
+          <span class="brand-name">CASA DA FOTO</span>
+          <span class="brand-subtitle">Estúdio Fotográfico • Portal Exclusivo</span>
+        </div>
+      </div>
+      <div>
+        <span id="clientNameBadge" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Conteúdo Principal do Portal -->
+  <main class="portal-container" id="portalContainer">
+    
+    <div class="welcome-hero">
+      <h1 class="client-greeting" id="clientGreeting">Seus Ensaios Fotográficos</h1>
+      <p class="client-instruction">
+        Seja bem-vindo(a) à sua área exclusiva. Abaixo estão reunidas todas as sessões registradas pelo nosso estúdio. Selecione um ensaio para visualizar e escolher suas fotos favoritas.
+      </p>
+    </div>
+
+    <!-- Feedback de Carregamento -->
+    <div id="loadingState" style="text-align: center; padding: 4rem 1rem; color: var(--text-secondary);">
+      <p style="font-size: 1.1rem; font-weight: 500;">Carregando suas galerias...</p>
+    </div>
+
+    <!-- Feedback de Erro -->
+    <div id="errorState" style="display: none; text-align: center; padding: 4rem 1rem; color: var(--danger-text);">
+      <h2 style="font-family: var(--font-serif); font-size: 1.8rem; margin-bottom: 0.5rem;">Link Inválido ou Expirado</h2>
+      <p id="errorMessage" style="color: var(--text-secondary);">Não conseguimos localizar o seu portal com o token fornecido. Entre em contato com o estúdio.</p>
+    </div>
+
+    <!-- Grade de Álbuns / Ensaios -->
+    <div class="albums-grid" id="albumsGrid" style="display: none;"></div>
+
+  </main>
+
+  <script src="/public/js/anti-print.js"></script>
+  <script>
+    // Inicializa proteção anti-cópia básica
+    AntiPrintProtection.init({ gallerySelector: '#portalContainer' });
+
+    // Extrai o token da URL (/portal/:token)
+    function getAccessToken() {
+      const parts = window.location.pathname.split('/').filter(Boolean);
+      const portalIdx = parts.indexOf('portal');
+      if (portalIdx !== -1 && parts[portalIdx + 1]) {
+        return parts[portalIdx + 1];
+      }
+      // Fallback para query string (?token=...)
+      const params = new URLSearchParams(window.location.search);
+      return params.get('token') || '';
+    }
+
+    async function loadPortal() {
+      const token = getAccessToken();
+      const loadingEl = document.getElementById('loadingState');
+      const errorEl = document.getElementById('errorState');
+      const gridEl = document.getElementById('albumsGrid');
+      const greetingEl = document.getElementById('clientGreeting');
+      const badgeEl = document.getElementById('clientNameBadge');
+
+      if (!token) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        document.getElementById('errorMessage').textContent = 'Nenhum código de acesso foi fornecido na URL.';
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/portal/${encodeURIComponent(token)}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Falha ao buscar dados do portal.');
+        }
+
+        const { client, albums } = data;
+
+        // Atualiza cabeçalho e saudação personalizada
+        greetingEl.textContent = `Olá, ${client.name}`;
+        badgeEl.textContent = `Cliente: ${client.name}`;
+
+        loadingEl.style.display = 'none';
+
+        if (!albums || albums.length === 0) {
+          gridEl.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 3rem;">Nenhum ensaio disponível no momento para este cliente.</p>';
+          gridEl.style.display = 'grid';
+          return;
+        }
+
+        gridEl.innerHTML = albums.map(album => {
+          const isDone = album.status === 'concluido';
+          const statusClass = isDone ? 'status-concluido' : 'status-em_selecao';
+          const statusText = isDone ? 'Concluído' : 'Em Seleção';
+          
+          const coverUrl = album.cover_image_url || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80';
+          const formattedDate = album.event_date ? new Date(album.event_date + 'T00:00:00').toLocaleDateString('pt-BR') : 'Data a definir';
+
+          return `
+            <div class="album-card">
+              <div class="album-card-cover photo-wrapper">
+                <img src="${coverUrl}" alt="${album.title}" class="protected-img" loading="lazy">
+                <div class="photo-shield"></div>
+                <div class="photo-watermark"></div>
+                <span class="album-status-badge ${statusClass}">${statusText}</span>
+              </div>
+              <div class="album-card-body">
+                <div>
+                  <h2 class="album-card-title">${album.title}</h2>
+                  <div class="album-card-meta">
+                    <span>📅 ${formattedDate}</span>
+                    <span>🖼️ ${album.total_photos} fotos</span>
+                  </div>
+                </div>
+                <div class="album-card-footer">
+                  <div class="album-counter">
+                    <strong>${album.selected_photos}</strong> de <strong>${album.max_photos_included}</strong> fotos escolhidas
+                  </div>
+                  <a href="/portal/${encodeURIComponent(token)}/album/${album.id}" class="btn-primary">
+                    Acessar Galeria →
+                  </a>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        gridEl.style.display = 'grid';
+
+      } catch (err) {
+        console.error('Erro ao carregar portal:', err);
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        document.getElementById('errorMessage').textContent = err.message;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadPortal);
+  </script>
+</body>
+</html>

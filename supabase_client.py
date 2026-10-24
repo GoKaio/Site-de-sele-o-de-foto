@@ -10,6 +10,12 @@ import os
 import mimetypes
 import requests
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 # ── 1. CONFIGURAÇÕES E CHAVES DO SUPABASE ─────────────────────────────────────
 # URL pública do projeto Supabase (ex: https://xyzcompany.supabase.co)
 SUPABASE_URL = os.environ.get('SUPABASE_URL') or os.environ.get('NEXT_PUBLIC_SUPABASE_URL', '')
@@ -20,16 +26,22 @@ SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY') or os.environ.get('NEXT_
 # Chave de serviço (EXCLUSIVA de backend serverless, NUNCA expor ao cliente!)
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')
 
-# Nome do bucket de uploads no Supabase Storage
-STORAGE_BUCKET = os.environ.get('SUPABASE_STORAGE_BUCKET', 'casadafoto-uploads')
+def get_supabase_url():
+    return os.environ.get('SUPABASE_URL') or os.environ.get('NEXT_PUBLIC_SUPABASE_URL', '')
+
+def get_supabase_key():
+    return os.environ.get('SUPABASE_SERVICE_ROLE_KEY') or os.environ.get('SUPABASE_ANON_KEY') or os.environ.get('NEXT_PUBLIC_SUPABASE_ANON_KEY', '')
+
+def get_storage_bucket():
+    return os.environ.get('SUPABASE_STORAGE_BUCKET', 'casadafoto-uploads')
 
 def is_supabase_configured() -> bool:
     """Retorna True se as credenciais do Supabase estiverem configuradas."""
-    return bool(SUPABASE_URL and (SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY))
+    return bool(get_supabase_url() and get_supabase_key())
 
 def get_auth_header() -> dict:
     """Retorna os headers de autorização para chamadas REST do Supabase."""
-    token = SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY
+    token = get_supabase_key()
     return {
         'apikey': token,
         'Authorization': f'Bearer {token}'
@@ -44,6 +56,9 @@ def upload_para_supabase_storage(file_bytes: bytes, filename: str, content_type:
     if not is_supabase_configured():
         return None
 
+    url = get_supabase_url()
+    bucket = get_storage_bucket()
+
     if not content_type:
         content_type, _ = mimetypes.guess_type(filename)
         if not content_type:
@@ -51,7 +66,7 @@ def upload_para_supabase_storage(file_bytes: bytes, filename: str, content_type:
 
     # Endpoint do Supabase Storage API para upload de objeto
     # POST /storage/v1/object/<bucket>/<path>
-    url_upload = f"{SUPABASE_URL.rstrip('/')}/storage/v1/object/{STORAGE_BUCKET}/{filename}"
+    url_upload = f"{url.rstrip('/')}/storage/v1/object/{bucket}/{filename}"
 
     headers = get_auth_header()
     headers['Content-Type'] = content_type
@@ -60,17 +75,17 @@ def upload_para_supabase_storage(file_bytes: bytes, filename: str, content_type:
     try:
         res = requests.post(url_upload, headers=headers, data=file_bytes, timeout=10)
         if res.status_code in (200, 201):
-            url_publica = f"{SUPABASE_URL.rstrip('/')}/storage/v1/object/public/{STORAGE_BUCKET}/{filename}"
+            url_publica = f"{url.rstrip('/')}/storage/v1/object/public/{bucket}/{filename}"
             return url_publica
         
         # Se bucket não existir, tenta criar automaticamente com permissão pública
         if res.status_code == 404 or (res.status_code == 400 and 'Bucket not found' in res.text):
             try:
-                url_create_bucket = f"{SUPABASE_URL.rstrip('/')}/storage/v1/bucket"
-                requests.post(url_create_bucket, headers=headers, json={"id": STORAGE_BUCKET, "name": STORAGE_BUCKET, "public": True}, timeout=6)
+                url_create_bucket = f"{url.rstrip('/')}/storage/v1/bucket"
+                requests.post(url_create_bucket, headers=headers, json={"id": bucket, "name": bucket, "public": True}, timeout=6)
                 res2 = requests.post(url_upload, headers=headers, data=file_bytes, timeout=10)
                 if res2.status_code in (200, 201):
-                    return f"{SUPABASE_URL.rstrip('/')}/storage/v1/object/public/{STORAGE_BUCKET}/{filename}"
+                    return f"{url.rstrip('/')}/storage/v1/object/public/{bucket}/{filename}"
             except Exception:
                 pass
 

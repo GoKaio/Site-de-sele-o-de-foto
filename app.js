@@ -213,6 +213,42 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cGal) sessionStorage.setItem('cliente_galeria_id', cGal);
   }
 
+  // Ativa botão no header apenas para administradores/fotógrafos autenticados
+  if (isAdmin || isFoto) {
+    if (document.body) {
+      document.body.classList.add('is-admin');
+    } else {
+      document.addEventListener('DOMContentLoaded', function() {
+        if (document.body) document.body.classList.add('is-admin');
+      });
+    }
+  }
+
+  // ── Gatilhos discretos de acesso ao Painel Administrativo ────────────────
+  // 1. Atalho de teclado secreto: Ctrl + Shift + A
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+      e.preventDefault();
+      window.location.href = 'admin-login.html';
+    }
+  });
+
+  // 2. Três cliques rápidos consecutivos no logotipo
+  let _logoClicks = 0;
+  let _logoTimer = null;
+  document.addEventListener('click', function(e) {
+    const isLogo = e.target.closest('#headerLogoImg, .header-logo-card, #authLogoImg');
+    if (isLogo) {
+      _logoClicks++;
+      clearTimeout(_logoTimer);
+      _logoTimer = setTimeout(function() { _logoClicks = 0; }, 900);
+      if (_logoClicks >= 3) {
+        _logoClicks = 0;
+        window.location.href = 'admin-login.html';
+      }
+    }
+  });
+
   // ============================================================================
   // 0. CONTROLE DE ACESSO E PERMISSÕES (ROLE-BASED ACCESS CONTROL)
   // ============================================================================
@@ -528,6 +564,171 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // ============================================================================
+  // 3. PROTEÇÃO ANTI-CÓPIA DA GALERIA DO CLIENTE
+  // ============================================================================
+  // Ativa APENAS na galeria do cliente (escolha-fotos.html).
+  // Fotógrafo/admin NÃO são afetados — podem inspecionar livremente.
+  // ============================================================================
+  (function ativarProtecaoAntiCopia() {
+    const isGaleriaCliente = !!document.querySelector('.proofing-cards-grid, #photosGrid');
+    if (!isGaleriaCliente) return;
+
+    const tipoUsuario = sessionStorage.getItem('usuario_tipo') || '';
+    const isFotoOuAdmin = tipoUsuario === 'fotografo' || tipoUsuario === 'admin';
+    if (isFotoOuAdmin) return;
+
+    // ── 1. Bloqueia clique direito / menu de contexto nas imagens ────────
+    document.addEventListener('contextmenu', function(e) {
+      const alvo = e.target;
+      if (alvo && (alvo.tagName === 'IMG' || alvo.closest('.proofing-thumb-wrapper, .proofing-card'))) {
+        e.preventDefault();
+        e.stopPropagation();
+        mostrarAvisoProtecao('\uD83D\uDD12 Imagens protegidas — direitos reservados ao estúdio.');
+        return false;
+      }
+    }, true);
+
+    // ── 2. Bloqueia drag-and-drop de imagens ─────────────────────────────
+    document.addEventListener('dragstart', function(e) {
+      if (e.target && e.target.tagName === 'IMG') {
+        e.preventDefault();
+        return false;
+      }
+    }, true);
+
+    // ── 3. Atalhos de teclado bloqueados na galeria ───────────────────────
+    document.addEventListener('keydown', function(e) {
+      const tecla = (e.key || '').toLowerCase();
+      const ctrl  = e.ctrlKey || e.metaKey;
+
+      if (e.key === 'PrintScreen' || e.key === 'F13') {
+        e.preventDefault();
+        return false;
+      }
+      if (ctrl && !e.shiftKey && tecla === 's') { e.preventDefault(); return false; }
+      if (ctrl && e.shiftKey  && tecla === 's') { e.preventDefault(); return false; }
+      if (ctrl && tecla === 'p') {
+        e.preventDefault();
+        mostrarAvisoProtecao('🔒 Impressão bloqueada nesta galeria protegida.');
+        return false;
+      }
+      if (e.key === 'F12') { e.preventDefault(); return false; }
+      if (ctrl && tecla === 'u') { e.preventDefault(); return false; }
+      if (ctrl && e.shiftKey && (tecla === 'i' || tecla === 'j')) { e.preventDefault(); return false; }
+    }, true);
+
+    // ── MÓDULO 3: Dissuasão de Captura via keyup no PrintScreen ──────────
+    window.addEventListener('keyup', function(e) {
+      if (e.key === 'PrintScreen' || e.code === 'PrintScreen' || e.keyCode === 44) {
+        // 1. Limpa a área de transferência do usuário
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText('').catch(function() {});
+        }
+
+        // 2. Aplica classe com blur de 25px no container por 2 segundos
+        const container = document.querySelector('.proofing-cards-grid, #photosGrid, main') || document.body;
+        container.classList.add('screen-blur-25px');
+        setTimeout(function() {
+          container.classList.remove('screen-blur-25px');
+        }, 2000);
+
+        mostrarAvisoProtecao('🔒 Captura de tela não permitida — Área de transferência limpa.');
+      }
+    });
+
+    // ── MÓDULO 3: Blur imediato caso a janela perca o foco (window.onblur / visibilitychange) ──
+    window.addEventListener('blur', function() {
+      const container = document.querySelector('.proofing-cards-grid, #photosGrid, main') || document.body;
+      container.classList.add('window-unfocused-blur');
+    });
+
+    window.addEventListener('focus', function() {
+      const container = document.querySelector('.proofing-cards-grid, #photosGrid, main') || document.body;
+      container.classList.remove('window-unfocused-blur');
+    });
+
+    document.addEventListener('visibilitychange', function() {
+      const container = document.querySelector('.proofing-cards-grid, #photosGrid, main') || document.body;
+      if (document.hidden) {
+        container.classList.add('window-unfocused-blur');
+      } else {
+        container.classList.remove('window-unfocused-blur');
+      }
+    });
+
+    // ── 5. Bloqueia seleção de texto na grade de fotos ────────────────────
+    function bloquearSelecaoNaGrade() {
+      const grade = document.querySelector('.proofing-cards-grid, #photosGrid');
+      if (grade) {
+        grade.addEventListener('selectstart', function(e) { e.preventDefault(); return false; });
+      }
+    }
+    bloquearSelecaoNaGrade();
+    // Reaplica após cada renderização de fotos (MutationObserver)
+    const _observer = new MutationObserver(bloquearSelecaoNaGrade);
+    const _container = document.querySelector('.proofing-photos-col, main');
+    if (_container) _observer.observe(_container, { childList: true, subtree: true });
+
+    // ── Overlay de escurecimento (anti-PrintScreen do SO) ────────────────
+    let _blurOverlay = null;
+    function ativarOverscreenBlur(duracao) {
+      if (_blurOverlay) return;
+      _blurOverlay = document.createElement('div');
+      _blurOverlay.id = 'antiCopyBlurOverlay';
+      _blurOverlay.setAttribute('aria-hidden', 'true');
+      Object.assign(_blurOverlay.style, {
+        position: 'fixed', inset: '0', zIndex: '999999',
+        background: 'rgba(10, 6, 3, 0.97)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexDirection: 'column', gap: '1rem',
+        backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+        transition: 'opacity 0.25s ease', opacity: '0',
+        userSelect: 'none', pointerEvents: 'none'
+      });
+      _blurOverlay.innerHTML = '<div style="text-align:center;color:#FAF5EE;font-family:sans-serif;max-width:380px;padding:2rem;">' +
+        '<div style="font-size:3rem;margin-bottom:1rem;">\uD83D\uDD12</div>' +
+        '<h2 style="font-size:1.25rem;font-weight:800;margin-bottom:0.5rem;color:#C59B6D;">Galeria Protegida</h2>' +
+        '<p style="font-size:0.88rem;opacity:0.85;line-height:1.6;margin:0;">As imagens desta galeria pertencem ao<br>' +
+        '<strong style="color:#E6CA65;">Est\u00fadio Casa da Foto</strong><br>e estão protegidas por direitos autorais.</p></div>';
+      document.body.appendChild(_blurOverlay);
+      requestAnimationFrame(function() { if (_blurOverlay) _blurOverlay.style.opacity = '1'; });
+      if (duracao) {
+        if (overlayTimeout) clearTimeout(overlayTimeout);
+        overlayTimeout = setTimeout(limparOverscreenBlur, duracao);
+      }
+    }
+
+    function limparOverscreenBlur() {
+      if (_blurOverlay) {
+        _blurOverlay.style.opacity = '0';
+        var el = _blurOverlay;
+        setTimeout(function() { if (el && el.parentNode) el.parentNode.removeChild(el); }, 300);
+        _blurOverlay = null;
+      }
+      if (overlayTimeout) { clearTimeout(overlayTimeout); overlayTimeout = null; }
+    }
+
+    // ── Toast de aviso de proteção ───────────────────────────────────────
+    function mostrarAvisoProtecao(msg) {
+      if (typeof window.showToast === 'function') {
+        window.showToast(msg, 'warning');
+      } else {
+        var t = document.createElement('div');
+        Object.assign(t.style, {
+          position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)',
+          background: '#2D1D14', color: '#FAF5EE', padding: '0.75rem 1.5rem',
+          borderRadius: '9999px', fontSize: '0.85rem', fontWeight: '700',
+          zIndex: '999998', boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+          border: '1px solid #C59B6D', maxWidth: '90vw', textAlign: 'center'
+        });
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(function() { t.remove(); }, 3000);
+      }
+    }
+  })();
 
   // ============================================================================
   // 3. TELA: ESCOLHA DE FOTOS (escolha-fotos.html)
