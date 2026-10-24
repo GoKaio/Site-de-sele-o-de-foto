@@ -1,0 +1,11 @@
+package.json
+package-lock.json
+src/
+node_modules/
+.agents/
+.wrangler/
+scripts/
+schema.sql
+banco.db
+*.pyc
+__pycache__/
