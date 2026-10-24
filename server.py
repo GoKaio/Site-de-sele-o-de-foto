@@ -2710,15 +2710,15 @@ def api_post_portal_select(token, album_id):
 @app.route('/portal/<token>')
 @app.route('/portal/<token>/')
 def serve_portal_entry(token):
-    return static_file('portal.html', root=os.path.join(BASE_DIR, 'public'))
+    return static_file('portal.html', root=BASE_DIR)
 
 @app.route('/portal/<token>/album/<album_id:int>')
 def serve_portal_album(token, album_id):
-    return static_file('portal-album.html', root=os.path.join(BASE_DIR, 'public'))
+    return static_file('portal-album.html', root=BASE_DIR)
 
 @app.route('/public/<filepath:path>')
 def serve_public_assets(filepath):
-    return static_file(filepath, root=os.path.join(BASE_DIR, 'public'))
+    return static_file(filepath, root=BASE_DIR)
 
 # ==============================================================================
 # 9. ARQUIVOS ESTÁTICOS (com proteções de segurança)

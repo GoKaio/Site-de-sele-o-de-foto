@@ -10,8 +10,20 @@
       "destination": "/api/index.py"
     },
     {
+      "source": "/portal/(.*)/album/(.*)",
+      "destination": "/portal-album.html"
+    },
+    {
       "source": "/portal/(.*)",
-      "destination": "/api/index.py"
+      "destination": "/portal.html"
+    },
+    {
+      "source": "/public/css/portal.css",
+      "destination": "/portal.css"
+    },
+    {
+      "source": "/public/js/anti-print.js",
+      "destination": "/anti-print.js"
     }
   ],
   "headers": [
